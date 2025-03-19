@@ -12,6 +12,7 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { createTheme, ThemeProvider } from "@mui/material";
 import { Home } from "./routes/home.tsx";
+import { CourseOuline } from "./routes/course_outline.tsx";
 
 const theme = createTheme({
   palette: {
@@ -50,6 +51,7 @@ const router = createBrowserRouter([
         path: "/home",
         element: <Home />,
       },
+      { path: "/course_outline", element: <CourseOuline /> },
       {
         path: "*",
         element: <ErrorRoute />,

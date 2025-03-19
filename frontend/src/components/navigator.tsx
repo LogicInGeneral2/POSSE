@@ -9,6 +9,9 @@ import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
+import InfoIcon from "@mui/icons-material/Info";
+import FolderIcon from "@mui/icons-material/Folder";
+import DriveFolderUploadIcon from "@mui/icons-material/DriveFolderUpload";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ListItem from "@mui/material/ListItem";
@@ -107,14 +110,29 @@ export default function NavigationBar() {
 
   const menuItems = [
     {
-      text: "Dashboard",
+      text: "Home",
       icon: <HomeIcon style={{ color: "#58041D" }} />,
       path: "/home",
     },
     {
-      text: "Tasks",
+      text: "Course Outline",
+      icon: <InfoIcon style={{ color: "#58041D" }} />,
+      path: "/course_outline",
+    },
+    {
+      text: "Supervisors",
       icon: <AssignmentIcon style={{ color: "#58041D" }} />,
-      path: "/tasks",
+      path: "/supervisors",
+    },
+    {
+      text: "Documents",
+      icon: <FolderIcon style={{ color: "#58041D" }} />,
+      path: "/documents",
+    },
+    {
+      text: "Submissions",
+      icon: <DriveFolderUploadIcon style={{ color: "#58041D" }} />,
+      path: "/submissions",
     },
     {
       text: "Profile",

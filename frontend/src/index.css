@@ -3,7 +3,7 @@
   --secondary-color: #F8B628;
   --thirtiary-color: #E9DADD;
 
-  font-family: Inter;
+  font-family: "Roboto","Helvetica","Arial",sans-serif;
   font-weight: 400;
   color: var(--primary-color);
   background-color: #ffffff;

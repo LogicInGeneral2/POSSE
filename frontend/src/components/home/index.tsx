@@ -15,6 +15,8 @@ import {
   CalendarMonth,
   EventBusyRounded,
 } from "@mui/icons-material";
+import Announcements from "./carousel";
+import DashboardCalender from "./calender";
 
 export const HomePage = () => {
   return (
@@ -24,7 +26,11 @@ export const HomePage = () => {
           height: "100%",
         }}
       >
-        <Typography fontSize={"3rem"} color="secondary">
+        <Typography
+          fontSize={"3rem"}
+          color="secondary"
+          sx={{ fontWeight: "bold" }}
+        >
           Welcome back, Ahmad Jalkhan
         </Typography>
 
@@ -90,18 +96,7 @@ export const HomePage = () => {
                   sx={{ borderBottomWidth: 2, borderColor: "primary.main" }}
                 />
 
-                <Typography sx={{ fontWeight: "bold" }}>TITLE HERE</Typography>
-                <Typography>
-                  This is where the describtion goes.
-                  ABCDEFGHIJKLMNOPQRSTUVWXYZ. 1234567890.
-                  abcdefghijklmnopqrstuvwxyz.
-                </Typography>
-                <iframe
-                  src="../../../data/CHAPTER 1 - PROJECT.pdf"
-                  width="100%"
-                  height={"100%"}
-                  style={{ border: "none" }}
-                />
+                <Announcements />
               </Stack>
             </Stack>
           </Grid>
@@ -258,7 +253,7 @@ export const HomePage = () => {
                   </Box>
                 </Grid>
               </Grid>
-              <Box>TESTING</Box>
+              <DashboardCalender />
             </Stack>
           </Grid>
         </Grid>
