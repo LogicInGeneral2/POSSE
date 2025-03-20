@@ -10,32 +10,11 @@ import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-import { createTheme, ThemeProvider } from "@mui/material";
+import { ThemeProvider } from "@mui/material";
 import { Home } from "./routes/home.tsx";
 import { CourseOuline } from "./routes/course_outline.tsx";
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#58041D",
-    },
-    secondary: {
-      main: "#F8B628",
-    },
-    error: {
-      main: "#d32f2f",
-    },
-    warning: {
-      main: "#ed6c02",
-    },
-    info: {
-      main: "#0288d1",
-    },
-    success: {
-      main: "#2e7d32",
-    },
-  },
-});
+import { Supervisors } from "./routes/supervisors.tsx";
+import theme from "./theme.tsx";
 
 const router = createBrowserRouter([
   {
@@ -52,6 +31,10 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       { path: "/course_outline", element: <CourseOuline /> },
+      {
+        path: "/supervisors",
+        element: <Supervisors />,
+      },
       {
         path: "*",
         element: <ErrorRoute />,

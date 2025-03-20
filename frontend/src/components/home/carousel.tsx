@@ -32,7 +32,7 @@ function Item({ item }: { item: AnnouncementItem }) {
 
 function Announcements() {
   return (
-    <Carousel >
+    <Carousel>
       {announcement.map((item) => (
         <Item key={item.id} item={item} />
       ))}
