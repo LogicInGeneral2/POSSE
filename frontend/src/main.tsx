@@ -15,6 +15,7 @@ import { Home } from "./routes/home.tsx";
 import { CourseOuline } from "./routes/course_outline.tsx";
 import { Supervisors } from "./routes/supervisors.tsx";
 import theme from "./theme.tsx";
+import { Documents } from "./routes/documents.tsx";
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
       {
         path: "/supervisors",
         element: <Supervisors />,
+      },
+      {
+        path: "/documents",
+        element: <Documents />,
       },
       {
         path: "*",

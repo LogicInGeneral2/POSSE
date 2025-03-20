@@ -19,7 +19,21 @@ export const SupervisorsPage = () => {
         </Typography>
 
         <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
-
+        <Box
+          sx={{
+            marginTop: "20px",
+            fontSize: "1rem",
+            padding: "5px",
+            border: "1px solid",
+            borderRadius: "8px",
+            display: "flex",
+            alignItems: "center",
+            fontWeight: "bold",
+          }}
+        >
+          <SupervisorAccountRounded sx={{ mr: 1, fontSize: "2rem" }} />
+          Assigned Supervisor: Selections Pending...
+        </Box>
         <Box
           sx={{
             marginTop: "20px",
@@ -32,30 +46,18 @@ export const SupervisorsPage = () => {
             textAlign: "center",
           }}
         >
-          <Box
-            sx={{
-              fontSize: "2rem",
-              padding: "5px",
-              border: "1px solid",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <SupervisorAccountRounded sx={{ mr: 1, fontSize: "3rem" }} />
-            Assigned Supervisor: Selections Pending...
-          </Box>
           <Box sx={{ display: "flex", alignItems: "flex-start" }}>
-            <ErrorRounded sx={{ mr: 1, mt: 1, fontSize: "2rem" }} />
+            <ErrorRounded sx={{ mr: 1, mt: 0.5, fontSize: "1rem" }} />
             <Typography
               sx={{
-                fontSize: "2rem",
+                fontSize: "1rem",
                 textAlign: "left",
               }}
             >
-              Rank your top three preffered supervisors. Alternatively, add a
-              new supervisor below if they are not from the SE program, together
-              with a screenshot as a proof of agreement.
+              Supervisor Selection Period is currently ongoing. Rank your top
+              three preffered supervisors. Alternatively, add a new supervisor
+              below if they are not from the SE program, together with a
+              screenshot as a proof of agreement.
             </Typography>
           </Box>
           <Box>

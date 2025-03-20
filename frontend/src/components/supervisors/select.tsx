@@ -39,15 +39,20 @@ export default function SupervisorsSelection({
   disabled,
   value,
   onChange,
+  excludedNames,
 }: {
   disabled: boolean;
   value: SupervisorsType | null;
   onChange: (newValue: SupervisorsType | null) => void;
+  excludedNames: string[];
 }) {
   const [open, toggleOpen] = React.useState(false);
   const [dialogValue, setDialogValue] = React.useState<SupervisorsType>({
     name: "",
   });
+  const filteredOptions = options.filter(
+    (option) => !excludedNames.includes(option.name)
+  );
 
   // State to track uploaded files (keeps files when toggling Edit/Save)
   const [uploadedFiles, setUploadedFiles] = React.useState<File[]>([]);
@@ -93,7 +98,9 @@ export default function SupervisorsSelection({
           }
         }}
         filterOptions={(options, params) => {
-          const filtered = filter(options, params);
+          const filtered = filter(options, params).filter(
+            (option) => !excludedNames.includes(option.name)
+          );
           if (params.inputValue !== "") {
             filtered.push({
               inputValue: params.inputValue,
@@ -102,8 +109,8 @@ export default function SupervisorsSelection({
           }
           return filtered;
         }}
-        id="free-solo-dialog-demo"
-        options={options}
+        id="new-name-dialog"
+        options={filteredOptions}
         getOptionLabel={(option) =>
           typeof option === "string" ? option : option.name
         }

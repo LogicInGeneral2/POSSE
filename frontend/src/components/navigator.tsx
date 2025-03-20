@@ -21,9 +21,9 @@ import ExitToAppRoundedIcon from "@mui/icons-material/ExitToAppRounded";
 import ListItemText from "@mui/material/ListItemText";
 import HomeIcon from "@mui/icons-material/Home";
 import AccountBoxIcon from "@mui/icons-material/AccountBox";
-import AssignmentIcon from "@mui/icons-material/Assignment";
 import { useNavigate } from "react-router";
 import logo from "../assets/icon.png";
+import { SupervisedUserCircleRounded } from "@mui/icons-material";
 
 const drawerWidth = 240;
 
@@ -121,7 +121,7 @@ export default function NavigationBar() {
     },
     {
       text: "Supervisors",
-      icon: <AssignmentIcon style={{ color: "#58041D" }} />,
+      icon: <SupervisedUserCircleRounded style={{ color: "#58041D" }} />,
       path: "/supervisors",
     },
     {
@@ -191,7 +191,7 @@ export default function NavigationBar() {
       <Drawer
         variant="permanent"
         open={open}
-        PaperProps={{ sx: { backgroundColor: "#E9DADD" } }}
+        sx={{ backgroundColor: "#E9DADD" }}
       >
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>

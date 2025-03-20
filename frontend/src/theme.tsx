@@ -53,6 +53,34 @@ const theme = createTheme({
         },
       },
     },
+    MuiRadio: {
+      styleOverrides: {
+        root: {
+          color: "#58041D", // Applies to all Radio variants
+        },
+      },
+    },
+    MuiRadioGroup: {
+      styleOverrides: {
+        root: {
+          color: "#58041D", // Applies to all RadioGroup variants
+        },
+      },
+    },
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          color: "#58041D", // Applies to all ToggleButton variants
+        },
+      },
+    },
+    MuiToggleButtonGroup: {
+      styleOverrides: {
+        root: {
+          color: "#58041D", // Applies to all ToggleButtonGroup variants
+        },
+      },
+    },
   },
 });
 

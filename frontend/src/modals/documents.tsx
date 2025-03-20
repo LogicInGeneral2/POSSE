@@ -1,0 +1,21 @@
+const typeOptions = ["Templates", "Lecture Notes", "Samples"];
+
+const colorOptions = [
+  {
+    value: "Lecture Notes",
+    primary: "#73edfb",
+    secondary: "#254c51",
+  },
+  {
+    value: "Templates",
+    primary: "#d89f9a",
+    secondary: "#2e2221",
+  },
+  {
+    value: "Samples",
+    primary: "#d6d6d4",
+    secondary: "#2c2c2c",
+  },
+];
+
+export { typeOptions, colorOptions };

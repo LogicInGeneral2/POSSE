@@ -21,22 +21,6 @@ export default function SupervisorsTable() {
 
   const handleToggleEdit = () => {
     setIsEditing((prev) => !prev);
-
-    /*const handleToggleEdit = () => {
-  if (isEditing) {
-    // When saving, send data to backend
-    fetch("/api/supervisors", {
-      method: "POST", // Or PUT if updating existing data
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(supervisorChoices),
-    })
-      .then((res) => res.json())
-      .then((data) => console.log("Saved:", data))
-      .catch((err) => console.error("Error saving supervisors:", err));
-  }
-  setIsEditing((prev) => !prev);
-};
-*/
   };
 
   const handleSupervisorChange = (
@@ -73,7 +57,10 @@ export default function SupervisorsTable() {
                 <TableCell component="th" scope="row">
                   <SupervisorsSelection
                     disabled={!isEditing}
-                    value={supervisorChoices[index]}
+                    value={supervisorChoices[index] || null}
+                    excludedNames={supervisorChoices
+                      .filter((s): s is SupervisorsType => s !== null)
+                      .map((s) => s.name)}
                     onChange={(newValue) =>
                       handleSupervisorChange(index, newValue)
                     }

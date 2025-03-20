@@ -1,0 +1,48 @@
+[
+    {
+        "id": 11,
+        "title": "Chapter 1",
+        "uploadDate": "2022-01-01",
+        "category": "Lecture Notes",
+        "src":"../../../data/CHAPTER 1 - PROJECT.pdf",
+        "thumbnail":"../../../data/documents/1.png"
+    },
+    {
+        "id": 12,
+        "title": "Chapter 2",
+        "uploadDate": "2022-01-01",
+        "category": "Lecture Notes",
+        "src":"../../../data/CHAPTER 2.pdf",
+        "thumbnail":"../../../data/documents/2.png"
+    },
+    {
+        "id": 13,
+        "title": "Chapter 3",
+        "uploadDate": "2022-01-01",
+        "category": "Lecture Notes",
+        "src":"../../../data/Ch3 SD.pdf",
+        "thumbnail":"../../../data/documents/3.png"
+    },
+    {
+        "id": 21,
+        "title": "SDD",
+        "uploadDate": "2021-02-05",
+        "category": "Templates",
+        "src":"../../../data/documents/SDD Template.doc",
+        "thumbnail":"../../../data/documents/4.png"
+    },{
+        "id": 22,
+        "title": "SRS",
+        "uploadDate": "2021-02-05",
+        "category": "Templates",
+        "src":"../../../data/documents/SRS Template.doc",
+        "thumbnail":"../../../data/documents/5.png"
+    },{
+        "id": 31,
+        "title": "Ch4 Ying",
+        "uploadDate": "2025-02-05",
+        "category": "Samples",
+        "src":"../../../data/documents/Ying.pdf",
+        "thumbnail":"../../../data/documents/6.png"
+    }
+]
