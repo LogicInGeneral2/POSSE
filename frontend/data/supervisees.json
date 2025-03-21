@@ -1,0 +1,66 @@
+[
+    {
+        "id": 1,
+        "name": "Ahmad",
+        "course": "FYP 1",
+        "progress": "Progress 1",
+        "status": "Reviewed",
+        "submission":"../../../data/CHAPTER 1 - PROJECT.pdf"
+    },
+    {
+        "id": 2,
+        "name": "Ali",
+        "course": "FYP 1",
+        "progress": "Progress 2",
+        "status": "Submitted",
+        "submission":"../../../data/CHAPTER 1 - PROJECT.pdf"
+    },
+    {
+        "id": 3,
+        "name": "Abu",
+        "course": "FYP 1",
+        "progress": "Proposal",
+        "status": "Pending",
+        "submission":"../../../data/CHAPTER 1 - PROJECT.pdf"
+    },
+    {
+        "id": 4,
+        "name": "Fatimah",
+        "course": "FYP 1",
+        "progress": "Final",
+        "status": "Behind",
+        "submission":"../../../data/CHAPTER 1 - PROJECT.pdf"
+    },    
+    {
+        "id": 5,
+        "name": "Ching",
+        "course": "FYP 2",
+        "progress": "Progress 1",
+        "status": "Reviewed",
+        "submission":"../../../data/CHAPTER 1 - PROJECT.pdf"
+    },
+    {
+        "id": 6,
+        "name": "Chong",
+        "course": "FYP 2",
+        "progress": "Progress 2",
+        "status": "Submitted",
+        "submission":"../../../data/CHAPTER 1 - PROJECT.pdf"
+    },
+    {
+        "id": 7,
+        "name": "Amutha",
+        "course": "FYP 2",
+        "progress": "Proposal",
+        "status": "Pending",
+        "submission":"../../../data/CHAPTER 1 - PROJECT.pdf"
+    },
+    {
+        "id": 8,
+        "name": "Praveen",
+        "course": "FYP 2",
+        "progress": "Final",
+        "status": "Behind",
+        "submission":"../../../data/CHAPTER 1 - PROJECT.pdf"
+    }
+]

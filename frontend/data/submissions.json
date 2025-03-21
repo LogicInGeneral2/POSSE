@@ -20,7 +20,8 @@
         "description" : "Please submit your presentation slides in PDF form. Thank you!",
         "feedback_file" : "",
         "submission_file" : ""
-    },    {
+    },    
+    {
         "id": 3,
         "title": "Defense Presentation",
         "date_open": "10-09-2024",          

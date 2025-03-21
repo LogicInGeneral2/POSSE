@@ -36,12 +36,15 @@ const theme = createTheme({
     MuiSelect: {
       styleOverrides: {
         root: {
-          color: "#58041D", // Selected text color
+          color: "#58041D",
           "& .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#58041D", // Default border color
+            borderColor: "#58041D !important", // Ensure it matches TextField
           },
           "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#F8B628", // Border color on hover
+            borderColor: "#F8B628",
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#58041D",
           },
         },
       },
@@ -106,6 +109,58 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           color: "#58041D", // Applies to all ToggleButtonGroup variants
+        },
+      },
+    },
+    MuiTableContainer: {
+      styleOverrides: {
+        root: {
+          borderRadius: "8px",
+          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+          overflow: "hidden",
+        },
+      },
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#58041D !important", // Ensures color remains applied
+        },
+      },
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          "&:nth-of-type(odd)": {
+            backgroundColor: "#F8F8F8",
+          },
+          "&:hover": {
+            backgroundColor: "#F8B6281A",
+          },
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          padding: "5px",
+          color: "#58041D",
+        },
+        head: {
+          backgroundColor: "#58041D !important",
+          color: "#FFFFFF",
+          fontWeight: "bold",
+          fontSize: "1rem",
+        },
+        body: {
+          fontSize: "1rem",
+        },
+      },
+    },
+    MuiTableBody: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#FFFFFF",
         },
       },
     },
