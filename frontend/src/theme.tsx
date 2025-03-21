@@ -81,6 +81,34 @@ const theme = createTheme({
         },
       },
     },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          color: "#58041D", // Applies to all ToggleButtonGroup variants
+        },
+      },
+    },
+    MuiAccordionActions: {
+      styleOverrides: {
+        root: {
+          color: "#58041D", // Applies to all ToggleButtonGroup variants
+        },
+      },
+    },
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          color: "#58041D", // Applies to all ToggleButtonGroup variants
+        },
+      },
+    },
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          color: "#58041D", // Applies to all ToggleButtonGroup variants
+        },
+      },
+    },
   },
 });
 

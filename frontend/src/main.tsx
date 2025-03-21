@@ -16,6 +16,7 @@ import { CourseOuline } from "./routes/course_outline.tsx";
 import { Supervisors } from "./routes/supervisors.tsx";
 import theme from "./theme.tsx";
 import { Documents } from "./routes/documents.tsx";
+import { Submissions } from "./routes/submissions.tsx";
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
       {
         path: "/documents",
         element: <Documents />,
+      },
+      {
+        path: "/submissions",
+        element: <Submissions />,
       },
       {
         path: "*",

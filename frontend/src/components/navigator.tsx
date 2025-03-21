@@ -23,7 +23,11 @@ import HomeIcon from "@mui/icons-material/Home";
 import AccountBoxIcon from "@mui/icons-material/AccountBox";
 import { useNavigate } from "react-router";
 import logo from "../assets/icon.png";
-import { SupervisedUserCircleRounded } from "@mui/icons-material";
+import {
+  GradingRounded,
+  SupervisedUserCircleRounded,
+} from "@mui/icons-material";
+import { Tooltip } from "@mui/material";
 
 const drawerWidth = 240;
 
@@ -120,6 +124,11 @@ export default function NavigationBar() {
       path: "/course_outline",
     },
     {
+      text: "Submissions & Grading",
+      icon: <GradingRounded style={{ color: "#58041D" }} />,
+      path: "/supervisees",
+    },
+    {
       text: "Supervisors",
       icon: <SupervisedUserCircleRounded style={{ color: "#58041D" }} />,
       path: "/supervisors",
@@ -210,35 +219,53 @@ export default function NavigationBar() {
               disablePadding
               sx={{ display: "block", color: "#58041D" }}
             >
-              <ListItemButton
-                sx={{
-                  minHeight: 48,
-                  justifyContent: open ? "initial" : "center",
-                  px: 2.5,
-                }}
-                onClick={() => {
-                  if (item.external) {
-                    window.location.href = item.path;
-                  } else {
-                    navigate(item.path);
-                  }
+              <Tooltip
+                title={item.text}
+                placement="right"
+                arrow
+                slotProps={{
+                  popper: {
+                    modifiers: [
+                      {
+                        name: "offset",
+                        options: {
+                          offset: [0, -8],
+                        },
+                      },
+                    ],
+                  },
                 }}
               >
-                <ListItemIcon
+                <ListItemButton
                   sx={{
-                    minWidth: 0,
-                    mr: open ? 3 : "auto",
-                    justifyContent: "center",
-                    my: 0.5,
+                    minHeight: 48,
+                    justifyContent: open ? "initial" : "center",
+                    px: 2.5,
+                  }}
+                  onClick={() => {
+                    if (item.external) {
+                      window.location.href = item.path;
+                    } else {
+                      navigate(item.path);
+                    }
                   }}
                 >
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  sx={{ opacity: open ? 1 : 0 }}
-                />
-              </ListItemButton>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: open ? 3 : "auto",
+                      justifyContent: "center",
+                      my: 0.5,
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.text}
+                    sx={{ opacity: open ? 1 : 0 }}
+                  />
+                </ListItemButton>
+              </Tooltip>
             </ListItem>
           ))}
         </List>

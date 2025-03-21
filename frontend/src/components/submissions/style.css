@@ -1,0 +1,28 @@
+
+
+button#submissions-header  {
+    padding: 0;
+    padding-right: 0.25rem;
+}
+
+button#submissions-header > span {
+    margin: 0;
+}
+
+button#submissions-header[aria-expanded="false"] {
+    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+div.MuiBox-root.css-kei82p > div {
+    box-shadow: none !important;
+}
+
+button#submissions-header[aria-expanded="true"] {
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+
+.css-qs39y3-MuiButtonBase-root-MuiAccordionSummary-root.Mui-expanded {
+    min-height: 0 !important;
+}

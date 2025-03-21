@@ -18,3 +18,27 @@ body {
     margin: 0;
     padding: 0;
   }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--thirtiary-color); /* Soft background */
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--primary-color); /* Dark thumb */
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color); /* Highlight on hover */
+  }
+
+  .css-1lwhjos-MuiPaper-root-MuiDrawer-paper {
+    background-color: var(--thirtiary-color) !important;
+  }
