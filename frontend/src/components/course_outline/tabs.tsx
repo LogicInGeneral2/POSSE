@@ -31,7 +31,11 @@ function CustomTabPanel({
           <iframe
             src={fileSrc}
             width="100%"
-            style={{ border: "none", height: "calc(100vh - 320px)" }}
+            style={{
+              border: "none",
+              height: "calc(100vh - 320px)",
+              borderRadius: "8px",
+            }}
           />
         </Box>
       )}

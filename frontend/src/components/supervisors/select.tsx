@@ -129,7 +129,7 @@ export default function SupervisorsSelection({
               required
             />
 
-            <Upload_Button size={"100%"} />
+            <Upload_Button size={"100%"} disabled={false} />
           </DialogContent>
           <DialogActions sx={{ justifyContent: "center" }}>
             <Button onClick={handleClose}>Cancel</Button>

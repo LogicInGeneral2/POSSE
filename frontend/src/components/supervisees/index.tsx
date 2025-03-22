@@ -3,12 +3,7 @@ import React from "react";
 import DataTable from "./table";
 import supervisees from "../../../data/supervisees.json";
 import evaluatees from "../../../data/evaluatees.json";
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
+import { TabPanelProps } from "./superviseesType";
 
 function CustomTabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
