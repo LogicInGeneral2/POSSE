@@ -19,9 +19,6 @@ import {
   TablePagination,
   Dialog,
   DialogTitle,
-  DialogActions,
-  DialogContent,
-  Button,
   Tooltip,
 } from "@mui/material";
 import { JSX, useState } from "react";
@@ -75,12 +72,11 @@ export default function DataTable({ data }: SupervisorsTableProps) {
     if (action.type === "dialog") {
       if (action.label === "Download Submission") {
         setDialogTitle(`${action.label}ing ${row.name}'s Submission:`);
-        setDialogContent(<DownloadDialog />);
+        setDialogContent(<DownloadDialog setOpenDialog={setOpenDialog} />);
       } else if (action.label === "Upload Feedback") {
         setDialogTitle(`${action.label}ing ${row.name}'s Feedback:`);
-        setDialogContent(<UploadDialog />);
+        setDialogContent(<UploadDialog setOpenDialog={setOpenDialog} />);
       }
-
       setOpenDialog(true);
     } else if (action.type === "navigate" && action.path) {
       navigate(action.path, { state: { rowData: row } });
@@ -221,10 +217,7 @@ export default function DataTable({ data }: SupervisorsTableProps) {
       {/* Dialog for View and Download Actions */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
         <DialogTitle>{dialogTitle}</DialogTitle>
-        <DialogContent>{dialogContent}</DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Close</Button>
-        </DialogActions>
+        {dialogContent}
       </Dialog>
     </>
   );

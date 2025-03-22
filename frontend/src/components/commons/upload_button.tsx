@@ -15,7 +15,17 @@ const VisuallyHiddenInput = styled("input")(() => ({
   width: 1,
 })) as React.ComponentType<React.InputHTMLAttributes<HTMLInputElement>>;
 
-function Upload_Button({ size }: { size: string }) {
+function Upload_Button({
+  size,
+  disabled,
+  variants = "outlined",
+  icon = true,
+}: {
+  size: string;
+  disabled: boolean;
+  variants?: "text" | "outlined" | "contained";
+  icon?: boolean;
+}) {
   // State to track uploaded files (keeps files when toggling Edit/Save)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
@@ -31,13 +41,14 @@ function Upload_Button({ size }: { size: string }) {
     setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: { size } }}>
       {/* File Upload Button */}
       <Button
         component="label"
-        variant="outlined"
-        startIcon={<UploadIcon />}
-        sx={{ width: { size } }}
+        variant={variants}
+        startIcon={icon ? <UploadIcon /> : undefined}
+        sx={{ width: "100%" }}
+        disabled={disabled}
       >
         Upload
         <VisuallyHiddenInput
