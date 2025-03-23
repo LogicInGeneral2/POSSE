@@ -33,7 +33,7 @@ const action_options = [
       />
     ),
     type: "navigate",
-    path: "/upload-feedback",
+    path: "/viewing",
   },
   {
     label: "Download Submission",

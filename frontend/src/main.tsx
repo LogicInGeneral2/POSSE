@@ -19,6 +19,7 @@ import { Documents } from "./routes/documents.tsx";
 import { Submissions } from "./routes/submissions.tsx";
 import { Supervisees } from "./routes/supervisees.tsx";
 import { Grading } from "./routes/grading.tsx";
+import { Viewing } from "./routes/viewing.tsx";
 
 const router = createBrowserRouter([
   {
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
       {
         path: "/grading",
         element: <Grading />,
+      },
+      {
+        path: "/viewing",
+        element: <Viewing />,
       },
       {
         path: "/documents",

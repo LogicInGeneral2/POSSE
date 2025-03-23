@@ -18,21 +18,6 @@ export const GradingPage = () => {
           Grading
         </Typography>
         <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
-        <Box
-          sx={{
-            marginTop: "20px",
-            fontSize: "1rem",
-            padding: "5px",
-            border: "1px solid",
-            borderRadius: "8px",
-            display: "flex",
-            alignItems: "center",
-            fontWeight: "bold",
-          }}
-        >
-          <PersonIcon sx={{ mr: 1, fontSize: "2rem" }} />
-          Currently Grading: A
-        </Box>
 
         <Grid
           container
@@ -48,13 +33,36 @@ export const GradingPage = () => {
               height: "100%",
               display: "flex",
               flexDirection: "column",
-              backgroundColor: "#E9DADD",
-              padding: "20px",
-              borderRadius: "8px",
-              border: "1px solid",
             }}
           >
-            <GradingStepper pic="supervisor" />
+            <Box
+              sx={{
+                marginBottom: "20px",
+                fontSize: "1rem",
+                padding: "5px",
+                border: "1px solid",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                fontWeight: "bold",
+              }}
+            >
+              <PersonIcon sx={{ mr: 1, fontSize: "2rem" }} />
+              Currently Grading: A
+            </Box>
+            <Box
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                backgroundColor: "#E9DADD",
+                padding: "20px",
+                borderRadius: "8px",
+                border: "1px solid",
+              }}
+            >
+              <GradingStepper pic="supervisor" />
+            </Box>
           </Grid>
           <Grid size={4} sx={{ height: "100%" }}>
             <iframe
