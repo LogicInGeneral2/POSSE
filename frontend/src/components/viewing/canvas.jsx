@@ -106,9 +106,15 @@ export const CanvasProvider = ({ children }) => {
   };
 
   const deleteBtn = () => {
-    var activeObject = canvas.getActiveObject();
-    if (activeObject) {
-      canvas.remove(activeObject);
+    const activeObjects = canvas.getActiveObjects(); 
+  
+    if (activeObjects.length > 0) {
+      activeObjects.forEach((obj) => {
+        canvas.remove(obj); 
+      });
+  
+      canvas.discardActiveObject(); 
+      canvas.requestRenderAll(); // Refresh canvas
     }
   };
 
@@ -146,7 +152,8 @@ export const CanvasProvider = ({ children }) => {
     const rect = new fabric.Rect({
       height: 20,
       width: 400,
-      fill: color + "99",
+      fill: color,
+      opacity: 0.5,
       cornerStyle: "circle",
       editable: true,
     });
@@ -172,10 +179,26 @@ export const CanvasProvider = ({ children }) => {
     brush.strokeWidth = strokeWidth;
   };
 
-  const exportPdf = () => {
-    setExportPages((prev) => [...prev, exportPage.current]);
-    console.log(exportPages);
+  const exportPdf = async () => {
+    if (!canvas || numPages === null) return;
+    setExporting(true);
+
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+
+    for (let i = 1; i <= numPages; i++) {
+      if (i > 1) pdf.addPage();
+      const pageCanvas = document.querySelector(`#page-${i}`);
+      if (pageCanvas) {
+        const canvasImg = await html2canvas(pageCanvas, { scale: 2 });
+        const imgData = canvasImg.toDataURL("image/png");
+        pdf.addImage(imgData, "PNG", 10, 10, 190, 277);
+      }
+    }
+
+    pdf.save("exported_document.pdf");
+    setExporting(false);
   };
+  
 
   return (
     <funButtons.Provider

@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import { fabric } from "fabric";
 import { useButtons } from "./canvas";
 import SideBar from "./sidebar";
+import { MdClose } from "react-icons/md";
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 
 interface FileUploadProps {
@@ -14,6 +15,12 @@ interface FileUploadProps {
 export default function FileUpload({ src }: FileUploadProps) {
   const contextValues = useButtons();
   const [docIsLoading, setDocIsLoading] = useState<boolean>(true);
+  const [pageSize, setPageSize] = useState<{ width: number; height: number }>({
+    width: 595,
+    height: 842,
+  });
+
+  const canvasRef = useRef<fabric.Canvas | null>(null);
 
   useEffect(() => {
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -31,40 +38,50 @@ export default function FileUpload({ src }: FileUploadProps) {
     contextValues.setEdits({});
     contextValues.setNumPages(numPages);
     contextValues.setCurrPage(1);
+    setTimeout(() => setDocIsLoading(false), 1000);
+  }
 
-    // Get the first page size
-    pdfjs.getDocument(src as string).promise.then((pdf) => {
-      pdf.getPage(1).then((page) => {
-        const viewport = page.getViewport({ scale: 1 });
-        const pageWidth = viewport.width;
-        const pageHeight = viewport.height;
+  function onPageRenderSuccess({
+    width,
+    height,
+  }: {
+    width: number;
+    height: number;
+  }) {
+    setPageSize({ width, height });
 
-        contextValues.setCanvas(initCanvas(pageWidth, pageHeight));
-        setTimeout(() => setDocIsLoading(false), 2000);
-      });
+    if (canvasRef.current) {
+      canvasRef.current.dispose();
+    }
+
+    const newCanvas = new fabric.Canvas("canvas", {
+      width,
+      height,
+      isDrawingMode: false,
+      backgroundColor: "rgba(0,0,0,0)",
     });
+
+    canvasRef.current = newCanvas;
+    contextValues.setCanvas(newCanvas);
+
+    if (contextValues.edits[contextValues.currPage]) {
+      newCanvas.loadFromJSON(contextValues.edits[contextValues.currPage]);
+    }
   }
 
   function changePage(offset: number) {
     const page = contextValues.currPage;
-    contextValues.edits[page] = contextValues.canvas.toObject();
+    contextValues.edits[page] = canvasRef.current?.toObject() || {};
     contextValues.setEdits(contextValues.edits);
     contextValues.setCurrPage(page + offset);
-    contextValues.canvas.clear();
-    if (contextValues.edits[page + offset]) {
-      contextValues.canvas.loadFromJSON(contextValues.edits[page + offset]);
-    }
-    contextValues.canvas.renderAll();
-  }
 
-  const initCanvas = (width: number, height: number): fabric.Canvas => {
-    return new fabric.Canvas("canvas", {
-      isDrawingMode: false,
-      height: height,
-      width: width,
-      backgroundColor: "rgba(0,0,0,0)",
-    });
-  };
+    if (canvasRef.current) {
+      canvasRef.current.clear();
+      if (contextValues.edits[page + offset]) {
+        canvasRef.current.loadFromJSON(contextValues.edits[page + offset]);
+      }
+    }
+  }
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
@@ -100,10 +117,43 @@ export default function FileUpload({ src }: FileUploadProps) {
               </Box>
             </>
           )}
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <Box
+            sx={{
+              p: 1,
+              zIndex: 1200,
+              backgroundColor: "red",
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+              borderRadius: 2,
+              color: "white",
+              position: "fixed",
+              top: 200,
+              right: 40,
+              cursor: "pointer",
+            }}
+            onClick={() => contextValues.setFile(null)}
+          >
+            <MdClose size={25} />
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              position: "relative",
+            }}
+          >
             <Document file={src} onLoadSuccess={onDocumentLoadSuccess}>
-              <Box sx={{ position: "absolute", zIndex: 9, p: 4 }}>
-                <canvas id="canvas" />
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  pointerEvents: "none",
+                }}
+              >
+                <canvas
+                  id="canvas"
+                  style={{ width: pageSize.width, height: pageSize.height }}
+                />
               </Box>
               <Box
                 sx={{
@@ -114,38 +164,38 @@ export default function FileUpload({ src }: FileUploadProps) {
               >
                 <Page
                   pageNumber={contextValues.currPage}
-                  width={contextValues.canvas?.width || 595}
-                  height={contextValues.canvas?.height || 842}
+                  width={pageSize.width}
+                  height={pageSize.height}
+                  onRenderSuccess={onPageRenderSuccess}
                 />
               </Box>
             </Document>
           </Box>
-
           <Box
             sx={{
               position: "fixed",
-              bottom: 10,
+              bottom: 2,
               display: "flex",
               justifyContent: "center",
               width: "100%",
-              gap: 2,
+              gap: 3,
               zIndex: 50,
             }}
           >
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              disabled={!(contextValues.currPage > 1)}
-              onClick={() => changePage(-1)}
-            >
-              {"<"}
-            </Button>
+            {contextValues.currPage > 1 && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => changePage(-1)}
+              >
+                {"<"}
+              </Button>
+            )}
             <Box
               sx={{
                 px: 4,
                 py: 2,
-                backgroundColor: "#58041D",
+                backgroundColor: "#033f63",
                 borderRadius: 1,
                 color: "white",
               }}
@@ -156,7 +206,6 @@ export default function FileUpload({ src }: FileUploadProps) {
               <Button
                 variant="contained"
                 color="primary"
-                size="small"
                 onClick={() => changePage(1)}
               >
                 {">"}

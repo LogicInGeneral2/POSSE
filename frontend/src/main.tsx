@@ -49,10 +49,6 @@ const router = createBrowserRouter([
         element: <Grading />,
       },
       {
-        path: "/viewing",
-        element: <Viewing />,
-      },
-      {
         path: "/documents",
         element: <Documents />,
       },
@@ -65,6 +61,10 @@ const router = createBrowserRouter([
         element: <ErrorRoute />,
       },
     ],
+  },
+  {
+    path: "/viewing",
+    element: <Viewing />,
   },
 ]);
 
