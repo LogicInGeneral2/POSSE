@@ -19,9 +19,11 @@ import React from "react";
 import logo from "../../assets/icon.png";
 import "./login.css";
 import { useNavigate } from "react-router";
+import { useUser } from "../../../context/UserContext";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const { login } = useUser();
 
   const [showPassword, setShowPassword] = React.useState(false);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -34,6 +36,20 @@ export const LoginPage = () => {
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
     event.preventDefault();
+  };
+
+  const handleLogin = () => {
+    const userData = {
+      id: 1,
+      name: "John Doe Bin Eod Nhoj",
+      email: "john@example.com",
+      role: "admin",
+      supervisor: "Johny Does Binti Jane Dont",
+      course: "FYP 1",
+    };
+
+    login(userData);
+    navigate("/home");
   };
 
   return (
@@ -104,7 +120,6 @@ export const LoginPage = () => {
               <Box sx={{ display: "flex", alignItems: "flex-end" }}>
                 <AccountCircle color="primary" sx={{ mr: 1, my: 0.5 }} />
                 <TextField
-                  id="input-with-sx"
                   label="Username"
                   variant="standard"
                   sx={{ width: "100%" }}
@@ -113,7 +128,6 @@ export const LoginPage = () => {
               <Box sx={{ display: "flex", alignItems: "flex-end" }}>
                 <LockRounded color="primary" sx={{ mr: 1, my: 0.5 }} />
                 <TextField
-                  id="input-with-sx"
                   label="Password"
                   variant="standard"
                   sx={{ width: "100%" }}
@@ -173,7 +187,7 @@ export const LoginPage = () => {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={() => navigate("/home")}
+                onClick={handleLogin}
                 sx={{ borderRadius: "16px" }}
               >
                 Login

@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { Calendar, dateFnsLocalizer, Event } from "react-big-calendar";
 import withDragAndDrop, {
   withDragAndDropProps,
@@ -13,9 +13,28 @@ import { startOfHour } from "date-fns/startOfHour";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./Calender.css";
+import { getEvents } from "../../services";
+import { periodTypes } from "../../services/types";
 
 const DashboardCalender: FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
+  const [eventsPeriod, setEventsPeriod] = useState<periodTypes[]>([]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const data = await getEvents();
+      setEventsPeriod(data);
+    };
+    fetchEvents();
+    if (eventsPeriod.length) {
+      const newEvents = eventsPeriod.map((period) => ({
+        title: period.title,
+        start: new Date(period.start_date),
+        end: new Date(period.end_date),
+      }));
+      setEvents(newEvents);
+    }
+  }, []);
 
   const onEventResize: withDragAndDropProps["onEventResize"] = (data) => {
     const { start, end } = data;

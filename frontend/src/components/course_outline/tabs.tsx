@@ -1,13 +1,9 @@
 import { Tabs, Tab, Box } from "@mui/material";
 import React, { useState } from "react";
-
-interface TabItem {
-  label: string;
-  items: string;
-}
+import { CourseOutlineTabs } from "../../services/types";
 
 interface CourseOutlinePageProps {
-  tabsData: TabItem[];
+  tabsData: CourseOutlineTabs[];
 }
 
 function CustomTabPanel({

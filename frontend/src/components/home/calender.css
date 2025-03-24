@@ -89,4 +89,24 @@
     font-weight: bold;
   }
 
+  .rbc-header + .rbc-today {
+    color: var(--secondary-color) !important;
+    background-color: var(--primary-color) !important;
+  }
   
+  .rbc-btn-group:nth-of-type(3) > button:nth-child(3), .rbc-btn-group:nth-of-type(3) > button:nth-child(4) {
+    display: none !important;
+  }
+
+  .rbc-btn-group:nth-of-type(3) > button:nth-child(2) {
+      border-top-right-radius: 4px !important;
+      border-bottom-right-radius: 4px !important;
+    }
+
+  #root > div:nth-child(2) > div > div > div > div.MuiGrid2-root.MuiGrid2-direction-xs-row.MuiGrid2-grid-xs-8.css-1nk149l-MuiGrid2-root > div > div:nth-child(2) > div > div.rbc-time-view > div.rbc-time-header.rbc-overflowing {
+    background-color: #58041D !important;
+  }
+
+  .rbc-event-content {
+    background-color: var(--primary-color) !important;
+  }

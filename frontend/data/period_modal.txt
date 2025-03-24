@@ -1,0 +1,39 @@
+    Backend will automatically send only 1 data based on current date. 
+    Thefore the rest are placed here while awaiting backend development.
+
+    {
+      "title": "Proposal Period",
+      "description": "Students prepare and submit their project proposals.",
+      "icon": "<DescriptionIcon />",      
+      "directory": "submissions",
+      "start_date": "2025-05-25",
+      "end_date": "2025-07-25",
+      "days_left": 62
+    },
+    {
+      "title": "Progress 1 Period",
+      "description": "First progress report submission and review.",
+      "icon": "<AssessmentIcon />",
+      "directory": "submissions",
+      "start_date": "2025-07-26",
+      "end_date": "2025-09-26",
+      "days_left": 62
+    },
+    {
+      "title": "Progress 2 Period",
+      "description": "Second progress report submission and review.",
+      "icon": "<TimelineIcon />",
+      "directory": "submissions",
+      "start_date": "2025-09-27",
+      "end_date": "2025-11-27",
+      "days_left": 62
+    },
+    {
+      "title": "Final Submission Period",
+      "description": "Final report submission and assessment.",
+      "icon": "<FileUploadIcon />",
+      "directory": "submissions",
+      "start_date": "2025-11-28",
+      "end_date": "2026-01-28",
+      "days_left": 62
+    }

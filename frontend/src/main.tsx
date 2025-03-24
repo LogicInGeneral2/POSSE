@@ -20,6 +20,7 @@ import { Submissions } from "./routes/submissions.tsx";
 import { Supervisees } from "./routes/supervisees.tsx";
 import { Grading } from "./routes/grading.tsx";
 import { Viewing } from "./routes/viewing.tsx";
+import { UserProvider } from "../context/UserContext";
 
 const router = createBrowserRouter([
   {
@@ -70,8 +71,10 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider theme={theme}>
-      <RouterProvider router={router} />
-    </ThemeProvider>
+    <UserProvider>
+      <ThemeProvider theme={theme}>
+        <RouterProvider router={router} />
+      </ThemeProvider>
+    </UserProvider>
   </StrictMode>
 );
