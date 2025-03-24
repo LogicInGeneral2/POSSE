@@ -5,7 +5,8 @@ import "react-pdf/dist/esm/Page/TextLayer.css";
 import { fabric } from "fabric";
 import { useButtons } from "./canvas";
 import SideBar from "./sidebar";
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
+import Loader from "./loader";
 
 interface FileUploadProps {
   src: string | null;
@@ -70,41 +71,41 @@ export default function FileUpload({ src }: FileUploadProps) {
     <Box sx={{ minHeight: "100vh" }}>
       {src && <SideBar />}
       {src ? (
-        <Box sx={{ width: "100%", py: 8, backgroundColor: "white" }}>
-          {docIsLoading && (
-            <>
-              <Box
-                sx={{
-                  position: "fixed",
-                  width: "100%",
-                  height: "100%",
-                  top: 0,
-                  backgroundColor: "rgba(50,50,50,0.2)",
-                  zIndex: 1001,
-                  backdropFilter: "blur(5px)",
-                }}
-              />
-              <Box
-                sx={{
-                  position: "fixed",
-                  zIndex: 1100,
-                  display: "flex",
-                  width: "100%",
-                  height: "100%",
-                  top: 0,
-                  justifyContent: "center",
-                  alignItems: "center",
+        <Box
+          sx={{
+            width: "100%",
+            py: 8,
+            backgroundColor: "white",
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            id="singlePageExport"
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              width: contextValues.canvas?.width,
+              height: contextValues.canvas?.height,
+            }}
+          >
+            {docIsLoading && (
+              <>
+                <Loader />
+              </>
+            )}
+            <Document file={src} onLoadSuccess={onDocumentLoadSuccess}>
+              <div
+                id="canvasWrapper"
+                style={{
+                  visibility: "visible",
+                  zIndex: 9,
+                  padding: 4,
+                  position: "absolute",
                 }}
               >
-                <CircularProgress color="primary" size={120} thickness={5} />
-              </Box>
-            </>
-          )}
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <Document file={src} onLoadSuccess={onDocumentLoadSuccess}>
-              <Box sx={{ position: "absolute", zIndex: 9, p: 4 }}>
                 <canvas id="canvas" />
-              </Box>
+              </div>
               <Box
                 sx={{
                   p: 4,
@@ -119,8 +120,7 @@ export default function FileUpload({ src }: FileUploadProps) {
                 />
               </Box>
             </Document>
-          </Box>
-
+          </div>
           <Box
             sx={{
               position: "fixed",

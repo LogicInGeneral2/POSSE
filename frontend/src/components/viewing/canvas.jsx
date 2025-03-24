@@ -19,6 +19,7 @@ export const CanvasProvider = ({ children }) => {
   const [canvas, setCanvas] = React.useState("");
   const [isExporting, setExporting] = React.useState(false);
   const [hideCanvas, setHiddenCanvas] = React.useState(false);
+  const [pageCanvases, setPageCanvases] = React.useState({}); // Stores canvas state per page
 
   const exportPage = useRef(null);
   const [exportPages, setExportPages] = React.useState([]);
@@ -69,10 +70,25 @@ export const CanvasProvider = ({ children }) => {
   const downloadPage = () => {
     setExporting(true);
     const doc = document.querySelector("#singlePageExport");
-    html2canvas(doc).then((canvas) => {
+  
+    if (!doc) {
+      console.error("Error: Element #singlePageExport not found.");
+      setExporting(false);
+      return;
+    }
+  
+    html2canvas(doc, { scale: 2, useCORS: true }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF();
-      pdf.addImage(imgData, "PNG", 0, 0);
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+  
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
       pdf.save("marked_submission.pdf");
       setExporting(false);
     });
@@ -153,7 +169,7 @@ export const CanvasProvider = ({ children }) => {
       height: 20,
       width: 400,
       fill: color,
-      opacity: 0.5,
+      opacity: 0.4,
       cornerStyle: "circle",
       editable: true,
     });
@@ -180,26 +196,63 @@ export const CanvasProvider = ({ children }) => {
   };
 
   const exportPdf = async () => {
-    if (!canvas || numPages === null) return;
     setExporting(true);
-
-    const pdf = new jsPDF({ unit: "mm", format: "a4" });
-
-    for (let i = 1; i <= numPages; i++) {
-      if (i > 1) pdf.addPage();
-      const pageCanvas = document.querySelector(`#page-${i}`);
-      if (pageCanvas) {
-        const canvasImg = await html2canvas(pageCanvas, { scale: 2 });
-        const imgData = canvasImg.toDataURL("image/png");
-        pdf.addImage(imgData, "PNG", 10, 10, 190, 277);
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+  
+    let pageIndex = 1; // Start from the first page
+    const totalPages = numPages; // Total number of pages in the document
+  
+    const exportNextPage = async () => {
+      if (pageIndex > totalPages) {
+        pdf.save("marked_submission.pdf"); // Save the final PDF file
+        setExporting(false);
+        return;
       }
-    }
-
-    pdf.save("exported_document.pdf");
-    setExporting(false);
+  
+      // Change to the correct page before exporting
+      setCurrPage(pageIndex); // Ensure this updates your displayed page
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Allow time for UI to update
+  
+      if (edits[pageIndex]) {
+        canvas.loadFromJSON(edits[pageIndex], () => {
+          canvas.renderAll();
+  
+          setTimeout(() => {
+            const docElement = document.querySelector("#singlePageExport");
+            if (!docElement) {
+              console.error("Error: Element #singlePageExport not found.");
+              setExporting(false);
+              return;
+            }
+  
+            html2canvas(docElement, { scale: 2, useCORS: true }).then((canvas) => {
+              const imgData = canvas.toDataURL("image/png");
+              const imgWidth = 210;
+              const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  
+              if (pageIndex > 1) {
+                pdf.addPage(); // Add new page after the first
+              }
+              pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+  
+              pageIndex += 1; // Move to the next page
+              exportNextPage(); // Recursively export the next page
+            });
+          }, 600); // Delay to ensure rendering
+        });
+      } else {
+        pageIndex += 1;
+        exportNextPage();
+      }
+    };
+  
+    exportNextPage(); // Start exporting pages
   };
   
-
   return (
     <funButtons.Provider
       value={{
