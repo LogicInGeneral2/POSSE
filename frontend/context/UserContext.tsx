@@ -5,34 +5,29 @@ import {
   useEffect,
   ReactNode,
 } from "react";
+import {
+  User,
+  Student,
+  Supervisor,
+  UserContextType,
+} from "../src/services/types";
 
-// Define User type
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  supervisor?: string;
-  course?: string;
-}
-
-// Define context structure
-interface UserContextType {
-  user: User | null;
-  login: (userData: User) => void;
-  logout: () => void;
-}
-
-// Create context with default value
+// Create UserContext with a default value of `undefined`
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // Provider component
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    // Load user from localStorage if available
+  const [user, setUser] = useState<User | Student | Supervisor | null>(null);
+  const [loading, setLoading] = useState(true); // Track loading state
+
+  // Load user from localStorage on initial render
+  useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
+  }, []);
 
   // Sync user state to localStorage when changed
   useEffect(() => {
@@ -43,8 +38,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user]);
 
-  const login = (userData: User) => setUser(userData);
-  const logout = () => setUser(null);
+  const login = (userData: User | Student | Supervisor) => {
+    setUser(userData);
+  };
+
+  const logout = () => {
+    setUser(null);
+  };
+
+  // Return loading state to prevent UI flickers
+  if (loading) return <div>Loading...</div>;
 
   return (
     <UserContext.Provider value={{ user, login, logout }}>
@@ -53,7 +56,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Custom hook to use UserContext safely
+// Custom hook to safely use UserContext
 export const useUser = (): UserContextType => {
   const context = useContext(UserContext);
   if (!context) {

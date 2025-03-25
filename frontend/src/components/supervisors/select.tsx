@@ -9,17 +9,17 @@ import Button from "@mui/material/Button";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import supervisors from "../../../data/supervisors.json";
 import Upload_Button from "../commons/upload_button";
+import { SupervisorsSelectionType } from "../../services/types";
+import { useEffect, useState } from "react";
+import { getSelectionLists } from "../../services";
+import ErrorNotice from "../commons/error";
+import LoadingSpinner from "../commons/loading";
 
-interface SupervisorsType {
-  inputValue?: string;
-  name: string;
-}
-
-const options: SupervisorsType[] = supervisors.map((supervisor) => ({
+const options: SupervisorsSelectionType[] = supervisors.map((supervisor) => ({
   name: supervisor.name,
 }));
 
-const filter = createFilterOptions<SupervisorsType>();
+const filter = createFilterOptions<SupervisorsSelectionType>();
 
 export default function SupervisorsSelection({
   disabled,
@@ -28,17 +28,33 @@ export default function SupervisorsSelection({
   excludedNames,
 }: {
   disabled: boolean;
-  value: SupervisorsType | null;
-  onChange: (newValue: SupervisorsType | null) => void;
+  value: SupervisorsSelectionType | null;
+  onChange: (newValue: SupervisorsSelectionType | null) => void;
   excludedNames: string[];
 }) {
   const [open, toggleOpen] = React.useState(false);
-  const [dialogValue, setDialogValue] = React.useState<SupervisorsType>({
-    name: "",
-  });
+  const [dialogValue, setDialogValue] =
+    React.useState<SupervisorsSelectionType>({
+      name: "",
+    });
   const filteredOptions = options.filter(
     (option) => !excludedNames.includes(option.name)
   );
+  const [sv_lists, setSVLists] = useState<string[]>([]);
+  const [isLoading, setIsloading] = useState(true);
+
+  useEffect(() => {
+    const fetchCourseOutlines = async () => {
+      const data = await getSelectionLists();
+      setSVLists(data);
+      setIsloading(false);
+    };
+    fetchCourseOutlines();
+  }, []);
+
+  if (!sv_lists) {
+    return <ErrorNotice />;
+  }
 
   const handleClose = () => {
     setDialogValue({ name: "" });
@@ -53,53 +69,57 @@ export default function SupervisorsSelection({
 
   return (
     <>
-      <Autocomplete
-        value={value}
-        onChange={(_, newValue) => {
-          if (typeof newValue === "string") {
-            setTimeout(() => {
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : (
+        <Autocomplete
+          value={value}
+          onChange={(_, newValue) => {
+            if (typeof newValue === "string") {
+              setTimeout(() => {
+                toggleOpen(true);
+                setDialogValue({ name: newValue });
+              });
+            } else if (newValue && "inputValue" in newValue) {
               toggleOpen(true);
-              setDialogValue({ name: newValue });
-            });
-          } else if (newValue && "inputValue" in newValue) {
-            toggleOpen(true);
-            setDialogValue({ name: newValue.inputValue ?? "" });
-          } else {
-            onChange(newValue);
+              setDialogValue({ name: newValue.inputValue ?? "" });
+            } else {
+              onChange(newValue);
+            }
+          }}
+          filterOptions={(options, params) => {
+            const filtered = filter(options, params).filter(
+              (option) => !excludedNames.includes(option.name)
+            );
+            if (params.inputValue !== "") {
+              filtered.push({
+                inputValue: params.inputValue,
+                name: `Add "${params.inputValue}"`,
+              } as SupervisorsSelectionType);
+            }
+            return filtered;
+          }}
+          id="new-name-dialog"
+          options={filteredOptions}
+          getOptionLabel={(option) =>
+            typeof option === "string" ? option : option.name
           }
-        }}
-        filterOptions={(options, params) => {
-          const filtered = filter(options, params).filter(
-            (option) => !excludedNames.includes(option.name)
-          );
-          if (params.inputValue !== "") {
-            filtered.push({
-              inputValue: params.inputValue,
-              name: `Add "${params.inputValue}"`,
-            } as SupervisorsType);
-          }
-          return filtered;
-        }}
-        id="new-name-dialog"
-        options={filteredOptions}
-        getOptionLabel={(option) =>
-          typeof option === "string" ? option : option.name
-        }
-        selectOnFocus
-        clearOnBlur
-        handleHomeEndKeys
-        renderOption={(props, option) => (
-          <li {...props} key={option.name}>
-            {option.name}
-          </li>
-        )}
-        sx={{ width: "100%" }}
-        freeSolo
-        disabled={disabled} // Disable selection when not in edit mode
-        renderInput={(params) => (
-          <TextField {...params} label="Select Supervisor" />
-        )}
-      />
+          selectOnFocus
+          clearOnBlur
+          handleHomeEndKeys
+          renderOption={(props, option) => (
+            <li {...props} key={option.name}>
+              {option.name}
+            </li>
+          )}
+          sx={{ width: "100%" }}
+          freeSolo
+          disabled={disabled}
+          renderInput={(params) => (
+            <TextField {...params} label="Select Supervisor" />
+          )}
+        />
+      )}
 
       {/* Dialog for Adding a Supervisor */}
       <Dialog open={open} onClose={handleClose}>

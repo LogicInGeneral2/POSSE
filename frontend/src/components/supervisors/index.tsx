@@ -1,8 +1,19 @@
 import { ErrorRounded, SupervisorAccountRounded } from "@mui/icons-material";
 import { Box, Divider, Typography } from "@mui/material";
 import SupervisorsTable from "./table";
+import { useUser } from "../../../context/UserContext";
+import ErrorNotice from "../commons/error";
+import { Student } from "../../services/types";
 
 export const SupervisorsPage = () => {
+  const { user } = useUser();
+
+  if (!user || user.role !== "student") {
+    return <ErrorNotice />;
+  }
+
+  const student = user as Student;
+
   return (
     <>
       <div
@@ -32,7 +43,8 @@ export const SupervisorsPage = () => {
           }}
         >
           <SupervisorAccountRounded sx={{ mr: 1, fontSize: "2rem" }} />
-          Assigned Supervisor: Selections Pending...
+          Assigned Supervisor:
+          {student.supervisor ? student.supervisor : " Pending..."}
         </Box>
         <Box
           sx={{
@@ -57,7 +69,8 @@ export const SupervisorsPage = () => {
               Supervisor Selection Period is currently ongoing. Rank your top
               three preffered supervisors. Alternatively, add a new supervisor
               below if they are not from the SE program, together with a
-              screenshot as a proof of agreement.
+              screenshot as a proof of agreement. *Type in a name to add new
+              lecturers.
             </Typography>
           </Box>
           <Box>

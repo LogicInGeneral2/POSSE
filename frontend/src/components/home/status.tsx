@@ -25,7 +25,7 @@ const iconMap: Record<string, JSX.Element> = {
   submissions: <DriveFolderUpload sx={{ fontSize: "2rem" }} />,
 };
 
-export function Status() {
+export function Status({ isStudent }: { isStudent: Boolean }) {
   const [isLoading, setIsloading] = useState<boolean>(false);
   const [period, setPeriod] = useState<periodTypes>();
   const navigator = useNavigate();
@@ -60,7 +60,7 @@ export function Status() {
       ) : (
         <>
           <Grid
-            size={6}
+            size={isStudent ? 6 : 7}
             sx={{ display: "flex", flexDirection: "column", p: "10px" }}
           >
             <Stack
@@ -103,30 +103,33 @@ export function Status() {
               </Typography>
             </Stack>
           </Grid>
-          <Grid size={1} sx={{ p: "10px" }}>
-            <ButtonBase
-              sx={{
-                width: "100%",
-                height: "100%",
-                backgroundColor: "#58041D",
-                color: "orange",
-                borderTopRightRadius: "8px",
-                borderBottomRightRadius: "8px",
-                textAlign: "center",
-                display: "flex",
-                border: "2px solid #F8AB04",
-                boxShadow:
-                  "0 4px 8px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.1)",
-              }}
-              onClick={() => {
-                navigator(`/${period.directory}`);
-              }}
-            >
-              {iconMap[period.directory as keyof typeof iconMap] || (
-                <ErrorRounded />
-              )}
-            </ButtonBase>
-          </Grid>
+          {isStudent && (
+            <Grid size={1} sx={{ p: "10px" }}>
+              <ButtonBase
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: "#58041D",
+                  color: "orange",
+                  borderTopRightRadius: "8px",
+                  borderBottomRightRadius: "8px",
+                  textAlign: "center",
+                  display: "flex",
+                  border: "2px solid #F8AB04",
+                  boxShadow:
+                    "0 4px 8px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.1)",
+                }}
+                onClick={() => {
+                  navigator(`/${period.directory}`);
+                }}
+              >
+                {iconMap[period.directory as keyof typeof iconMap] || (
+                  <ErrorRounded />
+                )}
+              </ButtonBase>
+            </Grid>
+          )}
+
           <Grid
             size={5}
             sx={{

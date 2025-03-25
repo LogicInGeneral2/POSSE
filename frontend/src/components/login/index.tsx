@@ -20,6 +20,7 @@ import logo from "../../assets/icon.png";
 import "./login.css";
 import { useNavigate } from "react-router";
 import { useUser } from "../../../context/UserContext";
+import { Student, Supervisor } from "../../services/types";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -39,14 +40,27 @@ export const LoginPage = () => {
   };
 
   const handleLogin = () => {
-    const userData = {
+    const userData: Student = {
       id: 1,
       name: "John Doe Bin Eod Nhoj",
       email: "john@example.com",
-      role: "admin",
-      supervisor: "Johny Does Binti Jane Dont",
+      role: "student",
+      student_id: 1,
+      supervisor: "",
       course: "FYP 1",
     };
+
+    {
+      /*
+      id: 2,
+      name: "Dr. Jane Smith",
+      email: "jane@example.com",
+      role: "supervisor",
+      supervisor_id: 2,
+      supervisees_FYP1: ["Ali", "Abu", "Fatimah"],
+      supervisees_FYP2: ["Ching", "Chong"],
+      */
+    }
 
     login(userData);
     navigate("/home");

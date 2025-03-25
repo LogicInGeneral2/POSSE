@@ -28,6 +28,9 @@ import {
   SupervisedUserCircleRounded,
 } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
+import { useUser } from "../../context/UserContext";
+import { useEffect } from "react";
+import { getSelectionStatus } from "../services";
 
 const drawerWidth = 240;
 
@@ -103,6 +106,8 @@ export default function NavigationBar() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
+  const { user } = useUser();
+  const [status, setStatus] = React.useState<boolean | null>(null);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -112,33 +117,43 @@ export default function NavigationBar() {
     setOpen(false);
   };
 
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const data = await getSelectionStatus();
+      setStatus(data.enabled);
+    };
+    fetchStatus();
+  }, []);
+
   const menuItems = [
     {
       text: "Home",
       icon: <HomeIcon style={{ color: "#58041D" }} />,
       path: "/home",
+      external: false,
     },
     {
       text: "Course Outline",
       icon: <InfoIcon style={{ color: "#58041D" }} />,
       path: "/course_outline",
     },
-    {
+    user?.role === "supervisor" && {
       text: "Submissions & Grading",
       icon: <GradingRounded style={{ color: "#58041D" }} />,
       path: "/supervisees",
     },
-    {
-      text: "Supervisors",
-      icon: <SupervisedUserCircleRounded style={{ color: "#58041D" }} />,
-      path: "/supervisors",
-    },
+    user?.role === "student" &&
+      status === true && {
+        text: "Supervisors",
+        icon: <SupervisedUserCircleRounded style={{ color: "#58041D" }} />,
+        path: "/supervisors",
+      },
     {
       text: "Documents",
       icon: <FolderIcon style={{ color: "#58041D" }} />,
       path: "/documents",
     },
-    {
+    user?.role === "student" && {
       text: "Submissions",
       icon: <DriveFolderUploadIcon style={{ color: "#58041D" }} />,
       path: "/submissions",
@@ -153,16 +168,7 @@ export default function NavigationBar() {
       icon: <ExitToAppRoundedIcon style={{ color: "#58041D" }} />,
       path: "/logout",
     },
-  ].filter(
-    (
-      item
-    ): item is {
-      text: string;
-      icon: React.JSX.Element;
-      path: string;
-      external?: boolean;
-    } => item !== null
-  );
+  ].filter(Boolean);
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -213,61 +219,64 @@ export default function NavigationBar() {
         </DrawerHeader>
         <Divider />
         <List>
-          {menuItems.map((item) => (
-            <ListItem
-              key={item.text}
-              disablePadding
-              sx={{ display: "block", color: "#58041D" }}
-            >
-              <Tooltip
-                title={item.text}
-                placement="right"
-                arrow
-                slotProps={{
-                  popper: {
-                    modifiers: [
-                      {
-                        name: "offset",
-                        options: {
-                          offset: [0, -8],
-                        },
-                      },
-                    ],
-                  },
-                }}
-              >
-                <ListItemButton
-                  sx={{
-                    minHeight: 48,
-                    justifyContent: open ? "initial" : "center",
-                    px: 2.5,
-                  }}
-                  onClick={() => {
-                    if (item.external) {
-                      window.location.href = item.path;
-                    } else {
-                      navigate(item.path);
-                    }
-                  }}
+          {menuItems.map(
+            (item) =>
+              item && (
+                <ListItem
+                  key={item.text}
+                  disablePadding
+                  sx={{ display: "block", color: "#58041D" }}
                 >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      mr: open ? 3 : "auto",
-                      justifyContent: "center",
-                      my: 0.5,
+                  <Tooltip
+                    title={item.text}
+                    placement="right"
+                    arrow
+                    slotProps={{
+                      popper: {
+                        modifiers: [
+                          {
+                            name: "offset",
+                            options: {
+                              offset: [0, -8],
+                            },
+                          },
+                        ],
+                      },
                     }}
                   >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.text}
-                    sx={{ opacity: open ? 1 : 0 }}
-                  />
-                </ListItemButton>
-              </Tooltip>
-            </ListItem>
-          ))}
+                    <ListItemButton
+                      sx={{
+                        minHeight: 48,
+                        justifyContent: open ? "initial" : "center",
+                        px: 2.5,
+                      }}
+                      onClick={() => {
+                        if (item.external) {
+                          window.location.href = item.path;
+                        } else {
+                          navigate(item.path);
+                        }
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: open ? 3 : "auto",
+                          justifyContent: "center",
+                          my: 0.5,
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        sx={{ opacity: open ? 1 : 0 }}
+                      />
+                    </ListItemButton>
+                  </Tooltip>
+                </ListItem>
+              )
+          )}
         </List>
       </Drawer>
     </Box>
