@@ -35,6 +35,10 @@ export interface periodTypes {
   days_left: number;
 }
 
+export interface SubmissonsEntry extends periodTypes {
+  
+}
+
 export interface AnnouncementTypes {
   id: number;
   src: string;

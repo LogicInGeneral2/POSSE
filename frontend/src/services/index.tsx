@@ -161,3 +161,35 @@ export const getSuperviseesModal = async () => {
     throw new Error(error);
   }
 };
+
+export const getUserSubmissions = async () => {
+  try {
+    const response = await fetch(`${api}/submissions_user.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const uploadFeedback = async (payload: any) => {
+  try {
+    const response = await fetch(`${api}/upload-feedback`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to upload feedback");
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error("Error uploading feedback:", error);
+    throw new Error(error);
+  }
+};
