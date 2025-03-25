@@ -2,47 +2,53 @@
     {
         "id": 11,
         "title": "Chapter 1",
-        "uploadDate": "2022-01-01",
+        "upload_date": "2022-01-01",
         "category": "Lecture Notes",
         "src":"../../../data/CHAPTER 1 - PROJECT.pdf",
-        "thumbnail":"../../../data/documents/1.png"
+        "thumbnail":"../../../data/documents/1.png",
+        "type":"document"
     },
     {
         "id": 12,
         "title": "Chapter 2",
-        "uploadDate": "2022-01-01",
+        "upload_date": "2022-01-01",
         "category": "Lecture Notes",
         "src":"../../../data/CHAPTER 2.pdf",
-        "thumbnail":"../../../data/documents/2.png"
+        "thumbnail":"../../../data/documents/2.png",
+        "type":"document"
     },
     {
         "id": 13,
         "title": "Chapter 3",
-        "uploadDate": "2022-01-01",
+        "upload_date": "2022-01-01",
         "category": "Lecture Notes",
         "src":"../../../data/Ch3 SD.pdf",
-        "thumbnail":"../../../data/documents/3.png"
+        "thumbnail":"../../../data/documents/3.png",
+        "type":"document"
     },
     {
         "id": 21,
         "title": "SDD",
-        "uploadDate": "2021-02-05",
+        "upload_date": "2021-02-05",
         "category": "Templates",
         "src":"../../../data/documents/SDD Template.doc",
-        "thumbnail":"../../../data/documents/4.png"
+        "thumbnail":"../../../data/documents/4.png",
+        "type":"document"
     },{
         "id": 22,
         "title": "SRS",
-        "uploadDate": "2021-02-05",
+        "upload_date": "2021-02-05",
         "category": "Templates",
         "src":"../../../data/documents/SRS Template.doc",
-        "thumbnail":"../../../data/documents/5.png"
+        "thumbnail":"../../../data/documents/5.png",
+        "type":"document"
     },{
         "id": 31,
         "title": "Ch4 Ying",
-        "uploadDate": "2025-02-05",
+        "upload_date": "2025-02-05",
         "category": "Samples",
         "src":"../../../data/documents/Ying.pdf",
-        "thumbnail":"../../../data/documents/6.png"
+        "thumbnail":"../../../data/documents/6.png",
+        "type":"document"
     }
 ]

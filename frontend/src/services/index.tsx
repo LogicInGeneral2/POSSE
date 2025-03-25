@@ -86,3 +86,78 @@ export const saveSupervisorChoices = async (payload: any) => {
     throw new Error(error);
   }
 };
+
+export const getDocuments = async () => {
+  try {
+    const response = await fetch(`${api}/documents.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const getFile = (fileUrl: string, fileName: string) => {
+  const link = document.createElement("a");
+  link.href = fileUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+export const getDocumentOptions = async () => {
+  try {
+    const response = await fetch(`${api}/documents_options_modal.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const getDocumentColours = async () => {
+  try {
+    const response = await fetch(`${api}/documents_colours_modal.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const getSupervisees = async () => {
+  try {
+    const response = await fetch(`${api}/supervisees_submissions.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const getEvaluatees = async () => {
+  try {
+    const response = await fetch(`${api}/supervisees_submissions.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const getSuperviseesModal = async () => {
+  try {
+    const response = await fetch(`${api}/supervisees_modal.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};

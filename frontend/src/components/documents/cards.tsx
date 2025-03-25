@@ -5,30 +5,29 @@ import {
   CardMedia,
   Typography,
 } from "@mui/material";
-import { colorOptions } from "../../modals/documents";
+import { ColorType, DocumentType } from "../../services/types";
+import { format } from "date-fns";
+import { getDocumentColours, getFile } from "../../services";
+import { useEffect, useState } from "react";
+import ErrorNotice from "../commons/error";
 
-interface DocumentsType {
-  id: number;
-  title: string;
-  category: string;
-  uploadDate: string;
-  thumbnail: string;
-  src: string;
-}
-
-function FileCard({ file }: { file: DocumentsType }) {
-  const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = file.src;
-    link.download = file.title;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const colors = colorOptions.find(
-    (color) => color.value === file.category
+function FileCard({ file }: { file: DocumentType }) {
+  const [colours, setColors] = useState<ColorType[]>([]);
+  const colors = colours.find(
+    (color: { value: string }) => color.value === file.category
   ) || { primary: "#ffffff", secondary: "#58041D" };
+
+  useEffect(() => {
+    const fetchColours = async () => {
+      const data: ColorType[] = await getDocumentColours();
+      setColors(data);
+    };
+    fetchColours();
+  }, []);
+
+  if (!colours) {
+    return <ErrorNotice />;
+  }
 
   return (
     <Card
@@ -40,7 +39,7 @@ function FileCard({ file }: { file: DocumentsType }) {
         border: "1px solid #58041D",
       }}
     >
-      <CardActionArea onClick={handleDownload}>
+      <CardActionArea onClick={() => getFile(file.src, file.title)}>
         <CardMedia
           component="img"
           height="140"
@@ -79,7 +78,7 @@ function FileCard({ file }: { file: DocumentsType }) {
               paddingTop: 0,
             }}
           >
-            {file.uploadDate}
+            {format(file.upload_date, "d MMMM yyyy")}
           </Typography>
           <Typography
             variant="body2"

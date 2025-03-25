@@ -12,16 +12,41 @@ import {
   ToggleButtonGroup,
 } from "@mui/material";
 import FileCard from "./cards";
-import { typeOptions } from "../../modals/documents";
-import React, { useMemo, useState } from "react";
-import documentsData from "../../../data/documents.json";
-
+import React, { useEffect, useMemo, useState } from "react";
+import { getDocumentOptions, getDocuments } from "../../services";
+import ErrorNotice from "../commons/error";
+import { DocumentType, OptionType } from "../../services/types";
+import LoadingSpinner from "../commons/loading";
 const DocumentsList = () => {
   const [alignment, setAlignment] = useState("descending");
   const [sortBy, setSortBy] = useState("date");
+  const [documents, setDocuments] = useState<DocumentType[]>([]);
+  const [isLoading, setIsloading] = useState(true);
+  const [options, setOptions] = useState<OptionType[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, boolean>
-  >(typeOptions.reduce((acc, type) => ({ ...acc, [type]: true }), {}));
+  >({});
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      const data = await getDocuments();
+      setDocuments(data);
+      setIsloading(false);
+    };
+    const fetchOptions = async () => {
+      const data: OptionType[] = await getDocumentOptions();
+      setOptions(data);
+      setSelectedFilters(
+        data.reduce((acc, option) => ({ ...acc, [option.label]: true }), {})
+      );
+    };
+    fetchDocuments();
+    fetchOptions();
+  }, []);
+
+  if (!documents) {
+    return <ErrorNotice />;
+  }
 
   const handleAlignmentChange = (
     _event: React.MouseEvent<HTMLElement>,
@@ -37,22 +62,22 @@ const DocumentsList = () => {
   };
 
   const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedFilters({
-      ...selectedFilters,
+    setSelectedFilters((prev) => ({
+      ...prev,
       [event.target.name]: event.target.checked,
-    });
+    }));
   };
 
   const filteredAndSortedDocuments = useMemo(() => {
-    return documentsData
+    return documents
       .filter((file) => selectedFilters[file.category])
       .sort((a, b) => {
         if (sortBy === "date") {
           return alignment === "ascending"
-            ? new Date(a.uploadDate).getTime() -
-                new Date(b.uploadDate).getTime()
-            : new Date(b.uploadDate).getTime() -
-                new Date(a.uploadDate).getTime();
+            ? new Date(a.upload_date).getTime() -
+                new Date(b.upload_date).getTime()
+            : new Date(b.upload_date).getTime() -
+                new Date(a.upload_date).getTime();
         }
         if (sortBy === "title") {
           return alignment === "ascending"
@@ -72,15 +97,21 @@ const DocumentsList = () => {
     <Grid container spacing={2} sx={{ marginTop: "20px", height: "100%" }}>
       <Grid size={10} spacing={2}>
         <Grid container spacing={2} justifyContent="flex-start">
-          {filteredAndSortedDocuments.map((file) => (
-            <Grid
-              key={file.id}
-              size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
-              sx={{ display: "flex" }}
-            >
-              <FileCard file={file} />
-            </Grid>
-          ))}
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : (
+            <>
+              {filteredAndSortedDocuments.map((file) => (
+                <Grid
+                  key={file.id}
+                  size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
+                  sx={{ display: "flex" }}
+                >
+                  <FileCard file={file} />
+                </Grid>
+              ))}
+            </>
+          )}
         </Grid>
       </Grid>
       <Grid
@@ -126,17 +157,17 @@ const DocumentsList = () => {
           {/* FILTER FOR FILTERING RESULT */}
           <FormGroup>
             <FormLabel>Filter By</FormLabel>
-            {typeOptions.map((type) => (
+            {options.map((option) => (
               <FormControlLabel
-                key={type}
+                key={option.label}
                 control={
                   <Checkbox
-                    checked={selectedFilters[type]}
+                    checked={selectedFilters[option.label] ?? false}
                     onChange={handleFilterChange}
-                    name={type}
+                    name={option.label}
                   />
                 }
-                label={type}
+                label={option.label}
               />
             ))}
           </FormGroup>

@@ -2,8 +2,16 @@ import SearchIcon from "@mui/icons-material/Search";
 import DownloadIcon from "@mui/icons-material/Download";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import { JSX } from "react";
 
-const action_options = [
+export interface Action {
+  label: string;
+  icon: JSX.Element;
+  type: "dialog" | "navigate";
+  path?: string;
+}
+
+export const action_options = [
   {
     label: "View Submission",
     icon: (
@@ -67,5 +75,3 @@ const action_options = [
     path: "/grading",
   },
 ];
-
-export { action_options };

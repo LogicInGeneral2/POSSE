@@ -30,7 +30,7 @@ function UploadDialog({
     <>
       <DialogContent>
         <Box sx={{ display: "block", p: "5px" }}>
-          <FormControl fullWidth size="small">
+          <FormControl fullWidth size="small" sx={{ mb: "20px" }}>
             <InputLabel>Submission</InputLabel>
             <Select value={selectedFile || ""} onChange={handleChange}>
               {data.map((item) => (
@@ -40,16 +40,17 @@ function UploadDialog({
               ))}
             </Select>
           </FormControl>
+          <Upload_Button
+            size="small"
+            icon={false}
+            variants="contained"
+            disabled={!selectedFile}
+          />
         </Box>
       </DialogContent>
       <DialogActions sx={{ justifyContent: "space-between" }}>
         <Button onClick={() => setOpenDialog(false)}>Close</Button>
-        <Upload_Button
-          size="small"
-          icon={false}
-          variants="text"
-          disabled={!selectedFile}
-        />
+        <Button>Confirm</Button>
       </DialogActions>
     </>
   );

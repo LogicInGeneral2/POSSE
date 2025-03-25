@@ -8,6 +8,7 @@ export interface User {
 export interface Student extends User {
   student_id: number;
   supervisor?: string; // NUMBER
+  evaluators?: string[]; // NUMBER
   course?: string;
 }
 
@@ -15,6 +16,8 @@ export interface Supervisor extends User {
   supervisor_id: number;
   supervisees_FYP1?: string[]; // NUMBER
   supervisees_FYP2?: string[]; // NUMBER
+  evaluatees_FYP1?: string[]; // NUMBER
+  evaluatees_FYP2?: string[]; // NUMBER
 }
 
 export interface UserContextType {
@@ -47,4 +50,52 @@ export interface CourseOutlineTabs {
 export interface SupervisorsSelectionType {
   inputValue?: string;
   name: string;
+}
+
+interface FileType {
+  id: number;
+  title: string;
+  upload_date: Date;
+  src: string;
+}
+
+export interface DocumentType extends FileType {
+  type: "document";
+  category: string;
+  thumbnail: string;
+}
+
+export interface SubmissionType extends FileType {
+  type: "submission";
+  progress: string;
+  status: string;
+  submission: string;
+  studentId: number;
+  assignmentId: number;
+}
+
+export interface FeedbackType extends FileType {
+  type: "feedback";
+  supervisorId: number;
+  submissionId: number;
+}
+
+export interface OptionType {
+  label: string;
+}
+
+export interface ColorType {
+  value: string;
+  primary: string;
+  secondary: string;
+}
+
+export interface SuperviseeSubmission {
+  student: Student;
+  submissions: SubmissionType[];
+}
+
+export interface DataTableProps {
+  data: SuperviseeSubmission[];
+  category: string;
 }
