@@ -37,3 +37,43 @@
       "end_date": "2026-01-28",
       "days_left": 62
     }
+
+
+    Marks:
+    {
+    "student_id": 1,
+    "supervisor_id": 2,
+    "supervisor": {
+      "Log Book": 0,
+      "Meeting Frequency": 0,
+      "Work Ethic": 0,
+      "Independence": 0
+    },
+    "examiner": {
+      "examiner_1": {
+        "examiner_id": 1,
+        "grades": {
+          "Problem Formulation and Research": 0,
+          "Presentation": 0,
+          "Ethics": 0,
+          "Progress Report 1": 0,
+          "Progress Report 2": 0,
+          "Progress Report 3": 0,
+          "Progress Report 4": 0
+        }
+      },
+      "examiner_2": {
+        "examiner_id": 2,
+        "grades": {
+          "Problem Formulation and Research": 0,
+          "Presentation": 0,
+          "Ethics": 0,
+          "Progress Report 1": 0,
+          "Progress Report 2": 0,
+          "Progress Report 3": 0,
+          "Progress Report 4": 0
+        }
+      }
+    }
+  }
+  

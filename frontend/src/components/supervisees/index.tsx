@@ -99,14 +99,14 @@ export const SuperviseesPage = () => {
           {isLoading ? (
             <LoadingSpinner />
           ) : (
-            <DataTable data={supervisees} category="sv" />
+            <DataTable data={supervisees} category="supervisor" />
           )}
         </CustomTabPanel>
         <CustomTabPanel value={value} index={1}>
           {isLoading ? (
             <LoadingSpinner />
           ) : (
-            <DataTable data={evaluatees} category="ev" />
+            <DataTable data={evaluatees} category="examiner" />
           )}
         </CustomTabPanel>
       </div>

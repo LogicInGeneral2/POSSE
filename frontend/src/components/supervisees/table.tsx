@@ -112,7 +112,7 @@ export default function DataTable({ data, category }: DataTableProps) {
       );
       setOpenDialog(true);
     } else if (action.type === "navigate" && action.path) {
-      navigate(action.path, { state: { rowData: row } });
+      navigate(action.path, { state: { rowData: row, category } });
     }
   };
 
@@ -164,7 +164,7 @@ export default function DataTable({ data, category }: DataTableProps) {
             ))}
           </Select>
         </FormControl>
-        {category === "sv" && (
+        {category === "supervisor" && (
           <FormControl sx={{ width: "20%" }} size="small">
             <InputLabel>Progress</InputLabel>
             <Select

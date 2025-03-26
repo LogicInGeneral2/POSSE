@@ -193,3 +193,28 @@ export const uploadFeedback = async (payload: any) => {
     throw new Error(error);
   }
 };
+
+export const getGrades = async () => {
+  try {
+    const response = await fetch(`${api}/supervises_grades.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const saveGrades = async (payload: any) => {
+  try {
+    await fetch("/api/save-grades", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    console.error("Failed to send grades:", error);
+  }
+};
