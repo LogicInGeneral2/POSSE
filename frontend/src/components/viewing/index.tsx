@@ -21,7 +21,7 @@ export const ViewingPage = () => {
 
         <Box sx={{ marginTop: "20px" }}>
           <CanvasProvider>
-            <FileUpload src={"../../../data/CO.pdf"} />
+            <FileUpload />
           </CanvasProvider>
         </Box>
       </div>

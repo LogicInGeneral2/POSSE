@@ -35,9 +35,7 @@ export interface periodTypes {
   days_left: number;
 }
 
-export interface SubmissonsEntry extends periodTypes {
-  
-}
+export interface SubmissonsEntry extends periodTypes {}
 
 export interface AnnouncementTypes {
   id: number;
@@ -102,4 +100,24 @@ export interface SuperviseeSubmission {
 export interface DataTableProps {
   data: SuperviseeSubmission[];
   category: string;
+}
+
+export interface GradingContentsType {
+  label: string;
+  marks: number;
+  weightage: number;
+  PIC: string;
+  contents: string[];
+}
+
+export interface SubmissionsMetaType {
+  id: number;
+  title: string;
+  date_open: string;
+  date_close: string;
+  days_left: number;
+  status: string;
+  description: string;
+  submission: SubmissionType;
+  feedback: FeedbackType;
 }

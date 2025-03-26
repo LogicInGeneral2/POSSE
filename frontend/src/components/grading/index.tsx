@@ -61,7 +61,7 @@ export const GradingPage = () => {
               </Typography>
               <Typography sx={{ display: "flex", alignItems: "center" }}>
                 <GradingRounded sx={{ mr: 1, fontSize: "2rem" }} />
-                Grading As: {student.name}
+                Grading As: {category.toUpperCase()}
               </Typography>
             </Box>
             <Box

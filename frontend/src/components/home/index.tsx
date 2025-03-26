@@ -27,6 +27,7 @@ export const HomePage = () => {
           sx={{ fontWeight: "bold" }}
         >
           Welcome back, {user.name.split(" ").slice(0, 2).join(" ")}
+          {"..."}
         </Typography>
 
         <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />

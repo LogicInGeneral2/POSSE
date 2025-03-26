@@ -1,11 +1,37 @@
 import { Box, Divider, Typography } from "@mui/material";
-import submissionsData from "../../../data/submissions.json";
 import "./style.css";
 import SubmissionCards from "./accordian";
-import SubmissionsType from "./submissionsType";
 import LegendCard from "./card";
+import { useEffect, useState } from "react";
+import ErrorNotice from "../commons/error";
+import { getUserSubmissionData } from "../../services";
+import { SubmissionsMetaType } from "../../services/types";
+import LoadingSpinner from "../commons/loading";
 
 export const SubmissionsPage = () => {
+  const [meta, setMeta] = useState<SubmissionsMetaType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getUserSubmissionData();
+        if (response) {
+          setMeta(response);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (!meta) {
+    return <ErrorNotice />;
+  }
+
   return (
     <>
       <div
@@ -28,22 +54,33 @@ export const SubmissionsPage = () => {
             marginBottom: "20px",
           }}
         />
-        <Box
-          sx={{
-            marginTop: "20px",
-            height: "calc(100vh - 280px)",
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            gap: 0.75,
-            overflow: "auto",
-            scrollbarWidth: "none",
-          }}
-        >
-          {submissionsData.map((file: SubmissionsType) => (
-            <SubmissionCards file={file} />
-          ))}
-        </Box>
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : (
+          <Box
+            sx={{
+              marginTop: "20px",
+              marginBottom: "20px",
+              height: "calc(100vh - 300px)",
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              overflow: "auto",
+              scrollbarWidth: "none",
+            }}
+          >
+            {meta.map((submissionMeta: SubmissionsMetaType) => (
+              <SubmissionCards
+                key={submissionMeta.id}
+                submission={submissionMeta.submission || []}
+                feedback={submissionMeta.feedback || []}
+                meta={submissionMeta}
+              />
+            ))}
+          </Box>
+        )}
+
         <Box>
           <LegendCard />
         </Box>

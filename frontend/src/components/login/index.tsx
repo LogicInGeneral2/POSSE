@@ -40,7 +40,19 @@ export const LoginPage = () => {
   };
 
   const handleLogin = () => {
-    const userData: Supervisor = {
+    const userData: Student = {
+      id: 1,
+      name: "John Doe Bin Eod Nhoj",
+      email: "john@example.com",
+      role: "student",
+      student_id: 1,
+      supervisor: "Memoon Bin Mehdi",
+      evaluators: ["Ali", "Abu", "Fatimah"],
+      course: "FYP 1",
+    };
+
+    {
+      /*
       id: 2,
       name: "Dr. Jane Smith",
       email: "jane@example.com",
@@ -48,17 +60,6 @@ export const LoginPage = () => {
       supervisor_id: 2,
       supervisees_FYP1: ["Ali", "Abu", "Fatimah"],
       supervisees_FYP2: ["Ching", "Chong"],
-    };
-
-    {
-      /*
-      id: 1,
-      name: "John Doe Bin Eod Nhoj",
-      email: "john@example.com",
-      role: "student",
-      student_id: 1,
-      supervisor: "",
-      course: "FYP 1",
       */
     }
 

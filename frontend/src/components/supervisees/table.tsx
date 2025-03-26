@@ -212,7 +212,7 @@ export default function DataTable({ data, category }: DataTableProps) {
               <TableCell align="center">Matric No.</TableCell>
               <TableCell align="center">Name</TableCell>
               <TableCell align="center">Course</TableCell>
-              {category === "sv" ? (
+              {category === "supervisor" ? (
                 <TableCell align="center">Progress</TableCell>
               ) : (
                 <TableCell>Supervisor</TableCell>
@@ -232,7 +232,7 @@ export default function DataTable({ data, category }: DataTableProps) {
                     <TableCell align="center">{student.student_id}</TableCell>
                     <TableCell>{student.name}</TableCell>
                     <TableCell align="center">{student.course}</TableCell>
-                    {category === "sv" ? (
+                    {category === "supervisor" ? (
                       <TableCell align="center">
                         {latestSubmission.progress || "N/A"}
                       </TableCell>

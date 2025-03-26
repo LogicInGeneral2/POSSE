@@ -7,8 +7,6 @@ import {
   Button,
   Divider,
   IconButton,
-  List,
-  ListItem,
   Stack,
   styled,
   Typography,
@@ -22,11 +20,15 @@ import {
   OutboxRounded,
 } from "@mui/icons-material";
 import { status_info } from "../../modals/submissions";
-import SubmissionsType from "./submissionsType";
 import UploadIcon from "@mui/icons-material/Upload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DownloadIcon from "@mui/icons-material/Download";
 import React, { useState } from "react";
+import {
+  FeedbackType,
+  SubmissionsMetaType,
+  SubmissionType,
+} from "../../services/types";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -40,8 +42,16 @@ const VisuallyHiddenInput = styled("input")({
   width: 1,
 }) as React.ComponentType<React.InputHTMLAttributes<HTMLInputElement>>;
 
-function SubmissionCards({ file }: { file: SubmissionsType }) {
-  const themes = status_info.find((color) => color.value === file.status) || {
+function SubmissionCards({
+  submission,
+  feedback,
+  meta,
+}: {
+  submission: SubmissionType | null;
+  feedback: FeedbackType | null;
+  meta: SubmissionsMetaType;
+}) {
+  const themes = status_info.find((color) => color.value === meta.status) || {
     color: "#ffffff",
     icon: (
       <ErrorRounded
@@ -59,29 +69,29 @@ function SubmissionCards({ file }: { file: SubmissionsType }) {
     ),
   };
 
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setUploadedFiles([...uploadedFiles, ...Array.from(event.target.files)]);
+    if (event.target.files?.length) {
+      setUploadedFile(event.target.files[0]); // Replace previous file
     }
   };
 
-  const handleRemoveFile = (index: number) => {
-    setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+  const handleRemoveFile = () => {
+    setUploadedFile(null);
   };
 
-  const handleDownload = () => {
+  const handleDownload = (src: string, title: string) => {
     const link = document.createElement("a");
-    link.href = file.feedback_file;
-    link.download = file.title;
+    link.href = src;
+    link.download = title;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const handleSubmit = () => {
-    console.log("Submitting uploaded files:", uploadedFiles);
+    console.log("Submitting file:", uploadedFile);
   };
 
   return (
@@ -108,21 +118,21 @@ function SubmissionCards({ file }: { file: SubmissionsType }) {
                 paddingTop: "0.25rem",
               }}
             >
-              {file.title}
+              {meta.title}
             </Typography>
             <Box sx={{ display: "flex", gap: 1 }}>
               {[
                 {
                   icon: <EventAvailableRounded sx={{ fontSize: "1rem" }} />,
-                  text: file.date_open,
+                  text: meta.date_open,
                 },
                 {
                   icon: <EventBusyRounded sx={{ fontSize: "1rem" }} />,
-                  text: file.date_close,
+                  text: meta.date_close,
                 },
                 {
                   icon: <HourglassBottom sx={{ fontSize: "1rem" }} />,
-                  text: `${file.days_left} DAYS LEFT`,
+                  text: `${meta.days_left} DAYS LEFT`,
                 },
               ].map(({ icon, text }, index) => (
                 <Typography
@@ -143,63 +153,67 @@ function SubmissionCards({ file }: { file: SubmissionsType }) {
         </Stack>
       </AccordionSummary>
       <AccordionDetails sx={{ backgroundColor: "#E9DADD" }}>
-        {file.description}
+        {meta.description}
       </AccordionDetails>
-      <AccordionActions sx={{ backgroundColor: "#E9DADD" }}>
-        {file.status == "Feedback" && (
-          <Button
-            variant="outlined"
-            onClick={handleDownload}
-            startIcon={<DownloadIcon />}
-          >
-            Feedback
-          </Button>
-        )}
 
-        {uploadedFiles.length > 0 && (
-          <List>
-            {uploadedFiles.map((file, index) => (
-              <ListItem
-                key={index}
-                secondaryAction={
-                  <IconButton
-                    edge="end"
-                    onClick={() => handleRemoveFile(index)}
-                  >
-                    <DeleteIcon color="error" />
-                  </IconButton>
-                }
+      {/* Conditional Actions */}
+      {(meta.status === "Pending" ||
+        meta.status === "Completed" ||
+        meta.status === "Feedback" ||
+        meta.status === "Closed") && (
+        <AccordionActions sx={{ backgroundColor: "#E9DADD" }}>
+          {meta.status === "Feedback" && feedback && (
+            <Button
+              variant="contained"
+              onClick={() => handleDownload(feedback.src, feedback.title)}
+              startIcon={<DownloadIcon />}
+            >
+              Feedback
+            </Button>
+          )}
+
+          {meta.status === "Completed" ||
+            (meta.status === "Closed" && submission && (
+              <Button
+                variant="contained"
+                onClick={() => handleDownload(submission.src, submission.title)}
+                startIcon={<DownloadIcon />}
               >
-                {file.name}
-              </ListItem>
+                {submission.title}
+              </Button>
             ))}
-          </List>
-        )}
-        {file.status !== "Completed" &&
-          file.status !== "Feedback" &&
-          (uploadedFiles.length > 0 ? (
-            <Button
-              variant="outlined"
-              onClick={handleSubmit}
-              startIcon={<OutboxRounded />}
-            >
-              Submit
-            </Button>
-          ) : (
-            <Button
-              component="label"
-              variant="outlined"
-              startIcon={<UploadIcon />}
-            >
-              Upload
-              <VisuallyHiddenInput
-                type="file"
-                required
-                onChange={handleFileUpload}
-              />
-            </Button>
-          ))}
-      </AccordionActions>
+
+          {meta.status === "Pending" &&
+            (uploadedFile ? (
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Typography>{uploadedFile.name}</Typography>
+                <IconButton onClick={handleRemoveFile}>
+                  <DeleteIcon color="error" />
+                </IconButton>
+                <Button
+                  variant="contained"
+                  onClick={handleSubmit}
+                  startIcon={<OutboxRounded />}
+                >
+                  Submit
+                </Button>
+              </Stack>
+            ) : (
+              <Button
+                component="label"
+                variant="contained"
+                startIcon={<UploadIcon />}
+              >
+                Upload
+                <VisuallyHiddenInput
+                  type="file"
+                  required
+                  onChange={handleFileUpload}
+                />
+              </Button>
+            ))}
+        </AccordionActions>
+      )}
     </Accordion>
   );
 }

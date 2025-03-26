@@ -1,0 +1,102 @@
+[
+    {
+      "id": 1,
+      "title": "Testing For Feedback",
+      "date_open": "28-09-2024",
+      "date_close": "30-09-2024",
+      "days_left": 2,
+      "status": "Feedback",
+      "description": "Please submit your presentation slides in PDF form. Thank you!",
+      "submission": 
+        {
+          "id": 101,
+          "title": "CHAPTER 1 - PROJECT.pdf",
+          "upload_date": "2025-03-25T10:00:00Z",
+          "src": "../../../data/CHAPTER 1 - PROJECT.pdf",
+          "progress": "Progress 1",
+          "status": "Reviewed",
+          "type": "submission",
+          "studentId": 1,
+          "assignmentId": 1
+        }
+      ,
+      "feedback": 
+        {
+          "id": 101,
+          "title": "Feedback",
+          "upload_date": "2025-03-26T10:00:00Z",
+          "src": "../data/CO.pdf",
+          "type": "feedback",
+          "supervisorId": 1,
+          "submissionId": 101
+        }
+    },
+    {
+      "id": 2,
+      "title": "Testing For Completed",
+      "date_open": "28-09-2024",
+      "date_close": "10-10-2024",
+      "days_left": 20,
+      "status": "Completed",
+      "description": "Please submit your presentation slides in PDF form. Thank you!",
+      "submission": 
+        {
+          "id": 102,
+          "title": "CHAPTER 1 - PROJECT.pdf",
+          "upload_date": "2025-03-25T10:05:00Z",
+          "src": "../../../data/Ch3 SD.pdf",
+          "progress": "Progress 2",
+          "status": "Submitted",
+          "type": "submission",
+          "studentId": 2,
+          "assignmentId": 2
+        }
+      ,
+      "feedback": {}
+    },
+    {
+      "id": 3,
+      "title": "Defense Presentation",
+      "date_open": "10-09-2024",
+      "date_close": "12-09-2024",
+      "days_left": 0,
+      "status": "Pending",
+      "description": "Please submit your presentation slides in PDF form. Thank you!",
+      "submission": {},
+      "feedback": {}
+    },    
+    {
+        "id": 4,
+        "title": "Testing For Missed",
+        "date_open": "10-09-2024",
+        "date_close": "12-09-2024",
+        "days_left": 0,
+        "status": "Missed",
+        "description": "Please submit your presentation slides in PDF form. Thank you!",
+        "submission": {},
+        "feedback": {}
+      },
+    {
+        "id": 5,
+        "title": "Testing For Closed",
+        "date_open": "10-09-2024",
+        "date_close": "12-09-2024",
+        "days_left": 0,
+        "status": "Closed",
+        "description": "Please submit your presentation slides in PDF form. Thank you!",
+        "submission":         {
+          "id": 102,
+          "title": "CHAPTER 1 - PROJECT.pdf",
+          "upload_date": "2025-03-25T10:05:00Z",
+          "src": "../../../data/Ch3 SD.pdf",
+          "progress": "Progress 2",
+          "status": "Submitted",
+          "type": "submission",
+          "studentId": 2,
+          "assignmentId": 2
+        }
+      ,
+        "feedback": {}
+    }
+  ]
+  

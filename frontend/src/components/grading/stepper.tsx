@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Divider,
   FormControl,
   FormControlLabel,
   Paper,
@@ -20,49 +19,60 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import grading_contents from "../../modals/grading";
-import { getGrades, saveGrades } from "../../services";
+import { getGrades, getMarkingScheme, saveGrades } from "../../services";
 import ErrorNotice from "../commons/error";
 import { useUser } from "../../../context/UserContext";
 import LoadingSpinner from "../commons/loading";
+import { GradingContentsType } from "../../services/types";
 
 const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
-  const filteredContents = grading_contents.filter((item) => item.PIC === pic);
   const { user } = useUser();
-  const steps = filteredContents.map((item) => item.label);
   const [isLoading, setIsLoading] = useState(true);
-  const [grades, setGrades] = useState(
-    filteredContents.map((step) => new Array(step.contents.length).fill(0))
+  const [gradingContents, setGradingContents] = useState<GradingContentsType[]>(
+    []
   );
+  const [grades, setGrades] = useState<number[][]>([]);
+  const [activeStep, setActiveStep] = useState(0);
 
   useEffect(() => {
-    const fetchGrades = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getGrades();
-        if (data) {
+        const schemeData = await getMarkingScheme();
+        if (schemeData) {
+          setGradingContents(schemeData);
+        }
+        const gradesData = await getGrades();
+        if (gradesData) {
           setGrades(
-            filteredContents.map((step, stepIndex) =>
+            schemeData.map((step: GradingContentsType, stepIndex: number) =>
               step.contents.map(
-                (_, contentIndex) =>
-                  data[stepIndex * step.contents.length + contentIndex] || 0
+                (_, contentIndex: number) =>
+                  gradesData[stepIndex * step.contents.length + contentIndex] ||
+                  0
               )
+            )
+          );
+        } else {
+          setGrades(
+            schemeData.map((step: GradingContentsType) =>
+              new Array(step.contents.length).fill(0)
             )
           );
         }
       } catch (error) {
-        console.error("Error fetching grades:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchGrades();
+    fetchData();
   }, []);
 
-  if (!filteredContents.length) {
+  const steps = gradingContents.map((item) => item.label);
+
+  if (!gradingContents.length) {
     return <ErrorNotice />;
   }
-
-  const [activeStep, setActiveStep] = useState(0);
 
   const handleGradeChange = (
     stepIndex: number,
@@ -95,10 +105,8 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
         pic: pic,
         grades: grades.flat(),
       };
-
       console.log(payload);
       await saveGrades(payload);
-
       alert("Grades saved successfully!");
     } catch (error) {
       console.error("Error saving grades:", error);
@@ -168,20 +176,8 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
               >
                 {steps[activeStep]}
               </Typography>
-              <Stack
-                divider={
-                  <Divider
-                    orientation="horizontal"
-                    flexItem
-                    sx={{
-                      borderBottomWidth: 1,
-                      borderColor: "primary.main",
-                      mb: "10px",
-                    }}
-                  />
-                }
-              >
-                {filteredContents[activeStep].contents.map((content, index) => (
+              <Stack>
+                {gradingContents[activeStep].contents.map((content, index) => (
                   <Box
                     key={index}
                     sx={{
@@ -190,11 +186,7 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
                       justifyContent: "space-between",
                     }}
                   >
-                    <Typography
-                      sx={{ display: "flex", alignItems: "flex-end" }}
-                    >
-                      {content}
-                    </Typography>
+                    <Typography>{content}</Typography>
                     <FormControl>
                       <RadioGroup
                         row
@@ -207,7 +199,7 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
                           )
                         }
                       >
-                        {[...Array(filteredContents[activeStep].marks)].map(
+                        {[...Array(gradingContents[activeStep].marks)].map(
                           (_, idx) => (
                             <FormControlLabel
                               key={idx}
@@ -225,7 +217,6 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
               </Stack>
             </Box>
           )}
-
           <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
             <Button
               color="inherit"

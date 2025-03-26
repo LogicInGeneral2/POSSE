@@ -7,14 +7,25 @@ import { useButtons } from "./canvas";
 import SideBar from "./sidebar";
 import { Box, Button, Typography } from "@mui/material";
 import Loader from "./loader";
+import { getLatestUserSubmission } from "../../services";
+import ErrorNotice from "../commons/error";
 
-interface FileUploadProps {
-  src: string | null;
-}
-
-export default function FileUpload({ src }: FileUploadProps) {
+export default function FileUpload() {
   const contextValues = useButtons();
+  const [Source, setSource] = useState<{ src: string } | null>(null);
   const [docIsLoading, setDocIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchSource = async () => {
+      try {
+        const data = await getLatestUserSubmission();
+        setSource(data);
+      } catch (error) {
+        console.error("Error fetching submission:", error);
+      }
+    };
+    fetchSource();
+  }, []);
 
   useEffect(() => {
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -22,11 +33,11 @@ export default function FileUpload({ src }: FileUploadProps) {
       import.meta.url
     ).toString();
 
-    if (src) {
-      contextValues.setFile(src);
+    if (Source?.src) {
+      contextValues.setFile(Source.src);
       setDocIsLoading(true);
     }
-  }, [src]);
+  }, [Source]);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     contextValues.setEdits({});
@@ -34,7 +45,7 @@ export default function FileUpload({ src }: FileUploadProps) {
     contextValues.setCurrPage(1);
 
     // Get the first page size
-    pdfjs.getDocument(src as string).promise.then((pdf) => {
+    pdfjs.getDocument(Source!.src).promise.then((pdf) => {
       pdf.getPage(1).then((page) => {
         const viewport = page.getViewport({ scale: 1 });
         const pageWidth = viewport.width;
@@ -67,10 +78,14 @@ export default function FileUpload({ src }: FileUploadProps) {
     });
   };
 
+  if (!Source) {
+    return <ErrorNotice />;
+  }
+
   return (
     <Box sx={{ minHeight: "100vh" }}>
-      {src && <SideBar />}
-      {src ? (
+      {Source.src && <SideBar />}
+      {Source.src ? (
         <Box
           sx={{
             width: "100%",
@@ -89,12 +104,8 @@ export default function FileUpload({ src }: FileUploadProps) {
               height: contextValues.canvas?.height,
             }}
           >
-            {docIsLoading && (
-              <>
-                <Loader />
-              </>
-            )}
-            <Document file={src} onLoadSuccess={onDocumentLoadSuccess}>
+            {docIsLoading && <Loader />}
+            <Document file={Source.src} onLoadSuccess={onDocumentLoadSuccess}>
               <div
                 id="canvasWrapper"
                 style={{

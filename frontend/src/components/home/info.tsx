@@ -1,8 +1,5 @@
-import {
-  SupervisorAccountRounded,
-  WatchLaterRounded,
-} from "@mui/icons-material";
-import { Grid2 as Grid } from "@mui/material";
+import { GradingRounded, SupervisorAccountRounded } from "@mui/icons-material";
+import { Grid2 as Grid, Tooltip } from "@mui/material";
 import { useUser } from "../../../context/UserContext";
 import { Student, Supervisor } from "../../services/types";
 
@@ -24,49 +21,105 @@ export function Info() {
       {user?.role === "student" ? (
         <>
           <Grid
+            size={6}
             sx={{
               display: "flex",
               alignItems: "center",
               padding: "4px",
+              whiteSpace: "nowrap",
+              overflowX: "auto",
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": {
+                display: "none",
+              },
             }}
           >
-            <SupervisorAccountRounded sx={{ mr: 1 }} /> Supervisor:
-            {student.supervisor
-              ? student.supervisor?.split(" ").slice(0, 2).join(" ")
-              : " Pending..."}
+            <Tooltip
+              title="Assigned Supervisor"
+              placement="top"
+              arrow
+              slotProps={{
+                popper: {
+                  modifiers: [
+                    {
+                      name: "offset",
+                      options: {
+                        offset: [0, -8],
+                      },
+                    },
+                  ],
+                },
+              }}
+            >
+              <SupervisorAccountRounded sx={{ mr: 1 }} />
+            </Tooltip>
+            {student.supervisor ? student.supervisor : " Pending..."}
           </Grid>
 
           <Grid
+            size={6}
             sx={{
               display: "flex",
               alignItems: "center",
+              padding: "4px",
+              whiteSpace: "nowrap",
+              overflowX: "auto",
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": {
+                display: "none",
+              },
             }}
           >
-            <WatchLaterRounded sx={{ mr: 1 }} /> Course: {student.course}
+            <Tooltip
+              title="Assigned Examiners"
+              placement="top"
+              arrow
+              slotProps={{
+                popper: {
+                  modifiers: [
+                    {
+                      name: "offset",
+                      options: {
+                        offset: [0, -8],
+                      },
+                    },
+                  ],
+                },
+              }}
+            >
+              <GradingRounded sx={{ mr: 1 }} />
+            </Tooltip>
+            {student.evaluators && student.evaluators.length > 0
+              ? student.evaluators.slice(0, 3).join(", ")
+              : "Pending..."}
           </Grid>
         </>
       ) : (
         <>
           <Grid
+            size={6}
             sx={{
               display: "flex",
               alignItems: "center",
               padding: "4px",
             }}
           >
-            <SupervisorAccountRounded sx={{ mr: 1 }} /> Supervisor:{" "}
-            {supervisor.supervisees_FYP1?.length}
+            <SupervisorAccountRounded sx={{ mr: 1 }} /> SUPERVISEES:{" "}
+            {(supervisor.supervisees_FYP1?.length || 0) +
+              (supervisor.supervisees_FYP2?.length || 0)}
           </Grid>
 
           <Grid
+            size={6}
             sx={{
               display: "flex",
               alignItems: "center",
               padding: "4px",
             }}
           >
-            <SupervisorAccountRounded sx={{ mr: 1 }} /> Supervisor:{" "}
-            {supervisor.supervisees_FYP2?.length}
+            <GradingRounded sx={{ mr: 1 }} /> EVALUATEES:{" "}
+            {(supervisor.evaluatees_FYP1?.length || 0) +
+              (supervisor.evaluatees_FYP2?.length || 0)}
           </Grid>
         </>
       )}

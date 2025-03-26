@@ -13,6 +13,9 @@ button#submissions-header[aria-expanded="false"] {
     border-bottom-right-radius: 8px;
     border-bottom-left-radius: 8px;
 }
+button#submissions-header[aria-expanded="true"] > span > div > svg {
+    border-bottom-left-radius: 0px;
+}
 
 div.MuiBox-root.css-kei82p > div {
     box-shadow: none !important;
@@ -26,3 +29,4 @@ button#submissions-header[aria-expanded="true"] {
 .css-qs39y3-MuiButtonBase-root-MuiAccordionSummary-root.Mui-expanded {
     min-height: 0 !important;
 }
+

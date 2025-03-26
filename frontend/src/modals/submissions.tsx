@@ -100,6 +100,37 @@ const status_info = [
     ),
   },
   {
+    value: "Closed",
+    color: "#28a745",
+    icon: (
+      <CheckCircle
+        sx={{
+          color: "#3cfc68",
+          mr: 1,
+          fontSize: "1.5rem",
+          backgroundColor: "#28a745",
+          height: "3.25rem",
+          width: "2rem",
+          padding: "0.25rem",
+          borderRight: "1px solid #58041D",
+          borderTopLeftRadius: "8px",
+          borderBottomLeftRadius: "8px",
+        }}
+      />
+    ),
+    legend: (
+      <CheckCircle
+        sx={{
+          color: "#3cfc68",
+          fontSize: "1rem",
+          backgroundColor: "#28a745",
+          padding: "0.5rem",
+          borderRadius: "50%",
+        }}
+      />
+    ),
+  },
+  {
     value: "Feedback",
     color: "#0d6efd",
     icon: (

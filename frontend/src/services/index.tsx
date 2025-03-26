@@ -173,6 +173,17 @@ export const getUserSubmissions = async () => {
   }
 };
 
+export const getLatestUserSubmission = async () => {
+  try {
+    const response = await fetch(`${api}/submissions_user_latest.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
 export const uploadFeedback = async (payload: any) => {
   try {
     const response = await fetch(`${api}/upload-feedback`, {
@@ -205,6 +216,17 @@ export const getGrades = async () => {
   }
 };
 
+export const getMarkingScheme = async () => {
+  try {
+    const response = await fetch(`${api}/grading_content.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
 export const saveGrades = async (payload: any) => {
   try {
     await fetch("/api/save-grades", {
@@ -216,5 +238,16 @@ export const saveGrades = async (payload: any) => {
     });
   } catch (error) {
     console.error("Failed to send grades:", error);
+  }
+};
+
+export const getUserSubmissionData = async () => {
+  try {
+    const response = await fetch(`${api}/submissions_user_combined.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
   }
 };
