@@ -24,6 +24,7 @@ import AccountBoxIcon from "@mui/icons-material/AccountBox";
 import { useNavigate } from "react-router";
 import logo from "../assets/icon.png";
 import {
+  BookRounded,
   GradingRounded,
   SupervisedUserCircleRounded,
 } from "@mui/icons-material";
@@ -157,6 +158,11 @@ export default function NavigationBar() {
       text: "Submissions",
       icon: <DriveFolderUploadIcon style={{ color: "#58041D" }} />,
       path: "/submissions",
+    },
+    {
+      text: "Log Books",
+      icon: <BookRounded style={{ color: "#58041D" }} />,
+      path: "/logs",
     },
     {
       text: "Profile",

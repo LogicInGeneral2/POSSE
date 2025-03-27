@@ -262,3 +262,14 @@ export const getStudentList = async (category: string) => {
     throw new Error(error);
   }
 };
+
+export const getLogbookList = async (student: number) => {
+  try {
+    const response = await fetch(`${api}/logs.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};

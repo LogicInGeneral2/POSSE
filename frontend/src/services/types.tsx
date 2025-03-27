@@ -121,3 +121,14 @@ export interface SubmissionsMetaType {
   submission: SubmissionType;
   feedback: FeedbackType;
 }
+
+export interface LogType {
+  id: number;
+  supervisor_id: number;
+  student_id: number;
+  date: string;
+  activities: string;
+  feedbacks: string;
+  plan: string;
+  status: string;
+}

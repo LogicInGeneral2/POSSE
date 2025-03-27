@@ -21,6 +21,9 @@ import { Supervisees } from "./routes/supervisees.tsx";
 import { Grading } from "./routes/grading.tsx";
 import { Viewing } from "./routes/viewing.tsx";
 import { UserProvider } from "../context/UserContext";
+import { Logs } from "./routes/logs.tsx";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 
 const router = createBrowserRouter([
   {
@@ -58,6 +61,10 @@ const router = createBrowserRouter([
         element: <Submissions />,
       },
       {
+        path: "/logs",
+        element: <Logs />,
+      },
+      {
         path: "*",
         element: <ErrorRoute />,
       },
@@ -72,9 +79,11 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <UserProvider>
-      <ThemeProvider theme={theme}>
-        <RouterProvider router={router} />
-      </ThemeProvider>
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <ThemeProvider theme={theme}>
+          <RouterProvider router={router} />
+        </ThemeProvider>
+      </LocalizationProvider>
     </UserProvider>
   </StrictMode>
 );

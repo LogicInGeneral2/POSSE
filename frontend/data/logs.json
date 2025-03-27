@@ -1,0 +1,90 @@
+[
+    {
+      "id": 1,
+      "student_id": 1,
+      "supervisor_id": 1,
+      "date": "2025-03-01",
+      "activities": "● Current status of FYP1.\n● Discussion on possible topics for FYP.\n● Clarifications on suggested topics.",
+      "feedbacks": "Suggestion on a FYP topic, PSM system.\nBrief details on the requirements and scope of the project.\nBriefing on proposal form, such as details to be included and formats.",
+      "plan": "Update on proposal form, before finalizing it.",
+      "status": "Sent"
+    },
+    {
+      "id": 2,
+      "student_id": 1,
+      "supervisor_id": 1,
+      "date": "2025-03-03",
+      "activities": "● Reviewed initial proposal draft.\n● Discussed potential research methodologies.\n● Identified key challenges and risks.",
+      "feedbacks": "Proposal needs more details on methodology.\nConsider adding risk mitigation strategies.\nCheck the formatting of references.",
+      "plan": "Revise the proposal and submit a second draft for review.",
+      "status": "Sent"
+    },
+    {
+      "id": 3,
+      "student_id": 1,
+      "supervisor_id": 1,
+      "date": "2025-03-15",
+      "activities": "● Discussion on literature review structure.\n● Identified key papers and sources.\n● Guidance on writing style and citations.",
+      "feedbacks": "Ensure proper citation format.\nInclude more recent studies in literature review.\nOrganize sections more clearly.",
+      "plan": "Continue working on the literature review and refine structure.",
+      "status": "Sent"
+    },
+    {
+      "id": 4,
+      "student_id": 1,
+      "supervisor_id": 1,
+      "date": "2025-03-22",
+      "activities": "● Finalized research methodology.\n● Discussed data collection techniques.\n● Prepared for ethics approval submission.",
+      "feedbacks": "Include justification for selected methodology.\nClarify sample size and data collection approach.\nCheck ethics submission requirements.",
+      "plan": "Prepare and submit ethics approval documents.",
+      "status": "Sent"
+    },
+    {
+      "id": 5,
+      "student_id": 1,
+      "supervisor_id": 1,
+      "date": "2025-03-29",
+      "activities": "● Started working on data collection.\n● Discussed preliminary data analysis methods.\n● Addressed challenges in data gathering.",
+      "feedbacks": "Ensure data collection follows planned methodology.\nDocument challenges and solutions.\nStart preparing for initial data analysis.",
+      "plan": "Complete data collection and begin preprocessing.",
+      "status": "Sent"
+    },
+    {
+      "id": 6,
+      "student_id": 1,
+      "supervisor_id": 1,
+      "date": "2025-04-05",
+      "activities": "● Presented initial data analysis findings.\n● Received feedback on statistical techniques.\n● Discussed possible improvements.",
+      "feedbacks": "Improve data visualization techniques.\nCheck assumptions of statistical tests used.\nRefine analysis based on feedback.",
+      "plan": "Update analysis and refine statistical methods.",
+      "status": "Sent"
+    },    {
+      "id": 7,
+      "student_id": 1,
+      "supervisor_id": 1,
+      "date": "2025-04-15",
+      "activities": "● Presented initial data analysis findings.\n● Received feedback on statistical techniques.\n● Discussed possible improvements.",
+      "feedbacks": "Improve data visualization techniques.\nCheck assumptions of statistical tests used.\nRefine analysis based on feedback.",
+      "plan": "Update analysis and refine statistical methods.",
+      "status": "Sent"
+    },    {
+      "id": 8,
+      "student_id": 1,
+      "supervisor_id": 1,
+      "date": "2025-04-25",
+      "activities": "● Presented initial data analysis findings.\n● Received feedback on statistical techniques.\n● Discussed possible improvements.",
+      "feedbacks": "Improve data visualization techniques.\nCheck assumptions of statistical tests used.\nRefine analysis based on feedback.",
+      "plan": "Update analysis and refine statistical methods.",
+      "status": "Sent"
+    },    {
+      "id": 9,
+      "student_id": 1,
+      "supervisor_id": 1,
+      "date": "2025-04-26",
+      "activities": "● Presented initial data analysis findings.\n● Received feedback on statistical techniques.\n● Discussed possible improvements.",
+      "feedbacks": "Improve data visualization techniques.\nCheck assumptions of statistical tests used.\nRefine analysis based on feedback.",
+      "plan": "Update analysis and refine statistical methods.",
+      "status": "Sent"
+    }
+  ]
+  

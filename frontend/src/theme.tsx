@@ -1,4 +1,5 @@
 import { createTheme } from "@mui/material/styles";
+import type {} from "@mui/x-date-pickers/themeAugmentation";
 
 const theme = createTheme({
   palette: {
@@ -161,6 +162,38 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: "#FFFFFF",
+        },
+      },
+    },
+    MuiPickersDay: {
+      styleOverrides: {
+        root: {
+          color: "#58041D", // Default date text color
+          "&.Mui-selected": {
+            backgroundColor: "#58041D", // Selected date background
+            color: "#FFFFFF", // Selected date text color
+          },
+          "&:hover": {
+            backgroundColor: "#F8B628",
+            color: "#58041D",
+          },
+        },
+      },
+    },
+    MuiDayCalendar: {
+      styleOverrides: {
+        weekDayLabel: {
+          color: "#58041D", // Weekday labels (S, M, T, W, T, F, S)
+          fontWeight: "bold",
+        },
+      },
+    },
+    MuiDateCalendar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#fff",
+          color: "#58041D",
+          borderRadius: "8px",
         },
       },
     },
