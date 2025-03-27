@@ -173,7 +173,7 @@ export const getUserSubmissions = async () => {
   }
 };
 
-export const getLatestUserSubmission = async () => {
+export const getLatestUserSubmission = async (student: string) => {
   try {
     const response = await fetch(`${api}/submissions_user_latest.json`);
     const data = await response.json();
@@ -205,7 +205,7 @@ export const uploadFeedback = async (payload: any) => {
   }
 };
 
-export const getGrades = async () => {
+export const getGrades = async (student: string) => {
   try {
     const response = await fetch(`${api}/supervises_grades.json`);
     const data = await response.json();
@@ -244,6 +244,17 @@ export const saveGrades = async (payload: any) => {
 export const getUserSubmissionData = async () => {
   try {
     const response = await fetch(`${api}/submissions_user_combined.json`);
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const getStudentList = async (category: string) => {
+  try {
+    const response = await fetch(`${api}/supervisees_list.json`);
     const data = await response.json();
     return data;
   } catch (error: any) {

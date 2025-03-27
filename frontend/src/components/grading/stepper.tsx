@@ -1,21 +1,15 @@
 import {
   Box,
   Button,
+  Divider,
   FormControl,
   FormControlLabel,
-  Paper,
   Radio,
   RadioGroup,
   Stack,
   Step,
   StepLabel,
   Stepper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
@@ -24,6 +18,7 @@ import ErrorNotice from "../commons/error";
 import { useUser } from "../../../context/UserContext";
 import LoadingSpinner from "../commons/loading";
 import { GradingContentsType } from "../../services/types";
+import ScoreTable from "./finaltable";
 
 const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
   const { user } = useUser();
@@ -41,7 +36,7 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
         if (schemeData) {
           setGradingContents(schemeData);
         }
-        const gradesData = await getGrades();
+        const gradesData = await getGrades(student);
         if (gradesData) {
           setGrades(
             schemeData.map((step: GradingContentsType, stepIndex: number) =>
@@ -137,32 +132,11 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
                 justifyContent: "center",
               }}
             >
-              <TableContainer component={Paper} sx={{ mt: 2 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: "bold" }}>Step</TableCell>
-                      <TableCell sx={{ fontWeight: "bold" }}>Score</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {stepScores.map((score, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{steps[index]}</TableCell>
-                        <TableCell>{score}</TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: "bold" }}>
-                        Total Score
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: "bold" }}>
-                        {totalScore}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <ScoreTable
+                steps={steps}
+                stepScores={stepScores}
+                totalScore={totalScore}
+              />
             </Box>
           ) : (
             <Box sx={{ flexGrow: 1, height: "400px", overflow: "auto" }}>
@@ -176,7 +150,45 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
               >
                 {steps[activeStep]}
               </Typography>
-              <Stack>
+              <Stack
+                divider={
+                  <Divider
+                    orientation="horizontal"
+                    flexItem
+                    sx={{
+                      borderBottomWidth: 1,
+                      borderColor: "primary.main",
+                      mb: "10px",
+                    }}
+                  />
+                }
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "flex-end",
+                    gap: 2,
+                    mb: 1,
+                  }}
+                >
+                  {[...Array(gradingContents[activeStep].marks)].map(
+                    (_, idx) => (
+                      <Typography
+                        key={idx}
+                        sx={{
+                          width: "40px",
+                          textAlign: "left",
+                          mr: 0.5,
+                        }}
+                      >
+                        {idx + 1}
+                      </Typography>
+                    )
+                  )}
+                </Box>
+
+                {/* Content Rows */}
                 {gradingContents[activeStep].contents.map((content, index) => (
                   <Box
                     key={index}
@@ -184,6 +196,7 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
                       display: "flex",
                       flexDirection: "row",
                       justifyContent: "space-between",
+                      alignItems: "center",
                     }}
                   >
                     <Typography>{content}</Typography>
@@ -198,6 +211,7 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
                             Number(e.target.value)
                           )
                         }
+                        sx={{ display: "flex", gap: 2 }}
                       >
                         {[...Array(gradingContents[activeStep].marks)].map(
                           (_, idx) => (
@@ -205,8 +219,7 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
                               key={idx}
                               value={idx + 1}
                               control={<Radio />}
-                              label={`${idx + 1}`}
-                              labelPlacement="top"
+                              label=""
                             />
                           )
                         )}

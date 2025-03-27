@@ -5,6 +5,7 @@ import { SuperviseeSubmission } from "../../services/types";
 import { getEvaluatees, getSupervisees } from "../../services";
 import ErrorNotice from "../commons/error";
 import LoadingSpinner from "../commons/loading";
+import { useSearchParams } from "react-router";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -19,8 +20,8 @@ function CustomTabPanel(props: TabPanelProps) {
     <div
       role="tabpanel"
       hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
+      id={`students-tabpanel-${index}`}
+      aria-labelledby={`students-tab-${index}`}
       {...other}
     >
       {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
@@ -30,12 +31,13 @@ function CustomTabPanel(props: TabPanelProps) {
 
 function a11yProps(index: number) {
   return {
-    id: `simple-tab-${index}`,
-    "aria-controls": `simple-tabpanel-${index}`,
+    id: `students-tab-${index}`,
+    "aria-controls": `students-tabpanel-${index}`,
   };
 }
 
 export const SuperviseesPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [value, setValue] = React.useState(0);
   const [evaluatees, setEvaluatees] = useState<SuperviseeSubmission[]>([]);
   const [supervisees, setSupervisees] = useState<SuperviseeSubmission[]>([]);
@@ -44,6 +46,8 @@ export const SuperviseesPage = () => {
   if (!evaluatees || !supervisees) {
     return <ErrorNotice />;
   }
+
+  const tabQuery = searchParams.get("tab");
 
   useEffect(() => {
     const fetchSupervisees = async () => {
@@ -70,8 +74,13 @@ export const SuperviseesPage = () => {
     fetchEvaluatees();
   }, []);
 
+  useEffect(() => {
+    setValue(tabQuery === "evaluatees" ? 1 : 0);
+  }, [tabQuery]);
+
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
+    setSearchParams({ tab: newValue === 1 ? "evaluatees" : "supervisees" });
   };
 
   return (

@@ -43,7 +43,7 @@ export const SupervisorsPage = () => {
           }}
         >
           <SupervisorAccountRounded sx={{ mr: 1, fontSize: "2rem" }} />
-          Assigned Supervisor:
+          Assigned Supervisor:{" "}
           {student.supervisor ? student.supervisor : " Pending..."}
         </Box>
         <Box

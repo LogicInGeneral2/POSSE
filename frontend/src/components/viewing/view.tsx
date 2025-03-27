@@ -10,7 +10,7 @@ import Loader from "./loader";
 import { getLatestUserSubmission } from "../../services";
 import ErrorNotice from "../commons/error";
 
-export default function FileUpload() {
+export default function FileUpload({ student }: { student: string }) {
   const contextValues = useButtons();
   const [Source, setSource] = useState<{ src: string } | null>(null);
   const [docIsLoading, setDocIsLoading] = useState<boolean>(true);
@@ -18,7 +18,7 @@ export default function FileUpload() {
   useEffect(() => {
     const fetchSource = async () => {
       try {
-        const data = await getLatestUserSubmission();
+        const data = await getLatestUserSubmission(student);
         setSource(data);
       } catch (error) {
         console.error("Error fetching submission:", error);

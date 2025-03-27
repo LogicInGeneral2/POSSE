@@ -1,14 +1,16 @@
-import PersonIcon from "@mui/icons-material/Person";
 import { Box, Divider, Grid2 as Grid, Typography } from "@mui/material";
 import GradingStepper from "./stepper";
-import { useLocation } from "react-router";
-import { GradingRounded } from "@mui/icons-material";
+import { useLocation, useSearchParams } from "react-router";
+import Breadcrumb from "../commons/breadcrumbs";
 
 export const GradingPage = () => {
   const location = useLocation();
-  const rowData = location.state?.rowData;
-  const category = location.state?.category;
-  const student = rowData?.student;
+  const [searchParams] = useSearchParams();
+  const studentName =
+    searchParams.get("name") || location.state.rowData?.student?.name;
+  const studentId =
+    searchParams.get("student") || location.state.rowData?.student?.id;
+  const category = location.state?.category || "supervisor";
 
   return (
     <>
@@ -22,10 +24,17 @@ export const GradingPage = () => {
           color="secondary"
           sx={{ fontWeight: "bold" }}
         >
-          Grading
+          Submissions & Grading
         </Typography>
-        <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
+        <Box sx={{ justifyContent: "space-between", display: "flex" }}>
+          <Breadcrumb
+            receivedName={studentName}
+            category={category}
+            currentPage="Grading"
+          />
+        </Box>
 
+        <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
         <Grid
           container
           spacing={4}
@@ -44,28 +53,6 @@ export const GradingPage = () => {
           >
             <Box
               sx={{
-                marginBottom: "20px",
-                fontSize: "1rem",
-                padding: "5px",
-                border: "1px solid",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                fontWeight: "bold",
-                gap: "2rem",
-              }}
-            >
-              <Typography sx={{ display: "flex", alignItems: "center" }}>
-                <PersonIcon sx={{ mr: 1, fontSize: "2rem" }} />
-                Currently Grading: {student.name}
-              </Typography>
-              <Typography sx={{ display: "flex", alignItems: "center" }}>
-                <GradingRounded sx={{ mr: 1, fontSize: "2rem" }} />
-                Grading As: {category.toUpperCase()}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
@@ -75,7 +62,7 @@ export const GradingPage = () => {
                 border: "1px solid",
               }}
             >
-              <GradingStepper pic={category} student={student.id} />
+              <GradingStepper pic={category} student={studentId} />
             </Box>
           </Grid>
           <Grid
