@@ -8,6 +8,9 @@ import Details from "./details";
 import { useUser } from "../../../context/UserContext";
 import Calendar from "./calendar";
 import { format } from "date-fns";
+import Breadcrumb from "../commons/breadcrumbs";
+import { useLocation, useSearchParams } from "react-router";
+import LoadingSpinner from "../commons/loading";
 
 export const LogbooksPage = () => {
   const { user } = useUser();
@@ -16,55 +19,79 @@ export const LogbooksPage = () => {
   const [selectedLog, setSelectedLog] = useState<LogType | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  const [studentName, setStudentName] = useState<string | null>(null);
+  const [studentId, setStudentId] = useState<string | null>(null);
+  const [category, setCategory] = useState<string>("supervisor");
+
+  if (user !== null && user.role !== "student") {
+    useEffect(() => {
+      const stateData = location.state?.rowData?.student || {};
+      setStudentName(searchParams.get("name") || stateData.name);
+      setStudentId(searchParams.get("student") || stateData.id);
+      setCategory(location.state?.category || "supervisor");
+    }, [location.state, searchParams, user.role]);
+  }
 
   useEffect(() => {
     const fetchLogs = async () => {
-      if (!user) {
-        console.error("User is not available");
-        return;
-      }
+      const idToFetch = user?.role === "supervisor" ? studentId : user?.id;
+
+      if (!idToFetch) return;
+
       try {
-        const fetchedData = await getLogbookList(user.id);
+        const fetchedData = await getLogbookList(idToFetch as number);
         setData(fetchedData);
         setLogDates(fetchedData.map((log: { date: any }) => log.date));
       } catch (error) {
-        console.error("Error fetching logbooks:", error);
+        console.error("Failed to fetch logs", error);
+        setData([]);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchLogs();
-  }, [user]);
+  }, [user, studentId]);
 
   const handleSelectLog = (log: LogType) => {
     setSelectedLog(log);
-    setSelectedDate(log.date); // Update selected date for the calendar
+    setSelectedDate(log.date);
   };
 
   const handleSave = (updatedLog: LogType) => {
-    setData(
-      (prevData) =>
-        prevData.some((log) => log.id === updatedLog.id)
-          ? prevData.map((log) => (log.id === updatedLog.id ? updatedLog : log))
-          : [...prevData, updatedLog] // Add if it's a new entry
+    setData((prevData) =>
+      prevData.some((log) => log.id === updatedLog.id)
+        ? prevData.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+        : [...prevData, updatedLog]
     );
+
     setSelectedLog(updatedLog);
-    setLogDates((prev) => [...new Set([...prev, updatedLog.date])]); // Update calendar marks
+
+    setLogDates((prevDates) => {
+      // Remove the old date if it exists
+      const oldDate = selectedLog?.date;
+      const newDates = prevDates.filter((date) => date !== oldDate);
+
+      // Add the updated date
+      return [...new Set([...newDates, updatedLog.date])];
+    });
   };
 
   const handleDelete = (id: number) => {
-    setData((prevData) => prevData.filter((log) => log.id !== id));
+    setData((prevData) => {
+      const updatedData = prevData.filter((log) => log.id !== id);
+      setLogDates(updatedData.map((log) => log.date));
+      return updatedData;
+    });
     setSelectedLog(null);
-    setLogDates((prev) =>
-      prev.filter(
-        (date) => !data.find((log) => log.id !== id && log.date === date)
-      )
-    );
   };
 
   const handleDateClick = (selectedDate: Date) => {
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
-    setSelectedDate(formattedDate); // Sync calendar selection
+    setSelectedDate(formattedDate);
     const existingLog = data.find((log) => log.date === formattedDate);
 
     if (existingLog) {
@@ -83,7 +110,11 @@ export const LogbooksPage = () => {
     }
   };
 
-  if (!data) {
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
     return <ErrorNotice />;
   }
 
@@ -92,6 +123,15 @@ export const LogbooksPage = () => {
       <Typography fontSize="3rem" color="secondary" sx={{ fontWeight: "bold" }}>
         Log Books
       </Typography>
+      {user.role !== "student" ? (
+        <Box sx={{ justifyContent: "space-between", display: "flex" }}>
+          <Breadcrumb
+            receivedName={studentName ?? ""}
+            category={category}
+            currentPage="Grading"
+          />
+        </Box>
+      ) : null}
       <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
       <Box
         sx={{
@@ -102,47 +142,41 @@ export const LogbooksPage = () => {
           gap: "20px",
         }}
       >
-        {isLoading ? (
-          <div>Loading...</div>
-        ) : (
-          <>
-            <Box
-              sx={{
-                border: "1px solid",
-                borderRadius: "8px",
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-                width: "25%",
-                gap: "20px",
-                backgroundColor: "#E9DADD",
-              }}
-            >
-              <Calendar
-                logDates={logDates}
-                selectedDate={selectedDate}
-                onDateClick={handleDateClick}
-              />
-              <DataTable data={data} onRowClick={handleSelectLog} />
-            </Box>
-            <Box
-              sx={{
-                border: "1px solid",
-                borderRadius: "8px",
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-                flexGrow: 1,
-              }}
-            >
-              <Details
-                selectedLog={selectedLog}
-                onSave={handleSave}
-                onDelete={handleDelete}
-              />
-            </Box>
-          </>
-        )}
+        <Box
+          sx={{
+            border: "1px solid",
+            borderRadius: "8px",
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            width: "25%",
+            backgroundColor: "#E9DADD",
+          }}
+        >
+          <Calendar
+            logDates={logDates}
+            selectedDate={selectedDate}
+            onDateClick={handleDateClick}
+          />
+          <DataTable data={data} onRowClick={handleSelectLog} />
+        </Box>
+        <Box
+          sx={{
+            border: "1px solid",
+            borderRadius: "8px",
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            flexGrow: 1,
+          }}
+        >
+          <Details
+            selectedLog={selectedLog}
+            onSave={handleSave}
+            onDelete={handleDelete}
+            userRole={user?.role as string}
+          />
+        </Box>
       </Box>
     </div>
   );

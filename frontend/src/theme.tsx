@@ -7,8 +7,8 @@ const theme = createTheme({
     secondary: { main: "#F8B628" },
     error: { main: "#d32f2f" },
     warning: { main: "#ed6c02" },
-    info: { main: "#0288d1" },
-    success: { main: "#2e7d32" },
+    info: { main: "#0d6efd" },
+    success: { main: "#28a745" },
   },
   typography: {
     fontFamily: ["Roboto", "sans-serif"].join(","),

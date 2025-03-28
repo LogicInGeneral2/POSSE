@@ -44,7 +44,7 @@ export default function Calendar({
       minDate={startOfYear(new Date())}
       sx={{
         width: "100%",
-        height: "160vh",
+        height: "150vh",
         backgroundColor: "#E9DADD",
         borderTopLeftRadius: "8px",
         borderTopRightRadius: "8px",

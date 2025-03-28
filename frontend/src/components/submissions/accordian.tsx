@@ -19,7 +19,7 @@ import {
   HourglassBottom,
   OutboxRounded,
 } from "@mui/icons-material";
-import { status_info } from "../../modals/submissions";
+import { status_info } from "./status";
 import UploadIcon from "@mui/icons-material/Upload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DownloadIcon from "@mui/icons-material/Download";

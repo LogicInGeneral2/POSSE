@@ -1,5 +1,5 @@
 import { Grid2 as Grid, Typography } from "@mui/material";
-import { status_info } from "../../modals/submissions";
+import { status_info } from "./status";
 
 function LegendCard() {
   return (
