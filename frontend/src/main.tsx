@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import { RootRoute } from "./routes/root.tsx";
 import { ErrorRoute } from "./routes/error.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router";
-
 import "./index.css";
 import App from "./App.tsx";
 import "@fontsource/roboto/300.css";
@@ -24,6 +23,8 @@ import { UserProvider } from "../context/UserContext";
 import { Logs } from "./routes/logs.tsx";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
+import ProtectedRoute from "./routes/ProtectedRoute.tsx";
+import { Logout } from "./routes/logout.tsx";
 
 const router = createBrowserRouter([
   {
@@ -37,42 +38,85 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/home",
-        element: <Home />,
+        element: (
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        ),
       },
-      { path: "/course_outline", element: <CourseOuline /> },
+      {
+        path: "/course_outline",
+        element: (
+          <ProtectedRoute>
+            <CourseOuline />
+          </ProtectedRoute>
+        ),
+      },
       {
         path: "/supervisors",
-        element: <Supervisors />,
+        element: (
+          <ProtectedRoute>
+            <Supervisors />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/supervisees",
-        element: <Supervisees />,
+        element: (
+          <ProtectedRoute>
+            <Supervisees />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/grading",
-        element: <Grading />,
+        element: (
+          <ProtectedRoute>
+            <Grading />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/documents",
-        element: <Documents />,
+        element: (
+          <ProtectedRoute>
+            <Documents />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/submissions",
-        element: <Submissions />,
+        element: (
+          <ProtectedRoute>
+            <Submissions />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/logs",
-        element: <Logs />,
+        element: (
+          <ProtectedRoute>
+            <Logs />
+          </ProtectedRoute>
+        ),
       },
       {
-        path: "*",
-        element: <ErrorRoute />,
+        path: "/logout",
+        element: <Logout />,
       },
     ],
   },
   {
     path: "/viewing",
-    element: <Viewing />,
+    element: (
+      <ProtectedRoute>
+        <Viewing />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "*",
+    element: <ErrorRoute />,
   },
 ]);
 

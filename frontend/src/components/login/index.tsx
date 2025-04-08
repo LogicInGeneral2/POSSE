@@ -8,6 +8,7 @@ import {
   FormControlLabel,
   InputAdornment,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import {
   LockRounded,
@@ -15,16 +16,19 @@ import {
   VisibilityOff,
   Visibility,
 } from "@mui/icons-material";
-import React from "react";
+import React, { useState } from "react";
 import logo from "../../assets/icon.png";
 import "./login.css";
 import { useNavigate } from "react-router";
 import { useUser } from "../../../context/UserContext";
-import { Student, Supervisor } from "../../services/types";
+import { loginUser } from "../../services";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const { login } = useUser();
+  const [loading, setLoading] = useState(false);
 
   const [showPassword, setShowPassword] = React.useState(false);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -39,32 +43,20 @@ export const LoginPage = () => {
     event.preventDefault();
   };
 
-  const handleLogin = () => {
-    const userData: Student = {
-      id: 1,
-      name: "John Doe Bin Eod Nhoj",
-      email: "john@example.com",
-      role: "student",
-      student_id: 1,
-      supervisor: "Memoon Bin Mehdi",
-      evaluators: ["Ali", "Abu", "Fatimah"],
-      course: "FYP 1",
-    };
+  const handleLogin = async (event: { preventDefault: () => void }) => {
+    setLoading(true);
+    event.preventDefault();
 
-    {
-      /*
-      id: 2,
-      name: "Dr. Jane Smith",
-      email: "jane@example.com",
-      role: "supervisor",
-      supervisor_id: 2,
-      supervisees_FYP1: ["Ali", "Abu", "Fatimah"],
-      supervisees_FYP2: ["Ching", "Chong"],
-      */
+    try {
+      const { user: fetchedUser } = await loginUser(username, password);
+      login(fetchedUser);
+      navigate("/home");
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("Invalid username or password");
+    } finally {
+      setLoading(false);
     }
-
-    login(userData);
-    navigate("/home");
   };
 
   return (
@@ -138,6 +130,7 @@ export const LoginPage = () => {
                   label="Username"
                   variant="standard"
                   sx={{ width: "100%" }}
+                  onChange={(event) => setUsername(event.target.value)}
                 />
               </Box>
               <Box sx={{ display: "flex", alignItems: "flex-end" }}>
@@ -147,6 +140,7 @@ export const LoginPage = () => {
                   variant="standard"
                   sx={{ width: "100%" }}
                   type={showPassword ? "text" : "password"}
+                  onChange={(event) => setPassword(event.target.value)}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
@@ -199,14 +193,20 @@ export const LoginPage = () => {
                 </Box>
               </Stack>
 
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleLogin}
-                sx={{ borderRadius: "16px" }}
-              >
-                Login
-              </Button>
+              {loading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleLogin}
+                  sx={{ borderRadius: "16px" }}
+                >
+                  Login
+                </Button>
+              )}
             </div>
           </form>
         </Box>

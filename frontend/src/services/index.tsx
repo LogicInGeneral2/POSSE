@@ -1,4 +1,40 @@
-import api from "../api";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../api/constants";
+import { Student, Supervisor, User } from "./types";
+import api2 from "../api";
+const api = "../data";
+
+export const loginUser = async (
+  username: string,
+  password: string
+): Promise<{ user: User | Student | Supervisor }> => {
+  const res = await api2.post("/api/token/", { username, password });
+
+  localStorage.setItem(ACCESS_TOKEN, res.data.access);
+  localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+
+  const userRes = await api2.get("/api/users/me/");
+  console.log(userRes.data);
+  const userData = userRes.data as User | Student | Supervisor;
+
+  return { user: userData };
+};
+
+export const logoutUser = async () => {
+  const refreshToken = localStorage.getItem("refresh");
+
+  if (!refreshToken) {
+    console.error("No refresh token found");
+    return;
+  }
+
+  try {
+    await api2.post("/api/logout/", { refresh: refreshToken });
+    localStorage.removeItem(ACCESS_TOKEN);
+    localStorage.removeItem("refresh");
+  } catch (error) {
+    console.error("Logout failed", error);
+  }
+};
 
 export const getPeriod = async () => {
   try {

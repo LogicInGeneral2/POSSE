@@ -7,17 +7,17 @@ export interface User {
 
 export interface Student extends User {
   student_id: number;
-  supervisor?: string; // NUMBER
-  evaluators?: string[]; // NUMBER
+  supervisor?: string; 
+  evaluators?: string[]; 
   course?: string;
 }
 
 export interface Supervisor extends User {
   supervisor_id: number;
-  supervisees_FYP1?: string[]; // NUMBER
-  supervisees_FYP2?: string[]; // NUMBER
-  evaluatees_FYP1?: string[]; // NUMBER
-  evaluatees_FYP2?: string[]; // NUMBER
+  supervisees_FYP1?: string[]; 
+  supervisees_FYP2?: string[]; 
+  evaluatees_FYP1?: string[]; 
+  evaluatees_FYP2?: string[]; 
 }
 
 export interface UserContextType {

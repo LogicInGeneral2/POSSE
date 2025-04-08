@@ -11,6 +11,7 @@ import {
   Supervisor,
   UserContextType,
 } from "../src/services/types";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../src/api/constants";
 
 // Create UserContext with a default value of `undefined`
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -44,6 +45,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
+    // Clear JWT tokens from localStorage
+    localStorage.removeItem(ACCESS_TOKEN);
+    localStorage.removeItem(REFRESH_TOKEN);
   };
 
   // Return loading state to prevent UI flickers

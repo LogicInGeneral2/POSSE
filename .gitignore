@@ -27,3 +27,4 @@ dist-ssr
 /env/
 /frontend/src/api/
 **/node_modules/
+/frontend/.env
