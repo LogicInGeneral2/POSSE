@@ -12,10 +12,9 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError("Email is required")
         email = self.normalize_email(email)
-        username = email.split("@")[0]
-        user = self.model(
-            email=email, name=name, role=role, username=username, **extra_fields
-        )
+
+        # Do NOT pass username here — let it auto-generate in save()
+        user = self.model(email=email, name=name, role=role, **extra_fields)
         user.set_password(password)
         user.save()
         return user
@@ -43,14 +42,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["email", "name", "role"]
-
     objects = CustomUserManager()
+
+    USERNAME_FIELD = "username"  # Login with username
+    REQUIRED_FIELDS = ["email", "name", "role"]  # Asked when creating superuser
 
     def save(self, *args, **kwargs):
         if not self.username and self.email:
-            self.username = self.email.split("@")[0]
+            base_username = self.email.split("@")[0]
+            unique_username = base_username
+            counter = 1
+            while User.objects.filter(username=unique_username).exists():
+                unique_username = f"{base_username}{counter}"
+                counter += 1
+            self.username = unique_username
         super().save(*args, **kwargs)
 
     def __str__(self):
