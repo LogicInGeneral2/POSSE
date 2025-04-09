@@ -157,7 +157,9 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
               <Typography sx={{ fontWeight: "bold" }}>START DATE</Typography>
               <CalendarMonth sx={{ fontSize: "3rem" }} />
               <Typography sx={{ fontWeight: "bold" }}>
-                {format(period.start_date, "d MMMM yyyy")}
+                {period.start_date
+                  ? format(new Date(period.start_date), "dd MMM yyyy")
+                  : "N/A"}
               </Typography>
             </Box>
             <Box

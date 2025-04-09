@@ -1,5 +1,5 @@
 import Carousel from "react-material-ui-carousel";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { AnnouncementTypes } from "../../services/types";
 import { useEffect, useState } from "react";
 import { getAnnouncements } from "../../services";
@@ -14,7 +14,7 @@ function Announcements() {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       const data = await getAnnouncements();
-      setAnnouncements(data);
+      setAnnouncements(data.data);
       setIsloading(false);
     };
     fetchAnnouncements();

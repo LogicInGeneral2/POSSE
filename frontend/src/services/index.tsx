@@ -13,7 +13,6 @@ export const loginUser = async (
   localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
 
   const userRes = await api2.get("/api/users/me/");
-  console.log(userRes.data);
   const userData = userRes.data as User | Student | Supervisor;
 
   return { user: userData };
@@ -38,8 +37,7 @@ export const logoutUser = async () => {
 
 export const getPeriod = async () => {
   try {
-    const response = await fetch(`${api}/period_modal.json`);
-    const data = await response.json();
+    const { data } = await api2.get(`/period/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -49,8 +47,7 @@ export const getPeriod = async () => {
 
 export const getEvents = async () => {
   try {
-    const response = await fetch(`${api}/period_all.json`);
-    const data = await response.json();
+    const data = await api2.get(`/periods/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -60,8 +57,8 @@ export const getEvents = async () => {
 
 export const getAnnouncements = async () => {
   try {
-    const response = await fetch(`${api}/announcement.json`);
-    const data = await response.json();
+    const data = await api2.get(`/announcement/`);
+    console.log(data);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);

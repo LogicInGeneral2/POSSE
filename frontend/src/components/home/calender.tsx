@@ -18,22 +18,23 @@ import { periodTypes } from "../../services/types";
 
 const DashboardCalender: FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
-  const [eventsPeriod, setEventsPeriod] = useState<periodTypes[]>([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const data = await getEvents();
-      setEventsPeriod(data);
+      try {
+        const data: periodTypes[] = (await getEvents()).data;
+        const newEvents: Event[] = data.map((period) => ({
+          title: period.title,
+          start: new Date(period.start_date),
+          end: new Date(period.end_date),
+        }));
+        setEvents(newEvents);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
     };
+
     fetchEvents();
-    if (eventsPeriod.length) {
-      const newEvents = eventsPeriod.map((period) => ({
-        title: period.title,
-        start: new Date(period.start_date),
-        end: new Date(period.end_date),
-      }));
-      setEvents(newEvents);
-    }
   }, []);
 
   const onEventResize: withDragAndDropProps["onEventResize"] = (data) => {
