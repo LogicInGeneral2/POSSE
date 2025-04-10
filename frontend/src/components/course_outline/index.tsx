@@ -13,7 +13,7 @@ export const CourseOulinePage = () => {
   useEffect(() => {
     const fetchCourseOutlines = async () => {
       const data = await getCourseOutlines();
-      setTabs(data);
+      setTabs(data.data);
       setIsloading(false);
     };
     fetchCourseOutlines();

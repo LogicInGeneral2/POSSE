@@ -132,10 +132,10 @@ const DocumentsList = () => {
             aria-label="alignment-toggle-button"
             sx={{ width: "100%" }}
           >
-            <ToggleButton value="ascending" sx={{ width: "50%" }}>
+            <ToggleButton value="ascending" sx={{ width: "50%" }} size="small">
               Ascending
             </ToggleButton>
-            <ToggleButton value="descending" sx={{ width: "50%" }}>
+            <ToggleButton value="descending" sx={{ width: "50%" }} size="small">
               Descending
             </ToggleButton>
           </ToggleButtonGroup>

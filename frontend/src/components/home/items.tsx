@@ -1,5 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { AnnouncementTypes } from "../../services/types";
+import PDFViewer from "../commons/pdfviewer";
+import Download_Button from "../commons/download_button";
 
 export function Item({ item }: { item: AnnouncementTypes }) {
   return (
@@ -12,12 +14,13 @@ export function Item({ item }: { item: AnnouncementTypes }) {
       }}
     >
       <Typography sx={{ fontWeight: "bold" }}>{item.title}</Typography>
-      <Typography>{item.message}</Typography>
-      <iframe
-        src={item.src}
-        width="100%"
-        style={{ border: "none", minHeight: "300px" }}
+      <Typography>{item.message}</Typography>{" "}
+      <Download_Button
+        fileUrl={item.src}
+        text="Download Attachment"
+        disabled={false}
       />
+      <PDFViewer src={item.src} />
     </Box>
   );
 }

@@ -14,7 +14,8 @@ function Download_Button({
   variants?: "text" | "outlined" | "contained";
   icon?: boolean;
 }) {
-  const handleDownload = () => {
+  {
+    /*  const handleDownload = () => {
     if (!fileUrl) return;
     const link = document.createElement("a");
     link.href = fileUrl;
@@ -22,6 +23,28 @@ function Download_Button({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }; */
+  }
+  const handleDownload = async () => {
+    try {
+      if (!fileUrl) return;
+      const response = await fetch(fileUrl);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        fileUrl.substring(fileUrl.lastIndexOf("/") + 1) || "download.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
   };
 
   return (

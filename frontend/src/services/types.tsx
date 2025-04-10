@@ -7,17 +7,17 @@ export interface User {
 
 export interface Student extends User {
   student_id: number;
-  supervisor?: string; 
-  evaluators?: string[]; 
+  supervisor?: string;
+  evaluators?: string[];
   course?: string;
 }
 
 export interface Supervisor extends User {
   supervisor_id: number;
-  supervisees_FYP1?: string[]; 
-  supervisees_FYP2?: string[]; 
-  evaluatees_FYP1?: string[]; 
-  evaluatees_FYP2?: string[]; 
+  supervisees_FYP1?: string[];
+  supervisees_FYP2?: string[];
+  evaluatees_FYP1?: string[];
+  evaluatees_FYP2?: string[];
 }
 
 export interface UserContextType {
@@ -46,7 +46,7 @@ export interface AnnouncementTypes {
 
 export interface CourseOutlineTabs {
   label: string;
-  items: string;
+  src: string;
 }
 
 export interface SupervisorsSelectionType {

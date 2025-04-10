@@ -1,6 +1,8 @@
 import { Tabs, Tab, Box } from "@mui/material";
 import React, { useState } from "react";
 import { CourseOutlineTabs } from "../../services/types";
+import PDFViewer from "../commons/pdfviewer";
+import Download_Button from "../commons/download_button";
 
 interface CourseOutlinePageProps {
   tabsData: CourseOutlineTabs[];
@@ -23,16 +25,21 @@ function CustomTabPanel({
       aria-labelledby={`simple-tab-${index}`}
     >
       {value === index && (
-        <Box sx={{ p: 3 }}>
-          <iframe
-            src={fileSrc}
-            width="100%"
-            style={{
-              border: "none",
-              height: "calc(100vh - 320px)",
-              borderRadius: "8px",
-            }}
+        <Box
+          sx={{
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          <Download_Button
+            fileUrl={fileSrc}
+            text="Download Attachment"
+            disabled={false}
+            variants="contained"
           />
+          <PDFViewer src={fileSrc} customHeight="100%" defaultZoom={0.5} />
         </Box>
       )}
     </div>
@@ -71,7 +78,7 @@ export function CustomTabs({ tabsData }: CourseOutlinePageProps) {
           key={index}
           value={value}
           index={index}
-          fileSrc={tab.items}
+          fileSrc={tab.src}
         />
       ))}
     </Box>

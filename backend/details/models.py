@@ -11,6 +11,14 @@ class Announcement(models.Model):
         return self.title
 
 
+class Outline(models.Model):
+    label = models.CharField(max_length=255)
+    src = models.FileField(upload_to="outlines/", null=True, blank=True)
+
+    def __str__(self):
+        return self.label
+
+
 class Period(models.Model):
     DIRECTORY_CHOICES = [
         ("supervisors", "Supervisors"),

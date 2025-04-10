@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Announcement, Period
+from .models import Announcement, Outline, Period
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
@@ -17,6 +17,22 @@ class AnnouncementAdmin(admin.ModelAdmin):
         return obj.message[:50] + ("..." if len(obj.message) > 50 else "")
 
     short_message.short_description = "Message"
+
+    def src_link(self, obj):
+        if obj.src:
+            return format_html(
+                "<a href='{}' target='_blank'>View File</a>", obj.src.url
+            )
+        return "-"
+
+    src_link.short_description = "File"
+
+
+@admin.register(Outline)
+class OutlineAdmin(admin.ModelAdmin):
+    list_display = ["label", "src_link"]
+    search_fields = ["label"]
+    list_per_page = 20
 
     def src_link(self, obj):
         if obj.src:

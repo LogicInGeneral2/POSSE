@@ -58,7 +58,6 @@ export const getEvents = async () => {
 export const getAnnouncements = async () => {
   try {
     const data = await api2.get(`/announcement/`);
-    console.log(data);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -68,8 +67,7 @@ export const getAnnouncements = async () => {
 
 export const getCourseOutlines = async () => {
   try {
-    const response = await fetch(`${api}/courseOutline_modal.json`);
-    const data = await response.json();
+    const data = await api2.get(`/outline/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);

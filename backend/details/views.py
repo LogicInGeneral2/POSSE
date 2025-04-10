@@ -1,14 +1,25 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Announcement, Period
-from .serializers import AnnouncementSerializer, PeriodSerializer
+from .models import Announcement, Outline, Period
+from .serializers import AnnouncementSerializer, OutlineSerializer, PeriodSerializer
 from django.utils import timezone
 
 
 class AnnouncementListView(APIView):
     def get(self, request):
         announcements = Announcement.objects.all()
-        serializer = AnnouncementSerializer(announcements, many=True)
+        serializer = AnnouncementSerializer(
+            announcements, many=True, context={"request": request}
+        )
+        return Response(serializer.data)
+
+
+class OutlineListView(APIView):
+    def get(self, request):
+        outlines = Outline.objects.all()
+        serializer = OutlineSerializer(
+            outlines, many=True, context={"request": request}
+        )
         return Response(serializer.data)
 
 
