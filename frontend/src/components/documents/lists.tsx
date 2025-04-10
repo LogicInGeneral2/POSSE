@@ -30,11 +30,11 @@ const DocumentsList = () => {
   useEffect(() => {
     const fetchDocuments = async () => {
       const data = await getDocuments();
-      setDocuments(data);
+      setDocuments(data.data);
       setIsloading(false);
     };
     const fetchOptions = async () => {
-      const data: OptionType[] = await getDocumentOptions();
+      const data: OptionType[] = (await getDocumentOptions()).data;
       setOptions(data);
       setSelectedFilters(
         data.reduce((acc, option) => ({ ...acc, [option.label]: true }), {})
@@ -43,10 +43,6 @@ const DocumentsList = () => {
     fetchDocuments();
     fetchOptions();
   }, []);
-
-  if (!documents) {
-    return <ErrorNotice />;
-  }
 
   const handleAlignmentChange = (
     _event: React.MouseEvent<HTMLElement>,
@@ -69,6 +65,8 @@ const DocumentsList = () => {
   };
 
   const filteredAndSortedDocuments = useMemo(() => {
+    if (Object.keys(selectedFilters).length === 0) return [];
+
     return documents
       .filter((file) => selectedFilters[file.category])
       .sort((a, b) => {
@@ -91,15 +89,17 @@ const DocumentsList = () => {
         }
         return 0;
       });
-  }, [alignment, sortBy, selectedFilters]);
+  }, [documents, alignment, sortBy, selectedFilters]);
 
   return (
     <Grid container spacing={2} sx={{ marginTop: "20px", height: "100%" }}>
-      <Grid size={10} spacing={2}>
+      <Grid size={10}>
         <Grid container spacing={2} justifyContent="flex-start">
           {isLoading ? (
             <LoadingSpinner />
-          ) : (
+          ) : documents.length === 0 ? (
+            <ErrorNotice />
+          ) : filteredAndSortedDocuments.length > 0 ? (
             <>
               {filteredAndSortedDocuments.map((file) => (
                 <Grid
@@ -111,6 +111,8 @@ const DocumentsList = () => {
                 </Grid>
               ))}
             </>
+          ) : (
+            <ErrorNotice />
           )}
         </Grid>
       </Grid>

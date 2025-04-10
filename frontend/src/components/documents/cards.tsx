@@ -7,9 +7,31 @@ import {
 } from "@mui/material";
 import { ColorType, DocumentType } from "../../services/types";
 import { format } from "date-fns";
-import { getDocumentColours, getFile } from "../../services";
+import { getDocumentColours } from "../../services";
 import { useEffect, useState } from "react";
 import ErrorNotice from "../commons/error";
+
+export const getFile = async (fileUrl: string) => {
+  try {
+    if (!fileUrl) return;
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download =
+      fileUrl.substring(fileUrl.lastIndexOf("/") + 1) || "download.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    console.error("Download failed:", error);
+  }
+};
 
 function FileCard({ file }: { file: DocumentType }) {
   const [colours, setColors] = useState<ColorType[]>([]);
@@ -19,7 +41,7 @@ function FileCard({ file }: { file: DocumentType }) {
 
   useEffect(() => {
     const fetchColours = async () => {
-      const data: ColorType[] = await getDocumentColours();
+      const data: ColorType[] = (await getDocumentColours()).data;
       setColors(data);
     };
     fetchColours();
@@ -39,11 +61,11 @@ function FileCard({ file }: { file: DocumentType }) {
         border: "1px solid #58041D",
       }}
     >
-      <CardActionArea onClick={() => getFile(file.src, file.title)}>
+      <CardActionArea onClick={() => getFile(file.src)}>
         <CardMedia
           component="img"
           height="140"
-          image={file.thumbnail}
+          image={file.thumbnail_url}
           alt={file.title}
         />
         <CardContent

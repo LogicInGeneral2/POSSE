@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Announcement, Outline, Period
-from .serializers import AnnouncementSerializer, OutlineSerializer, PeriodSerializer
+from .models import Announcement, Period
+from .serializers import AnnouncementSerializer, PeriodSerializer
 from django.utils import timezone
 
 
@@ -10,15 +10,6 @@ class AnnouncementListView(APIView):
         announcements = Announcement.objects.all()
         serializer = AnnouncementSerializer(
             announcements, many=True, context={"request": request}
-        )
-        return Response(serializer.data)
-
-
-class OutlineListView(APIView):
-    def get(self, request):
-        outlines = Outline.objects.all()
-        serializer = OutlineSerializer(
-            outlines, many=True, context={"request": request}
         )
         return Response(serializer.data)
 
@@ -33,7 +24,6 @@ class CurrentPeriodView(APIView):
             serializer = PeriodSerializer(period)
             return Response(serializer.data)
         else:
-            # Default JSON response if no period is active
             return Response(
                 {
                     "title": "No Period",

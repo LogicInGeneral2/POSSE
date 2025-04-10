@@ -7,26 +7,32 @@ import ErrorNotice from "../commons/error";
 import { getUserSubmissionData } from "../../services";
 import { SubmissionsMetaType } from "../../services/types";
 import LoadingSpinner from "../commons/loading";
+import { useUser } from "../../../context/UserContext";
 
 export const SubmissionsPage = () => {
   const [meta, setMeta] = useState<SubmissionsMetaType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useUser();
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchSubmissions = async () => {
+    if (user && user.id) {
+      setIsLoading(true);
       try {
-        const response = await getUserSubmissionData();
+        const response = await getUserSubmissionData(user.id);
         if (response) {
-          setMeta(response);
+          setMeta(response.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
-    };
-    fetchData();
-  }, []);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubmissions();
+  }, [user]);
 
   if (!meta) {
     return <ErrorNotice />;
@@ -76,6 +82,7 @@ export const SubmissionsPage = () => {
                 submission={submissionMeta.submission || []}
                 feedback={submissionMeta.feedback || []}
                 meta={submissionMeta}
+                refreshSubmissions={fetchSubmissions}
               />
             ))}
           </Box>

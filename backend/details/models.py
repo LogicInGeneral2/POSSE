@@ -11,14 +11,6 @@ class Announcement(models.Model):
         return self.title
 
 
-class Outline(models.Model):
-    label = models.CharField(max_length=255)
-    src = models.FileField(upload_to="outlines/", null=True, blank=True)
-
-    def __str__(self):
-        return self.label
-
-
 class Period(models.Model):
     DIRECTORY_CHOICES = [
         ("supervisors", "Supervisors"),
@@ -47,3 +39,41 @@ class Period(models.Model):
         if self.end_date >= today:
             return (self.end_date - today).days
         return 0
+
+
+class Submissions(models.Model):
+    title = models.CharField(max_length=255)
+    date_open = models.DateField()
+    date_close = models.DateField()
+    description = models.TextField()
+
+    def __str__(self):
+        return self.title
+
+    def days_left(self):
+        today = timezone.now().date()
+        if self.date_close:
+            if self.date_close >= today:
+                return (self.date_close - today).days
+        return 0
+
+    def get_dynamic_status(self, student):
+        today = timezone.now().date()
+        days_left = self.days_left()
+
+        student_submission = self.studentsubmission_set.filter(student=student).first()
+        if not student_submission:
+            if today < self.date_open:
+                return "Upcoming"
+            elif days_left > 0:
+                return "Pending"
+            else:
+                return "Missed"
+        else:
+            feedback = student_submission.feedback_set.first()
+            if feedback:
+                return "Feedback"
+            elif days_left == 0:
+                return "Closed"
+            else:
+                return "Completed"

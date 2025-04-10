@@ -22,13 +22,15 @@ import {
 import { status_info } from "./status";
 import UploadIcon from "@mui/icons-material/Upload";
 import DeleteIcon from "@mui/icons-material/Delete";
-import DownloadIcon from "@mui/icons-material/Download";
 import React, { useState } from "react";
 import {
   FeedbackType,
   SubmissionsMetaType,
   SubmissionType,
 } from "../../services/types";
+import { deleteSubmission, uploadSubmission } from "../../services";
+import { useUser } from "../../../context/UserContext";
+import Download_Button from "../commons/download_button";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -46,10 +48,12 @@ function SubmissionCards({
   submission,
   feedback,
   meta,
+  refreshSubmissions,
 }: {
   submission: SubmissionType | null;
   feedback: FeedbackType | null;
   meta: SubmissionsMetaType;
+  refreshSubmissions: () => void;
 }) {
   const themes = status_info.find((color) => color.value === meta.status) || {
     color: "#ffffff",
@@ -68,12 +72,12 @@ function SubmissionCards({
       />
     ),
   };
-
+  const { user } = useUser();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) {
-      setUploadedFile(event.target.files[0]); // Replace previous file
+      setUploadedFile(event.target.files[0]);
     }
   };
 
@@ -81,17 +85,43 @@ function SubmissionCards({
     setUploadedFile(null);
   };
 
-  const handleDownload = (src: string, title: string) => {
-    const link = document.createElement("a");
-    link.href = src;
-    link.download = title;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const handleSubmit = async () => {
+    if (!uploadedFile || !meta || !user) {
+      console.log("Missing file or submission phase.");
+      return;
+    }
 
-  const handleSubmit = () => {
-    console.log("Submitting file:", uploadedFile);
+    try {
+      const response = await uploadSubmission({
+        studentId: user.id,
+        file: uploadedFile,
+        submissionPhaseId: meta.id,
+      });
+
+      if (response.status >= 200 && response.status < 300) {
+        console.log("Upload successful!");
+        refreshSubmissions();
+      } else {
+        const errorData = await response;
+        console.error("Upload failed:", errorData);
+      }
+    } catch (error) {
+      console.error("Error during upload:", error);
+    }
+  };
+  const handleDeleteSubmission = async () => {
+    if (!user || !submission) {
+      console.log("Missing user or submission.");
+      return;
+    }
+    try {
+      await deleteSubmission(user.id, submission.id);
+      refreshSubmissions();
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error during delete:", error.message);
+      }
+    }
   };
 
   return (
@@ -163,26 +193,38 @@ function SubmissionCards({
         meta.status === "Closed") && (
         <AccordionActions sx={{ backgroundColor: "#E9DADD" }}>
           {meta.status === "Feedback" && feedback && (
-            <Button
-              variant="contained"
-              onClick={() => handleDownload(feedback.src, feedback.title)}
-              startIcon={<DownloadIcon />}
-            >
-              Feedback
-            </Button>
+            <>
+              <Download_Button
+                fileUrl={feedback.src}
+                text={feedback.title}
+                variants="contained"
+                disabled={false}
+              />
+            </>
           )}
-
-          {meta.status === "Completed" ||
-            (meta.status === "Closed" && submission && (
-              <Button
-                variant="contained"
-                onClick={() => handleDownload(submission.src, submission.title)}
-                startIcon={<DownloadIcon />}
-              >
-                {submission.title}
-              </Button>
-            ))}
-
+          {meta.status === "Closed" && submission && (
+            <>
+              <Download_Button
+                fileUrl={submission.src}
+                text={submission.title}
+                variants="contained"
+                disabled={false}
+              />
+            </>
+          )}
+          {meta.status === "Completed" && submission && (
+            <>
+              <IconButton onClick={handleDeleteSubmission}>
+                <DeleteIcon color="error" />
+              </IconButton>
+              <Download_Button
+                fileUrl={submission.src}
+                text={submission.title}
+                variants="contained"
+                disabled={false}
+              />
+            </>
+          )}
           {meta.status === "Pending" &&
             (uploadedFile ? (
               <Stack direction="row" alignItems="center" spacing={1}>

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Announcement, Outline, Period
+from .models import Announcement, Period, Submissions
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
@@ -17,22 +17,6 @@ class AnnouncementAdmin(admin.ModelAdmin):
         return obj.message[:50] + ("..." if len(obj.message) > 50 else "")
 
     short_message.short_description = "Message"
-
-    def src_link(self, obj):
-        if obj.src:
-            return format_html(
-                "<a href='{}' target='_blank'>View File</a>", obj.src.url
-            )
-        return "-"
-
-    src_link.short_description = "File"
-
-
-@admin.register(Outline)
-class OutlineAdmin(admin.ModelAdmin):
-    list_display = ["label", "src_link"]
-    search_fields = ["label"]
-    list_per_page = 20
 
     def src_link(self, obj):
         if obj.src:
@@ -77,3 +61,24 @@ class PeriodAdmin(admin.ModelAdmin):
 
     def days_left(self, obj):
         return obj.days_left()
+
+
+@admin.register(Submissions)
+class SubmissionsAdmin(admin.ModelAdmin):
+    list_display = ("title", "date_open", "date_close", "days_left_colored")
+    search_fields = ("title",)
+    list_filter = ("date_open", "date_close")
+    date_hierarchy = "date_open"
+    readonly_fields = ("days_left",)
+
+    fieldsets = (
+        (None, {"fields": ("title", "description")}),
+        ("Submission Window", {"fields": ("date_open", "date_close", "days_left")}),
+    )
+
+    def days_left_colored(self, obj):
+        days = obj.days_left()
+        color = "green" if days > 3 else "orange" if days > 0 else "red"
+        return format_html(f"<span style='color:{color}'>{days} days</span>")
+
+    days_left_colored.short_description = "Days Left"

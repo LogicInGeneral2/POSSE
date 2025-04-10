@@ -120,8 +120,7 @@ export const saveSupervisorChoices = async (payload: any) => {
 
 export const getDocuments = async () => {
   try {
-    const response = await fetch(`${api}/documents.json`);
-    const data = await response.json();
+    const data = await api2.get(`/documents/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -129,19 +128,9 @@ export const getDocuments = async () => {
   }
 };
 
-export const getFile = (fileUrl: string, fileName: string) => {
-  const link = document.createElement("a");
-  link.href = fileUrl;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
 export const getDocumentOptions = async () => {
   try {
-    const response = await fetch(`${api}/documents_options_modal.json`);
-    const data = await response.json();
+    const data = await api2.get(`/documents/categories/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -151,8 +140,7 @@ export const getDocumentOptions = async () => {
 
 export const getDocumentColours = async () => {
   try {
-    const response = await fetch(`${api}/documents_colours_modal.json`);
-    const data = await response.json();
+    const data = await api2.get(`/documents/themes/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -272,14 +260,48 @@ export const saveGrades = async (payload: any) => {
   }
 };
 
-export const getUserSubmissionData = async () => {
+export const getUserSubmissionData = async (student: number) => {
   try {
-    const response = await fetch(`${api}/submissions_user_combined.json`);
-    const data = await response.json();
+    const data = await api2.get(`/submissions/${student}/`);
+    console.log(data);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
     throw new Error(error);
+  }
+};
+
+export const uploadSubmission = async ({
+  studentId,
+  file,
+  submissionPhaseId,
+}: {
+  studentId: number;
+  file: File;
+  submissionPhaseId: number;
+}) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("submission_phase", submissionPhaseId.toString());
+
+  return api2.post(`/submissions/upload/${studentId}/`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const deleteSubmission = async (
+  studentId: number,
+  submissionId: number
+) => {
+  try {
+    return await api2.delete(
+      `/submissions/delete/${studentId}/${submissionId}/`
+    );
+  } catch (error: any) {
+    console.error("Error deleting submission:", error);
+    throw new Error(error.message);
   }
 };
 

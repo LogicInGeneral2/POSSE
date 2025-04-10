@@ -64,7 +64,7 @@ interface FileType {
 export interface DocumentType extends FileType {
   type: "document";
   category: string;
-  thumbnail: string;
+  thumbnail_url: string;
 }
 
 export interface SubmissionType extends FileType {
