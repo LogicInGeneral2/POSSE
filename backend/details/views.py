@@ -20,6 +20,12 @@ class CurrentPeriodView(APIView):
         period = Period.objects.filter(
             start_date__lte=today, end_date__gte=today
         ).first()
+
+        if request.path.endswith("selection/"):
+            if period and period.is_selection_period:
+                return Response(True)
+            return Response(False)
+
         if period:
             serializer = PeriodSerializer(period)
             return Response(serializer.data)

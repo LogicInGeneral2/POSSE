@@ -1,7 +1,11 @@
 from django.contrib import admin
 from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Student
+from django.http import HttpResponseRedirect
+from django.urls import path, reverse
+from .models import SupervisorsRequest, User, Student
+from django.utils.html import format_html
+from django.contrib import messages
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -34,6 +38,8 @@ class UserAdmin(BaseUserAdmin):
                     "is_superuser",
                     "groups",
                     "user_permissions",
+                    "is_available",
+                    "is_examiner",
                 )
             },
         ),
@@ -69,3 +75,119 @@ class StudentAdmin(admin.ModelAdmin):
         return obj.supervisor.name if obj.supervisor else "-"
 
     supervisor_name.short_description = "Supervisor"
+
+
+@admin.register(SupervisorsRequest)
+class SupervisorsRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "student",
+        "supervisor_id",
+        "supervisor_name",
+        "priority",
+        "proof_link",
+        "approve_button",
+    )
+    list_filter = ("priority",)
+    search_fields = (
+        "student__user__name",
+        "student__student_id",
+        "student__user__email",
+    )
+    actions = ["bulk_approve"]
+
+    def proof_link(self, obj):
+        if obj.proof:
+            return format_html(
+                '<a href="{}" target="_blank">View Proof</a>', obj.proof.url
+            )
+        return "-"
+
+    proof_link.short_description = "Proof"
+
+    def approve_button(self, obj):
+        return format_html(
+            '<a class="button" href="{}">Approve</a>',
+            reverse("admin:approve_supervisor_request", args=[obj.pk]),
+        )
+
+    approve_button.short_description = "Approve"
+    approve_button.allow_tags = True
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "approve/<int:request_id>/",
+                self.admin_site.admin_view(self.process_approve),
+                name="approve_supervisor_request",
+            ),
+        ]
+        return custom_urls + urls
+
+    def process_approve(self, request, request_id):
+        supervisor_request = self.get_object(request, request_id)
+
+        # Check if supervisor_id is valid
+        try:
+            supervisor = User.objects.get(
+                id=supervisor_request.supervisor_id, role="supervisor"
+            )
+        except User.DoesNotExist:
+            self.message_user(
+                request,
+                "Please create the user (Supervisor) first.",
+                messages.WARNING,
+            )
+            url = (
+                reverse("admin:users_user_add")
+                + f"?name={supervisor_request.supervisor_name}&role=supervisor"
+            )
+
+            return HttpResponseRedirect(url)
+
+        # Get or create student profile
+        try:
+            student_profile = Student.objects.get(user_id=supervisor_request.student.id)
+        except Student.DoesNotExist:
+            self.message_user(request, "Student profile not found.", messages.ERROR)
+            return HttpResponseRedirect(
+                reverse("admin:users_supervisorsrequest_changelist")
+            )
+
+        # Assign supervisor (overwrite)
+        student_profile.supervisor = supervisor
+        student_profile.save()
+
+        # Delete other requests for this student
+        SupervisorsRequest.objects.filter(student=supervisor_request.student).delete()
+
+        self.message_user(
+            request, "Supervisor assigned and other requests deleted.", messages.SUCCESS
+        )
+        return HttpResponseRedirect(
+            reverse("admin:users_supervisorsrequest_changelist")
+        )
+
+
+def bulk_approve(self, request, queryset):
+    success, failed = 0, 0
+    for obj in queryset:
+        try:
+            supervisor = User.objects.get(id=obj.supervisor_id, role="supervisor")
+            student_profile = Student.objects.get(user_id=obj.student.id)
+            student_profile.supervisor = supervisor
+            student_profile.save()
+            SupervisorsRequest.objects.filter(student=obj.student).delete()
+            success += 1
+        except Exception as e:  # noqa: F841
+            failed += 1
+
+    self.message_user(
+        request,
+        f"{success} approved. {failed} failed. Ensure supervisor IDs are valid and students exist.",
+        messages.INFO,
+    )
+
+
+bulk_approve.short_description = "Bulk Approve Selected Requests"

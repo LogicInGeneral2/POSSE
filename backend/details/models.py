@@ -26,6 +26,7 @@ class Period(models.Model):
     directory = models.CharField(max_length=20, choices=DIRECTORY_CHOICES)
     start_date = models.DateField()
     end_date = models.DateField()
+    is_selection_period = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title

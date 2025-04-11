@@ -7,19 +7,15 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import supervisors from "../../../data/supervisors.json";
 import Upload_Button from "../commons/upload_button";
-import { SupervisorsSelectionType } from "../../services/types";
+import {
+  SupervisorsList,
+  SupervisorsSelectionType,
+} from "../../services/types";
 import { useEffect, useState } from "react";
 import { getSelectionLists } from "../../services";
 import ErrorNotice from "../commons/error";
 import LoadingSpinner from "../commons/loading";
-
-const options: SupervisorsSelectionType[] = supervisors.map((supervisor) => ({
-  name: supervisor.name,
-}));
-
-const filter = createFilterOptions<SupervisorsSelectionType>();
 
 export default function SupervisorsSelection({
   disabled,
@@ -32,21 +28,30 @@ export default function SupervisorsSelection({
   onChange: (newValue: SupervisorsSelectionType | null) => void;
   excludedNames: string[];
 }) {
+  const [sv_lists, setSVLists] = useState<SupervisorsList[]>([]);
+
+  const options: SupervisorsSelectionType[] = sv_lists.map((supervisor) => ({
+    name: supervisor.name,
+    id: supervisor.id,
+  }));
+
+  const filter = createFilterOptions<SupervisorsSelectionType>();
+
   const [open, toggleOpen] = React.useState(false);
   const [dialogValue, setDialogValue] =
     React.useState<SupervisorsSelectionType>({
       name: "",
+      proof: undefined,
     });
   const filteredOptions = options.filter(
     (option) => !excludedNames.includes(option.name)
   );
-  const [sv_lists, setSVLists] = useState<string[]>([]);
   const [isLoading, setIsloading] = useState(true);
 
   useEffect(() => {
     const fetchCourseOutlines = async () => {
       const data = await getSelectionLists();
-      setSVLists(data);
+      setSVLists(data.data);
       setIsloading(false);
     };
     fetchCourseOutlines();
@@ -63,7 +68,7 @@ export default function SupervisorsSelection({
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onChange({ name: dialogValue.name });
+    onChange({ name: dialogValue.name, proof: dialogValue.proof });
     handleClose();
   };
 
@@ -149,7 +154,19 @@ export default function SupervisorsSelection({
               required
             />
 
-            <Upload_Button size={"100%"} disabled={false} />
+            <Upload_Button
+              size={"100%"}
+              disabled={false}
+              onUpload={(files) => {
+                if (files.length > 0) {
+                  const file = files[0];
+                  setDialogValue((prev) => ({
+                    ...prev,
+                    proof: file, // store as actual File object
+                  }));
+                }
+              }}
+            />
           </DialogContent>
           <DialogActions sx={{ justifyContent: "center" }}>
             <Button onClick={handleClose}>Cancel</Button>

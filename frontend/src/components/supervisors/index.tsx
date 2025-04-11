@@ -3,16 +3,25 @@ import { Box, Divider, Typography } from "@mui/material";
 import SupervisorsTable from "./table";
 import { useUser } from "../../../context/UserContext";
 import ErrorNotice from "../commons/error";
-import { Student } from "../../services/types";
+import { useEffect, useState } from "react";
+import { getSupervisor } from "../../services";
 
 export const SupervisorsPage = () => {
   const { user } = useUser();
+  const [supervisor, setSupervisor] = useState<string>("");
+
+  useEffect(() => {
+    const fetchSupervisor = async () => {
+      const data = await getSupervisor();
+      console.log(data);
+      setSupervisor(data.data);
+    };
+    fetchSupervisor();
+  }, []);
 
   if (!user || user.role !== "student") {
     return <ErrorNotice />;
   }
-
-  const student = user as Student;
 
   return (
     <>
@@ -43,8 +52,7 @@ export const SupervisorsPage = () => {
           }}
         >
           <SupervisorAccountRounded sx={{ mr: 1, fontSize: "2rem" }} />
-          Assigned Supervisor:{" "}
-          {student.supervisor ? student.supervisor : " Pending..."}
+          Assigned Supervisor: {supervisor ? supervisor : " Pending..."}
         </Box>
         <Box
           sx={{
@@ -74,7 +82,7 @@ export const SupervisorsPage = () => {
             </Typography>
           </Box>
           <Box>
-            <SupervisorsTable />
+            <SupervisorsTable supervisor={supervisor} />
           </Box>
         </Box>
       </div>

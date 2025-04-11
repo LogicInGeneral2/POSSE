@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -5,6 +6,10 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.core.exceptions import ValidationError
+
+
+def upload_to_supervisor_requests(instance, filename):
+    return f"supervisor_requests/student_{instance.student.id}/{filename}"
 
 
 class CustomUserManager(BaseUserManager):
@@ -23,6 +28,8 @@ class CustomUserManager(BaseUserManager):
         self, email, name, role="course_coordinator", password=None, **extra_fields
     ):
         extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("is_examiner", True)
         extra_fields.setdefault("is_superuser", True)
         return self.create_user(email, name, role, password, **extra_fields)
 
@@ -41,6 +48,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_examiner = models.BooleanField(default=False)
+    is_available = models.BooleanField(default=True)
 
     objects = CustomUserManager()
 
@@ -91,3 +100,32 @@ class Student(models.Model):
 
     def __str__(self):
         return f"{self.user.name} ({self.course})"
+
+
+class SupervisorsRequest(models.Model):
+    PRIORITY_CHOICES = [
+        (1, "First Choice"),
+        (2, "Second Choice"),
+        (3, "Third Choice"),
+    ]
+
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="supervisor_requests",
+        limit_choices_to={"role": "student"},
+    )
+    supervisor_id = models.PositiveIntegerField(null=True, blank=True)
+    supervisor_name = models.CharField(max_length=255, null=True, blank=True)
+    priority = models.PositiveSmallIntegerField(choices=PRIORITY_CHOICES)
+
+    proof = models.FileField(
+        upload_to=upload_to_supervisor_requests,
+        null=True,
+        blank=True,
+        help_text="Proof of request (image or PDF)",
+    )
+
+    class Meta:
+        unique_together = ("student", "priority")
+        ordering = ["student", "priority"]

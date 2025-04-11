@@ -20,11 +20,13 @@ function Upload_Button({
   disabled,
   variants = "outlined",
   icon = true,
+  onUpload,
 }: {
   size: string;
   disabled: boolean;
   variants?: "text" | "outlined" | "contained";
   icon?: boolean;
+  onUpload?: (files: File[]) => void;
 }) {
   // State to track uploaded files (keeps files when toggling Edit/Save)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -32,14 +34,24 @@ function Upload_Button({
   // Handle file selection
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      setUploadedFiles([...uploadedFiles, ...Array.from(event.target.files)]);
+      const newFiles = Array.from(event.target.files);
+      setUploadedFiles((prev) => [...prev, ...newFiles]);
+
+      if (onUpload) {
+        onUpload(newFiles);
+      }
     }
   };
 
   // Remove file from list
   const handleRemoveFile = (index: number) => {
-    setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    const updated = uploadedFiles.filter((_, i) => i !== index);
+    setUploadedFiles(updated);
+    if (onUpload) {
+      onUpload(updated);
+    }
   };
+
   return (
     <Box sx={{ width: { size } }}>
       {/* File Upload Button */}

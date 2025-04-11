@@ -19,7 +19,12 @@ from details.views import (
     AnnouncementListView,
     CurrentPeriodView,
 )
-from users.views import CurrentUserView, LogoutView
+from users.views import (
+    AvailableSupervisorsView,
+    CurrentUserView,
+    LogoutView,
+    SupervisorListsView,
+)
 from django.conf.urls.static import static
 from django.conf import settings
 
@@ -29,13 +34,30 @@ urlpatterns = [
     path("api/token/", TokenObtainPairView.as_view(), name="get_token"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="refresh"),
     path("api/users/me/", CurrentUserView.as_view(), name="current_user"),
+    path("api/users/supervisor/", CurrentUserView.as_view(), name="current_supervisor"),
     path("api-auth/", include("rest_framework.urls")),
     path("api/logout/", LogoutView.as_view(), name="logout"),
+    path(
+        "users/supervisors/lists/",
+        AvailableSupervisorsView.as_view(),
+        name="available-supervisors",
+    ),
     path("announcement/", AnnouncementListView.as_view(), name="announcement-list"),
     path("outline/", OutlineListView.as_view(), name="outline-list"),
     path("period/", CurrentPeriodView.as_view(), name="current-period"),
+    path("period/selection/", CurrentPeriodView.as_view(), name="current-period"),
     path("periods/", AllPeriodsView.as_view(), name="all-periods"),
     path("documents/", DocumentListView.as_view(), name="documents"),
+    path(
+        "submissions/supervisors/choices/",
+        SupervisorListsView.as_view(),
+        name="student-submissions",
+    ),
+    path(
+        "submissions/supervisors/choices/<int:student_id>/",
+        SupervisorListsView.as_view(),
+        name="student-submissions",
+    ),
     path(
         "submissions/<int:student_id>/",
         StudentSubmissionsView.as_view(),

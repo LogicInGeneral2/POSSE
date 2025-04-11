@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Student
+from .models import SupervisorsRequest, User, Student
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -84,3 +84,23 @@ class SupervisorViewSerializer(serializers.ModelSerializer):
 
     def get_evaluatees_FYP2(self, obj):
         return list(obj.evaluatees.filter(course="FYP2").values_list("id", flat=True))
+
+
+class SupervisorsListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "name"]
+
+
+class SupervisorChoiceSerializer(serializers.ModelSerializer):
+    proof = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SupervisorsRequest
+        fields = ["priority", "supervisor_id", "supervisor_name", "proof"]
+
+    def get_proof(self, obj):
+        request = self.context.get("request")
+        if obj.proof and request:
+            return request.build_absolute_uri(obj.proof.url)
+        return None

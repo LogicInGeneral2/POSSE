@@ -77,8 +77,7 @@ export const getCourseOutlines = async () => {
 
 export const getSelectionStatus = async () => {
   try {
-    const response = await fetch(`${api}/selection.json`);
-    const data = await response.json();
+    const data = await api2.get(`/period/selection/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -88,8 +87,7 @@ export const getSelectionStatus = async () => {
 
 export const getSelectionLists = async () => {
   try {
-    const response = await fetch(`${api}/supervisors.json`);
-    const data = await response.json();
+    const data = await api2.get(`users/supervisors/lists/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -97,23 +95,43 @@ export const getSelectionLists = async () => {
   }
 };
 
-export const saveSupervisorChoices = async (payload: any) => {
+export const getSupervisor = async () => {
   try {
-    const response = await fetch(`${api}/save-supervisors`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const data = await api2.get(`api/users/supervisor/`);
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
 
-    if (!response.ok) {
+export const saveSupervisorChoices = async (formData: FormData) => {
+  try {
+    const response = await api2.post(
+      `/submissions/supervisors/choices/`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    if (response.status !== 200 && response.status !== 201) {
       throw new Error("Failed to save supervisor choices");
     }
-
-    return await response.json();
   } catch (error: any) {
     console.error("Error saving choices:", error);
+    throw new Error(error);
+  }
+};
+
+export const getSupervisorChoices = async (student: number) => {
+  try {
+    const data = await api2.get(`/submissions/supervisors/choices/${student}/`);
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
     throw new Error(error);
   }
 };
@@ -263,7 +281,6 @@ export const saveGrades = async (payload: any) => {
 export const getUserSubmissionData = async (student: number) => {
   try {
     const data = await api2.get(`/submissions/${student}/`);
-    console.log(data);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);

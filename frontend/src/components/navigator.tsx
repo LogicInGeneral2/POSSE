@@ -121,7 +121,7 @@ export default function NavigationBar() {
   useEffect(() => {
     const fetchStatus = async () => {
       const data = await getSelectionStatus();
-      setStatus(data.enabled);
+      setStatus(data.data);
     };
     fetchStatus();
   }, []);

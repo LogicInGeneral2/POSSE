@@ -51,6 +51,8 @@ export interface CourseOutlineTabs {
 
 export interface SupervisorsSelectionType {
   inputValue?: string;
+  proof?: File;
+  id?: number;
   name: string;
 }
 
@@ -92,6 +94,11 @@ export interface ColorType {
   secondary: string;
 }
 
+export interface SupervisorsList {
+  id: number;
+  name: string;
+}
+
 export interface SuperviseeSubmission {
   student: Student;
   submissions: SubmissionType[];
@@ -131,4 +138,10 @@ export interface LogType {
   feedbacks: string;
   plan: string;
   status: string;
+}
+
+export interface SelectionContextType {
+  selectionStatus: boolean | null;
+  loading: boolean;
+  refreshStatus: () => void;
 }

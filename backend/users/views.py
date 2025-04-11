@@ -1,7 +1,13 @@
+import json
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer
+from .models import SupervisorsRequest, User
+from .serializers import (
+    SupervisorChoiceSerializer,
+    SupervisorsListSerializer,
+    UserSerializer,
+)
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework import status
 
@@ -10,8 +16,78 @@ class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = UserSerializer(request.user)
+        if request.path.endswith("supervisor/"):
+            if hasattr(request.user, "student") and request.user.student.supervisor:
+                return Response(request.user.student.supervisor.name)
+            return Response(None)
+        return Response(UserSerializer(request.user).data)
+
+
+class AvailableSupervisorsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        supervisors = User.objects.filter(role="supervisor", is_available=True)
+        serializer = SupervisorsListSerializer(supervisors, many=True)
         return Response(serializer.data)
+
+
+class SupervisorListsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, student_id):
+        choices = SupervisorsRequest.objects.filter(student_id=student_id).order_by(
+            "priority"
+        )
+        serializer = SupervisorChoiceSerializer(
+            choices, many=True, context={"request": request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        try:
+            student_id = request.data.get("studentId")
+            raw_choices = request.data.get("choices")
+
+            if isinstance(raw_choices, str):
+                choices = json.loads(raw_choices)
+            else:
+                choices = raw_choices
+
+            if not student_id or not isinstance(choices, list):
+                return Response(
+                    {"error": "Invalid payload"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Delete existing choices for student
+            SupervisorsRequest.objects.filter(student_id=student_id).delete()
+
+            instances = []
+            for choice in choices:
+                priority = choice.get("priority")
+                proof_field_name = f"proof_{priority}"  # Expect proof_1, proof_2, etc.
+                proof_file = request.FILES.get(proof_field_name)
+
+                instance = SupervisorsRequest(
+                    student_id=student_id,
+                    supervisor_id=choice.get("supervisorId"),
+                    supervisor_name=choice.get("supervisorName"),
+                    priority=priority,
+                    proof=proof_file or None,
+                )
+                instances.append(instance)
+
+            SupervisorsRequest.objects.bulk_create(instances)
+
+            return Response(
+                {"message": "Supervisor choices saved successfully."},
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class LogoutView(APIView):
