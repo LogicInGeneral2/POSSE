@@ -20,7 +20,6 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ExitToAppRoundedIcon from "@mui/icons-material/ExitToAppRounded";
 import ListItemText from "@mui/material/ListItemText";
 import HomeIcon from "@mui/icons-material/Home";
-import AccountBoxIcon from "@mui/icons-material/AccountBox";
 import { useNavigate } from "react-router";
 import logo from "../assets/icon.png";
 import {
@@ -159,15 +158,10 @@ export default function NavigationBar() {
       icon: <DriveFolderUploadIcon style={{ color: "#58041D" }} />,
       path: "/submissions",
     },
-    {
+    user?.role === "student" && {
       text: "Log Books",
       icon: <BookRounded style={{ color: "#58041D" }} />,
       path: "/logs",
-    },
-    {
-      text: "Profile",
-      icon: <AccountBoxIcon style={{ color: "#58041D" }} />,
-      path: "/profile",
     },
     {
       text: "Logout",
