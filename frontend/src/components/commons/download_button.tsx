@@ -1,4 +1,4 @@
-import { Button } from "@mui/material";
+import { Button, IconButton } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 
 function Download_Button({
@@ -9,7 +9,7 @@ function Download_Button({
   icon = true,
 }: {
   fileUrl: string | null;
-  text: string;
+  text?: string;
   disabled: boolean;
   variants?: "text" | "outlined" | "contained";
   icon?: boolean;
@@ -47,7 +47,7 @@ function Download_Button({
     }
   };
 
-  return (
+  return text ? (
     <Button
       variant={variants}
       onClick={handleDownload}
@@ -56,6 +56,10 @@ function Download_Button({
     >
       {text}
     </Button>
+  ) : (
+    <IconButton onClick={handleDownload} disabled={disabled} color="primary">
+      <DownloadIcon />
+    </IconButton>
   );
 }
 

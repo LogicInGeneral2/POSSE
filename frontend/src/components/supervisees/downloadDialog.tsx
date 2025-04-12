@@ -18,8 +18,10 @@ import LoadingSpinner from "../commons/loading";
 
 function DownloadDialog({
   setOpenDialog,
+  id,
 }: {
   setOpenDialog: (open: boolean) => void;
+  id: number;
 }) {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [submissionList, setSubmissionList] = useState<SubmissionType[]>([]);
@@ -28,8 +30,9 @@ function DownloadDialog({
 
   useEffect(() => {
     const fetchSubmissionList = async () => {
-      const data = await getUserSubmissions();
-      setSubmissionList(data);
+      const data = await getUserSubmissions(id);
+      console.log(data.data);
+      setSubmissionList(data.data);
       setIsloading(false);
     };
     fetchSubmissionList();
@@ -43,7 +46,8 @@ function DownloadDialog({
     const fileId = event.target.value;
     setSelectedFileId(fileId);
     const file = submissionList.find((item) => item.id === Number(fileId));
-    setSelectedFile(file ? file.src : null);
+    if (!file) return;
+    setSelectedFile(file.src);
   };
 
   return (
@@ -58,7 +62,7 @@ function DownloadDialog({
               <Select value={selectedFileId} onChange={handleChange}>
                 {submissionList.map((item) => (
                   <MenuItem key={item.id} value={String(item.id)}>
-                    {item.progress}
+                    {item.title}
                   </MenuItem>
                 ))}
               </Select>

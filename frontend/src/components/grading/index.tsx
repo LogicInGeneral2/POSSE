@@ -31,6 +31,7 @@ export const GradingPage = () => {
             receivedName={studentName}
             category={category}
             currentPage="Grading"
+            lists={location.state?.lists}
           />
         </Box>
 

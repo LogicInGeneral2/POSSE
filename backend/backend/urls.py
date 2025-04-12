@@ -7,6 +7,7 @@ from settings.views import (
     OutlineListView,
 )
 from documents.views import (
+    DeleteFeedbackView,
     DeleteSubmissionView,
     DocumentListView,
     FeedbackUploadView,
@@ -75,6 +76,11 @@ urlpatterns = [
         name="student-submissions",
     ),
     path(
+        "submissions/<int:student_id>/all/",
+        StudentSubmissionsView.as_view(),
+        name="student-submissions",
+    ),
+    path(
         "submissions/<int:student_id>/latest/",
         LatestStudentSubmissionView.as_view(),
         name="latest-submission",
@@ -89,7 +95,16 @@ urlpatterns = [
         DeleteSubmissionView.as_view(),
         name="delete-submission",
     ),
-    path("upload-feedback/", FeedbackUploadView.as_view(), name="upload-feedback"),
+    path(
+        "feedback/upload/<int:student_id>/",
+        FeedbackUploadView.as_view(),
+        name="upload-feedback",
+    ),
+    path(
+        "feedback/delete/<int:feedback_id>/",
+        DeleteFeedbackView.as_view(),
+        name="delete-submission",
+    ),
     path("documents/themes/", DocumentThemeListView.as_view(), name="document-themes"),
     path(
         "documents/categories/",

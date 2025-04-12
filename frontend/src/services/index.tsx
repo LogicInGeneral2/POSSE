@@ -197,10 +197,9 @@ export const getSuperviseesModal = async () => {
   }
 };
 
-export const getUserSubmissions = async () => {
+export const getUserSubmissions = async (student: number) => {
   try {
-    const response = await fetch(`${api}/submissions_user.json`);
-    const data = await response.json();
+    const data = await api2.get(`submissions/${student}/all/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -208,10 +207,9 @@ export const getUserSubmissions = async () => {
   }
 };
 
-export const getLatestUserSubmission = async (student: string) => {
+export const getLatestUserSubmission = async (student: number) => {
   try {
-    const response = await fetch(`${api}/submissions_user_latest.json`);
-    const data = await response.json();
+    const data = await api2.get(`submissions/${student}/latest/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -219,23 +217,32 @@ export const getLatestUserSubmission = async (student: string) => {
   }
 };
 
-export const uploadFeedback = async (payload: any) => {
+export const uploadFeedback = async ({
+  studentId,
+  file,
+  submissionId,
+}: {
+  studentId: number;
+  file: File;
+  submissionId: number;
+}) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("submission", submissionId.toString());
+
+  return api2.post(`feedback/upload/${studentId}/`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const deleteFeedback = async (feedbackId: number) => {
   try {
-    const response = await fetch(`${api}/upload-feedback`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to upload feedback");
-    }
-
-    return await response.json();
+    const data = await api2.delete(`feedback/delete/${feedbackId}/`);
+    return data;
   } catch (error: any) {
-    console.error("Error uploading feedback:", error);
+    console.error("Error fetching period:", error);
     throw new Error(error);
   }
 };
@@ -317,17 +324,6 @@ export const deleteSubmission = async (
   } catch (error: any) {
     console.error("Error deleting submission:", error);
     throw new Error(error.message);
-  }
-};
-
-export const getStudentList = async (category: string) => {
-  try {
-    const response = await fetch(`${api}/supervisees_list.json`);
-    const data = await response.json();
-    return data;
-  } catch (error: any) {
-    console.error("Error fetching period:", error);
-    throw new Error(error);
   }
 };
 

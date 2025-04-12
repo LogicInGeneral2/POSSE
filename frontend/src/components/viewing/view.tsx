@@ -10,22 +10,22 @@ import Loader from "./loader";
 import { getLatestUserSubmission } from "../../services";
 import ErrorNotice from "../commons/error";
 
-export default function FileUpload({ student }: { student: string }) {
+export default function FileUpload({ student }: { student: number }) {
   const contextValues = useButtons();
-  const [Source, setSource] = useState<{ src: string } | null>(null);
+  const [Source, setSource] = useState<{ file: string } | null>(null);
   const [docIsLoading, setDocIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchSource = async () => {
       try {
         const data = await getLatestUserSubmission(student);
-        setSource(data);
+        setSource(data.data);
       } catch (error) {
         console.error("Error fetching submission:", error);
       }
     };
     fetchSource();
-  }, []);
+  }, [student]);
 
   useEffect(() => {
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -33,8 +33,8 @@ export default function FileUpload({ student }: { student: string }) {
       import.meta.url
     ).toString();
 
-    if (Source?.src) {
-      contextValues.setFile(Source.src);
+    if (Source?.file) {
+      contextValues.setFile(Source.file);
       setDocIsLoading(true);
     }
   }, [Source]);
@@ -45,7 +45,7 @@ export default function FileUpload({ student }: { student: string }) {
     contextValues.setCurrPage(1);
 
     // Get the first page size
-    pdfjs.getDocument(Source!.src).promise.then((pdf) => {
+    pdfjs.getDocument(Source!.file).promise.then((pdf) => {
       pdf.getPage(1).then((page) => {
         const viewport = page.getViewport({ scale: 1 });
         const pageWidth = viewport.width;
@@ -84,8 +84,8 @@ export default function FileUpload({ student }: { student: string }) {
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
-      {Source.src && <SideBar />}
-      {Source.src ? (
+      {Source.file && <SideBar />}
+      {Source.file ? (
         <Box
           sx={{
             width: "100%",
@@ -105,7 +105,7 @@ export default function FileUpload({ student }: { student: string }) {
             }}
           >
             {docIsLoading && <Loader />}
-            <Document file={Source.src} onLoadSuccess={onDocumentLoadSuccess}>
+            <Document file={Source.file} onLoadSuccess={onDocumentLoadSuccess}>
               <div
                 id="canvasWrapper"
                 style={{

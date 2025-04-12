@@ -109,6 +109,7 @@ function SubmissionCards({
       console.error("Error during upload:", error);
     }
   };
+
   const handleDeleteSubmission = async () => {
     if (!user || !submission) {
       console.log("Missing user or submission.");

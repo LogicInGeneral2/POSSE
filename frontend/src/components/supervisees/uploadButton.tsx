@@ -21,12 +21,14 @@ function Upload_Button({
   variants = "outlined",
   icon = true,
   onFilesUploaded,
+  text = "Upload Files",
 }: {
   size: string;
   disabled: boolean;
   variants?: "text" | "outlined" | "contained";
   icon?: boolean;
-  onFilesUploaded: (files: File[]) => void; // Callback function
+  onFilesUploaded: (files: File | File[]) => void;
+  text?: string;
 }) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
@@ -53,7 +55,7 @@ function Upload_Button({
         sx={{ width: "100%" }}
         disabled={disabled}
       >
-        Choose Files
+        {text}
         <VisuallyHiddenInput
           type="file"
           multiple

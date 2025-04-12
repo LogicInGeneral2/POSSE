@@ -11,7 +11,7 @@
         { "label": "Submitted" },
         { "label": "Behind" },
         { "label": "Completed" },
-        { "label": "Evaluated" }
+        { "label": "Evaluated" }       
       ],
       "courses_options": [
         { "label": "FYP1" },

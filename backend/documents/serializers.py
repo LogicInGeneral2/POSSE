@@ -25,15 +25,31 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 
 class StudentSubmissionSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+
     class Meta:
         model = StudentSubmission
-        fields = "__all__"
+        fields = ["id", "student", "submission_phase", "file", "upload_date"]
+
+    def get_file(self, obj):
+        request = self.context.get("request")
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        return None
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
+    src = serializers.SerializerMethodField()
+
     class Meta:
         model = Feedback
-        fields = "__all__"
+        fields = ["id", "upload_date", "src", "file", "supervisor", "submission"]
+
+    def get_src(self, obj):
+        request = self.context.get("request")
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        return None
 
 
 class SubmissionPhaseSerializer(serializers.ModelSerializer):
@@ -97,6 +113,51 @@ class CombinedSubmissionSerializer(serializers.Serializer):
             "type": "feedback",
             "supervisorId": feedback.supervisor.id,
             "submissionId": submission.id,
+        }
+
+
+class StudentAllSubmissionSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.SerializerMethodField()
+    src = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
+    studentId = serializers.SerializerMethodField()
+    assignmentId = serializers.SerializerMethodField()
+    feedback = serializers.SerializerMethodField()
+
+    def get_title(self, obj):
+        return obj.file.name.split("/")[-1] if obj.file else ""
+
+    def get_src(self, obj):
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.file.url) if obj.file and request else ""
+
+    def get_status(self, obj):
+        return "Reviewed" if obj.feedback_set.exists() else "Submitted"
+
+    def get_type(self, obj):
+        return "submission"
+
+    def get_studentId(self, obj):
+        return obj.student.id
+
+    def get_assignmentId(self, obj):
+        return obj.submission_phase.id
+
+    def get_feedback(self, obj):
+        feedback = obj.feedback_set.first()
+        if not feedback:
+            return {}
+
+        return {
+            "id": feedback.id,
+            "title": "Feedback",
+            "upload_date": feedback.upload_date,
+            "src": feedback.file.url,
+            "type": "feedback",
+            "supervisorId": feedback.supervisor.id,
+            "submissionId": obj.id,
         }
 
 

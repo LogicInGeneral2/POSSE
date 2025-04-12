@@ -76,6 +76,7 @@ export interface SubmissionType extends FileType {
   submission: string;
   studentId: number;
   assignmentId: number;
+  feedback?: FeedbackType;
 }
 
 export interface FeedbackType extends FileType {

@@ -13,7 +13,6 @@ import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useNavigate, useLocation } from "react-router";
 import { useEffect, useState } from "react";
-import { getStudentList } from "../../services";
 import "./style.css";
 
 const StyledBreadcrumb = styled(Chip)(({ theme }) => ({
@@ -48,10 +47,12 @@ export default function Breadcrumb({
   receivedName,
   category,
   currentPage,
+  lists,
 }: {
   receivedName: string;
   category: string;
   currentPage: string;
+  lists: Lists[];
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,7 +63,7 @@ export default function Breadcrumb({
   );
   const [anchorPages, setAnchorPages] = useState<null | HTMLElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [names, setNames] = useState<Lists[]>([]);
+  const [names] = useState<Lists[]>(lists);
   const [selectedStudentName, setSelectedStudentName] = useState(receivedName);
 
   const pages: Navigations[] = [
@@ -71,12 +72,9 @@ export default function Breadcrumb({
   ];
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      const data = await getStudentList(category);
-      setNames(data);
-
+    const updateStudent = async () => {
       if (studentId) {
-        const foundStudent = data.find(
+        const foundStudent = names.find(
           (student: { id: { toString: () => string } }) =>
             student.id.toString() === studentId
         );
@@ -87,7 +85,7 @@ export default function Breadcrumb({
 
       setIsLoading(false);
     };
-    fetchStudents();
+    updateStudent();
   }, [category, studentId]);
 
   const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {

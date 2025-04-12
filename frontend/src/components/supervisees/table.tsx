@@ -105,14 +105,23 @@ export default function DataTable({ data, category }: DataTableProps) {
       setDialogTitle(`${action.label} ${row.student.name}'s Submission`);
       setDialogContent(
         action.label === "Download Submission" ? (
-          <DownloadDialog setOpenDialog={setOpenDialog} />
+          <DownloadDialog setOpenDialog={setOpenDialog} id={row.student.id} />
         ) : (
-          <UploadDialog setOpenDialog={setOpenDialog} />
+          <UploadDialog setOpenDialog={setOpenDialog} id={row.student.id} />
         )
       );
       setOpenDialog(true);
     } else if (action.type === "navigate" && action.path) {
-      navigate(action.path, { state: { rowData: row, category } });
+      const studentsList = data
+        .filter((item) => item.submissions.length > 0)
+        .map((item) => ({
+          id: item.student.id,
+          name: item.student.name,
+        }));
+
+      navigate(action.path, {
+        state: { rowData: row, category, lists: studentsList },
+      });
     }
   };
 
@@ -246,16 +255,19 @@ export default function DataTable({ data, category }: DataTableProps) {
                     <TableCell align="center">
                       {action_options.map((action) => (
                         <Tooltip key={action.label} title={action.label} arrow>
-                          <IconButton
-                            onClick={() =>
-                              handleActionClick(action as Action, {
-                                student,
-                                submissions,
-                              })
-                            }
-                          >
-                            {action.icon}
-                          </IconButton>
+                          <span>
+                            <IconButton
+                              onClick={() =>
+                                handleActionClick(action as Action, {
+                                  student,
+                                  submissions,
+                                })
+                              }
+                              disabled={!latestSubmission.src}
+                            >
+                              {action.icon}
+                            </IconButton>
+                          </span>
                         </Tooltip>
                       ))}
                     </TableCell>

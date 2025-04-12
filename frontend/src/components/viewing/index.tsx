@@ -11,6 +11,7 @@ export const ViewingPage = () => {
     searchParams.get("name") || location.state.rowData?.student?.name;
   const studentId =
     searchParams.get("student") || location.state.rowData?.student?.id;
+  const studentLists = location.state?.lists || [];
   const category = location.state?.category || "supervisor";
 
   return (
@@ -31,6 +32,7 @@ export const ViewingPage = () => {
           receivedName={studentName}
           category={category}
           currentPage="Viewing"
+          lists={studentLists}
         />
         <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
         <Box sx={{ marginTop: "20px" }}>

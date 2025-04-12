@@ -4,6 +4,7 @@ import {
   DialogActions,
   DialogContent,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -12,29 +13,50 @@ import {
 import Upload_Button from "./uploadButton";
 
 import { useEffect, useState } from "react";
-import { getUserSubmissions, uploadFeedback } from "../../services";
+import {
+  deleteFeedback,
+  getUserSubmissions,
+  uploadFeedback,
+} from "../../services";
 import ErrorNotice from "../commons/error";
 import { SubmissionType } from "../../services/types";
 import LoadingSpinner from "../commons/loading";
+import Download_Button from "../commons/download_button";
+import { DeleteRounded } from "@mui/icons-material";
 
 function UploadDialog({
   setOpenDialog,
+  id,
 }: {
   setOpenDialog: (open: boolean) => void;
+  id: number;
 }) {
-  const [selectedSubmissionId, setSelectedSubmissionId] = useState<
-    number | null
-  >(null);
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<SubmissionType | null>(null);
   const [submissionList, setSubmissionList] = useState<SubmissionType[]>([]);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadedFile, setUploadedFile] = useState<File>();
   const [isLoading, setIsloading] = useState(true);
 
-  useEffect(() => {
-    const fetchSubmissionList = async () => {
-      const data = await getUserSubmissions();
-      setSubmissionList(data);
+  const fetchSubmissionList = async () => {
+    setIsloading(true);
+    try {
+      const data = await getUserSubmissions(id);
+      setSubmissionList(data.data);
+
+      if (selectedSubmission) {
+        const updated = data.data.find(
+          (item: SubmissionType) => item.id === selectedSubmission.id
+        );
+        if (updated) setSelectedSubmission(updated);
+      }
+    } catch (error) {
+      console.error("Failed to fetch submissions:", error);
+    } finally {
       setIsloading(false);
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchSubmissionList();
   }, []);
 
@@ -42,32 +64,57 @@ function UploadDialog({
     return <ErrorNotice />;
   }
 
+  if (!submissionList) {
+    return <ErrorNotice />;
+  }
+
+  const handleDeleteFeedback = async (feedbackId: number) => {
+    try {
+      await deleteFeedback(feedbackId);
+      console.log("Feedback deleted.");
+      await fetchSubmissionList();
+    } catch (error) {
+      console.error("Failed to delete feedback:", error);
+    }
+  };
+
   const handleChange = (event: SelectChangeEvent) => {
-    setSelectedSubmissionId(Number(event.target.value));
+    const id = Number(event.target.value);
+    const found = submissionList.find((item) => item.id === id);
+    if (!found) return;
+    setSelectedSubmission(found);
   };
 
-  const handleFileUpload = (files: File[]) => {
-    setUploadedFiles(files);
+  const handleFileUpload = (files: File | File[]) => {
+    if (Array.isArray(files)) {
+      setUploadedFile(files[0]);
+    } else {
+      setUploadedFile(files);
+    }
   };
-
-  const handleConfirm = async () => {
-    if (!selectedSubmissionId || uploadedFiles.length === 0) return;
+  const handleSubmit = async () => {
+    if (!id || !uploadedFile || !selectedSubmission) {
+      console.log("Missing file or submission phase.");
+      return;
+    }
 
     try {
-      const payload = {
-        supervisorId: 1, // Assume supervisor ID (or get from context/state)
-        submissionId: selectedSubmissionId, // The selected submission ID
-        feedbackFiles: uploadedFiles.map((file) => ({
-          title: file.name,
-          upload_date: new Date().toISOString(),
-          src: URL.createObjectURL(file), // Mock file URL
-        })),
-      };
+      const response = await uploadFeedback({
+        studentId: id,
+        file: uploadedFile,
+        submissionId: selectedSubmission.id,
+      });
 
-      await uploadFeedback(payload);
-      setOpenDialog(false);
+      if (response.status >= 200 && response.status < 300) {
+        console.log("Upload successful!");
+        setUploadedFile(undefined);
+        await fetchSubmissionList();
+      } else {
+        const errorData = await response;
+        console.error("Upload failed:", errorData);
+      }
     } catch (error) {
-      console.error("Error uploading feedback:", error);
+      console.error("Error during upload:", error);
     }
   };
 
@@ -79,25 +126,63 @@ function UploadDialog({
             <LoadingSpinner />
           ) : (
             <>
-              <FormControl fullWidth size="small" sx={{ mb: "20px" }}>
-                <InputLabel>Submission</InputLabel>
-                <Select
-                  value={selectedSubmissionId?.toString() || ""}
-                  onChange={handleChange}
-                >
-                  {submissionList.map((item) => (
-                    <MenuItem key={item.id} value={item.id}>
-                      {item.progress}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 0.5,
+                  mb: 2,
+                  width: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  alignContent: "center",
+                  height: "100%",
+                }}
+              >
+                <FormControl fullWidth size="small">
+                  <InputLabel>Submission</InputLabel>
+                  <Select
+                    value={selectedSubmission?.id?.toString() || ""}
+                    onChange={handleChange}
+                  >
+                    {submissionList.map((item) => (
+                      <MenuItem key={item.id} value={item.id.toString()}>
+                        {item.title}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {selectedSubmission && selectedSubmission?.feedback?.id && (
+                  <>
+                    <Download_Button
+                      icon={true}
+                      disabled={!selectedSubmission.feedback.src}
+                      variants="contained"
+                      fileUrl={selectedSubmission.feedback?.src}
+                    />
+                    <IconButton
+                      color="primary"
+                      onClick={() =>
+                        selectedSubmission?.feedback?.id !== undefined
+                          ? handleDeleteFeedback(selectedSubmission.feedback.id)
+                          : console.error("Feedback ID is undefined")
+                      }
+                    >
+                      <DeleteRounded />
+                    </IconButton>
+                  </>
+                )}
+              </Box>
               <Upload_Button
                 size="small"
                 icon={false}
                 variants="contained"
-                disabled={!selectedSubmissionId}
-                onFilesUploaded={handleFileUpload} // Pass callback to capture uploaded files
+                disabled={!selectedSubmission}
+                onFilesUploaded={handleFileUpload}
+                text={
+                  selectedSubmission?.feedback?.id
+                    ? "Replace File"
+                    : "Upload File"
+                }
               />
             </>
           )}
@@ -106,8 +191,8 @@ function UploadDialog({
       <DialogActions sx={{ justifyContent: "space-between" }}>
         <Button onClick={() => setOpenDialog(false)}>Close</Button>
         <Button
-          onClick={handleConfirm}
-          disabled={!selectedSubmissionId || uploadedFiles.length === 0}
+          onClick={handleSubmit}
+          disabled={!selectedSubmission || !uploadedFile}
         >
           Confirm
         </Button>
