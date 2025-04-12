@@ -4,10 +4,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from users.models import Student
 from details.models import Submissions
 from .utils import IsSupervisor
-from .models import Document, Feedback, StudentSubmission
+from .models import Document, Feedback, Logbook, StudentSubmission
 from .serializers import (
     CombinedSubmissionSerializer,
     DocumentSerializer,
+    LogbookSerializer,
     StudentAllSubmissionSerializer,
     StudentSubmissionSerializer,
     FeedbackSerializer,
@@ -15,6 +16,7 @@ from .serializers import (
 )
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
+from rest_framework import status
 
 
 class DocumentListView(APIView):
@@ -30,7 +32,7 @@ class StudentSubmissionsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, student_id):
-        student = get_object_or_404(Student, id=student_id)
+        student = get_object_or_404(Student, user__id=student_id)
 
         if request.path.endswith("all/"):
             if request.user.role not in [
@@ -40,7 +42,6 @@ class StudentSubmissionsView(APIView):
             ]:
                 return Response({"detail": "Unauthorized"}, status=403)
 
-            # Get all actual submissions made by the student
             submissions = StudentSubmission.objects.filter(student=student)
 
             serializer = StudentAllSubmissionSerializer(
@@ -48,14 +49,14 @@ class StudentSubmissionsView(APIView):
             )
             return Response(serializer.data)
 
-        if request.user.role == "student" and request.user.id != student.user.id:
+        if request.user.role != "student" and request.user.id != student_id:
             return Response({"detail": "Unauthorized"}, status=403)
 
         submission_phases = Submissions.objects.all().order_by("-date_close")
         serializer = CombinedSubmissionSerializer(
             submission_phases,
             many=True,
-            context={"request": request, "student": student},
+            context={"request": request, "student": request.user.student},
         )
         return Response(serializer.data)
 
@@ -164,3 +165,172 @@ class DeleteSubmissionView(APIView):
                 {"detail": "Submission not found" + str(studentsubmission_id)},
                 status=404,
             )
+
+
+class LogbookCreateUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data.copy()
+
+        # Validate user role and required fields
+        if request.user.role in ["supervisor", "course_coordinator"]:
+            if not data.get("student") or not data.get("supervisor"):
+                return Response(
+                    {"detail": "Student and supervisor IDs are required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            # Ensure supervisor is authorized to create log for this student
+            student = get_object_or_404(Student, id=data["student"])
+            if request.user.role == "supervisor" and student.supervisor != request.user:
+                return Response(
+                    {"detail": "Not authorized to create logbook for this student."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        elif request.user.role == "student":
+            student = get_object_or_404(Student, user=request.user)
+            data["student"] = student.id
+            data["supervisor"] = student.supervisor.id if student.supervisor else None
+            if not data["supervisor"]:
+                return Response(
+                    {"detail": "No supervisor assigned to this student."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            return Response(
+                {"detail": "Invalid user role."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = LogbookSerializer(data=data)
+        if serializer.is_valid():
+            logbook = serializer.save()
+            return Response(
+                LogbookSerializer(logbook).data, status=status.HTTP_201_CREATED
+            )
+        return Response(
+            {"detail": "Invalid data.", "errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def put(self, request, pk):
+        log = get_object_or_404(Logbook, id=pk)
+
+        # Permission checks
+        if request.user.role == "student":
+            if log.student.user != request.user:
+                return Response(
+                    {"detail": "Not authorized to update this logbook."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        elif request.user.role in ["supervisor", "course_coordinator"]:
+            if request.user.role == "supervisor" and log.supervisor != request.user:
+                return Response(
+                    {"detail": "Not authorized to update this logbook."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        else:
+            return Response(
+                {"detail": "Invalid user role."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = LogbookSerializer(log, data=request.data, partial=True)
+        if serializer.is_valid():
+            updated_log = serializer.save()
+            return Response(
+                LogbookSerializer(updated_log).data, status=status.HTTP_200_OK
+            )
+        return Response(
+            {"detail": "Invalid data.", "errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def delete(self, request, pk):
+        log = get_object_or_404(Logbook, id=pk)
+
+        # Permission checks
+        if request.user.role == "student":
+            if log.student.user != request.user:
+                return Response(
+                    {"detail": "Not authorized to delete this logbook."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        elif request.user.role in ["supervisor", "course_coordinator"]:
+            if request.user.role == "supervisor" and log.supervisor != request.user:
+                return Response(
+                    {"detail": "Not authorized to delete this logbook."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        else:
+            return Response(
+                {"detail": "Invalid user role."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        log.delete()
+        return Response(
+            {"detail": "Logbook deleted successfully."},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+
+class LogbookStatusUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        if request.user.role not in ["supervisor", "course_coordinator"]:
+            return Response(
+                {"detail": "Not authorized to update logbook status."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        log = get_object_or_404(Logbook, id=pk)
+
+        # Check if supervisor is authorized
+        if request.user.role == "supervisor" and log.supervisor != request.user:
+            return Response(
+                {"detail": "Not authorized to update this logbook's status."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        status_value = request.data.get("status")
+        if status_value not in dict(Logbook.CATEGORY_CHOICES):
+            return Response(
+                {
+                    "detail": f"Invalid status. Must be one of: {', '.join(dict(Logbook.CATEGORY_CHOICES).keys())}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        log.status = status_value
+        log.save(update_fields=["status"])
+        return Response(
+            {"detail": "Status updated successfully.", "status": log.status},
+            status=status.HTTP_200_OK,
+        )
+
+
+class LogbookListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, student_id):
+        student = get_object_or_404(Student, user__id=student_id)
+
+        if request.user.role == "student":
+            if request.user != student.user:
+                return Response(
+                    {"detail": "Not authorized to view these logbooks."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        elif request.user.role == "supervisor":
+            if student.supervisor != request.user:
+                return Response(
+                    {"detail": "Not authorized to view these logbooks."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        elif request.user.role != "course_coordinator":
+            return Response(
+                {"detail": "Invalid user role."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        logbooks = Logbook.objects.filter(student=student).order_by("-date")
+        serializer = LogbookSerializer(logbooks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

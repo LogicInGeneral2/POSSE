@@ -1,7 +1,12 @@
 import { Box, Divider, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { LogType } from "../../services/types";
-import { getLogbookList } from "../../services";
+import {
+  deleteLogbook,
+  getLogbookList,
+  saveLogbook,
+  updateLogbookStatus,
+} from "../../services";
 import ErrorNotice from "../commons/error";
 import DataTable from "./table";
 import Details from "./details";
@@ -26,14 +31,14 @@ export const LogbooksPage = () => {
   const [studentId, setStudentId] = useState<string | null>(null);
   const [category, setCategory] = useState<string>("supervisor");
 
-  if (user !== null && user.role !== "student") {
-    useEffect(() => {
+  useEffect(() => {
+    if (user !== null && user.role !== "student") {
       const stateData = location.state?.rowData?.student || {};
       setStudentName(searchParams.get("name") || stateData.name);
       setStudentId(searchParams.get("student") || stateData.id);
       setCategory(location.state?.category || "supervisor");
-    }, [location.state, searchParams, user.role]);
-  }
+    }
+  }, [location.state, searchParams, user]);
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -43,8 +48,8 @@ export const LogbooksPage = () => {
 
       try {
         const fetchedData = await getLogbookList(idToFetch as number);
-        setData(fetchedData);
-        setLogDates(fetchedData.map((log: { date: any }) => log.date));
+        setData(fetchedData.data);
+        setLogDates(fetchedData.data.map((log: { date: any }) => log.date));
       } catch (error) {
         console.error("Failed to fetch logs", error);
         setData([]);
@@ -61,32 +66,84 @@ export const LogbooksPage = () => {
     setSelectedDate(log.date);
   };
 
-  const handleSave = (updatedLog: LogType) => {
-    setData((prevData) =>
-      prevData.some((log) => log.id === updatedLog.id)
-        ? prevData.map((log) => (log.id === updatedLog.id ? updatedLog : log))
-        : [...prevData, updatedLog]
-    );
+  const handleSave = async (updatedLog: LogType) => {
+    try {
+      const isUpdate = data.some((log) => log.id === updatedLog.id);
+      const payload = {
+        id: isUpdate ? updatedLog.id : undefined,
+        date: updatedLog.date,
+        activities: updatedLog.activities || "",
+        feedbacks: updatedLog.feedbacks || "",
+        plan: updatedLog.plan || "",
+        ...(user?.role !== "student" && {
+          studentId: updatedLog.student_id ?? studentId,
+          supervisorId: updatedLog.supervisor_id || user?.id,
+        }),
+      };
 
-    setSelectedLog(updatedLog);
+      const result = await saveLogbook(payload);
 
-    setLogDates((prevDates) => {
-      // Remove the old date if it exists
-      const oldDate = selectedLog?.date;
-      const newDates = prevDates.filter((date) => date !== oldDate);
+      setData((prevData) =>
+        isUpdate
+          ? prevData.map((log) =>
+              log.id === result.data.id ? result.data : log
+            )
+          : [...prevData, result.data]
+      );
 
-      // Add the updated date
-      return [...new Set([...newDates, updatedLog.date])];
-    });
+      setLogDates((prevDates) => {
+        const oldDate = data.find((log) => log.id === updatedLog.id)?.date;
+        const newDates = oldDate
+          ? prevDates.filter((date) => date !== oldDate)
+          : prevDates;
+        return [...new Set([...newDates, result.data.date])];
+      });
+
+      setSelectedLog(result.data);
+      setSelectedDate(result.data.date);
+    } catch (error: any) {
+      console.error("Error saving log:", error);
+      alert(
+        error.detail ||
+          (error.errors
+            ? JSON.stringify(error.errors)
+            : "Failed to save logbook.")
+      );
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setData((prevData) => {
-      const updatedData = prevData.filter((log) => log.id !== id);
-      setLogDates(updatedData.map((log) => log.date));
-      return updatedData;
-    });
-    setSelectedLog(null);
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteLogbook(id);
+      setData((prevData) => {
+        const updatedData = prevData.filter((log) => log.id !== id);
+        setLogDates(updatedData.map((log) => log.date));
+        return updatedData;
+      });
+      setSelectedLog(null);
+      setSelectedDate(null);
+    } catch (error: any) {
+      console.error("Error deleting log:", error);
+      alert(error.detail || "Failed to delete logbook.");
+    }
+  };
+
+  const handleStatusChange = async (logId: number, newStatus: string) => {
+    try {
+      const result = await updateLogbookStatus(logId, newStatus);
+      setData((prevData) =>
+        prevData.map((log) =>
+          log.id === logId ? { ...log, status: newStatus } : log
+        )
+      );
+      if (selectedLog?.id === logId) {
+        setSelectedLog({ ...selectedLog, status: newStatus });
+      }
+      alert(result.data.detail || "Status updated successfully.");
+    } catch (error: any) {
+      console.error("Error updating status:", error);
+      alert(error.detail || "Failed to update status.");
+    }
   };
 
   const handleDateClick = (selectedDate: Date) => {
@@ -105,7 +162,7 @@ export const LogbooksPage = () => {
         activities: "",
         feedbacks: "",
         plan: "",
-        status: "Draft",
+        status: "",
       });
     }
   };
@@ -129,6 +186,7 @@ export const LogbooksPage = () => {
             receivedName={studentName ?? ""}
             category={category}
             currentPage="Grading"
+            lists={location.state?.lists}
           />
         </Box>
       ) : null}

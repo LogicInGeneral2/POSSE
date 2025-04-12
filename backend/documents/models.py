@@ -81,3 +81,22 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"Feedback by {self.supervisor.name} for {self.submission}"
+
+
+class Logbook(models.Model):
+    CATEGORY_CHOICES = [
+        ("sent", "Sent"),
+        ("approved", "Approved"),
+    ]
+    student = models.ForeignKey("users.Student", on_delete=models.CASCADE)
+    supervisor = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, limit_choices_to={"role": "supervisor"}
+    )
+    date = models.DateField()
+    activities = models.TextField()
+    feedbacks = models.TextField()
+    plan = models.TextField()
+    status = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="sent")
+
+    def __str__(self):
+        return f"Logbook for {self.student.user.name} on {self.date}"

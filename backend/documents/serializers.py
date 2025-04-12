@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Document, StudentSubmission, Feedback
+from .models import Document, Logbook, StudentSubmission, Feedback
 from details.models import Submissions
 
 
@@ -169,3 +169,9 @@ class SubmissionUploadSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         student = self.context["student"]
         return StudentSubmission.objects.create(student=student, **validated_data)
+
+
+class LogbookSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Logbook
+        fields = "__all__"

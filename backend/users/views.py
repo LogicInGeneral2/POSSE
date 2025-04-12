@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-from documents.models import StudentSubmission
+from documents.models import Logbook, StudentSubmission
 from .models import Student, SupervisorsRequest, User
 from .serializers import (
     SupervisorChoiceSerializer,
@@ -135,6 +135,21 @@ class SuperviseeSubmissionsView(APIView):
                 .first()
             )
 
+            logbooks = Logbook.objects.filter(student=student).order_by("-date")
+            logbook_data = [
+                {
+                    "id": log.id,
+                    "date": log.date,
+                    "activities": log.activities,
+                    "feedbacks": log.feedbacks,
+                    "plan": log.plan,
+                    "status": log.status,
+                    "studentId": student.id,
+                    "supervisorId": log.supervisor.id,
+                }
+                for log in logbooks
+            ]
+
             result.append(
                 {
                     "student": {
@@ -161,6 +176,7 @@ class SuperviseeSubmissionsView(APIView):
                             "assignmentId": latest_submission.submission_phase.id,
                         }
                     ],
+                    "logbooks": logbook_data,
                 }
             )
 

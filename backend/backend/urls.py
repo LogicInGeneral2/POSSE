@@ -12,6 +12,9 @@ from documents.views import (
     DocumentListView,
     FeedbackUploadView,
     LatestStudentSubmissionView,
+    LogbookCreateUpdateView,
+    LogbookListView,
+    LogbookStatusUpdateView,
     StudentSubmissionsView,
     UploadStudentSubmissionView,
 )
@@ -111,4 +114,8 @@ urlpatterns = [
         DocumentCategoryListView.as_view(),
         name="document-categories",
     ),
+    path("logbooks/", LogbookCreateUpdateView.as_view()),
+    path("logbooks/<int:pk>/", LogbookCreateUpdateView.as_view()),
+    path("logbooks/<int:pk>/status/", LogbookStatusUpdateView.as_view()),
+    path("logbooks/student/<int:student_id>/", LogbookListView.as_view()),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
