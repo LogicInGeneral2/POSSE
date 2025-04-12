@@ -1,13 +1,17 @@
 from django.contrib import admin
+
+from .resources import AnnouncementResource, PeriodResource, SubmissionsResource
 from .models import Announcement, Period, Submissions
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
+from import_export.admin import ImportExportModelAdmin
 
 
 # Announcement Admin
 @admin.register(Announcement)
-class AnnouncementAdmin(admin.ModelAdmin):
+class AnnouncementAdmin(ImportExportModelAdmin):
+    resource_class = AnnouncementResource
     list_display = ["title", "short_message", "src_link"]
     search_fields = ["title", "message"]
     list_per_page = 20
@@ -53,7 +57,8 @@ class PeriodAdminForm(forms.ModelForm):
 
 
 @admin.register(Period)
-class PeriodAdmin(admin.ModelAdmin):
+class PeriodAdmin(ImportExportModelAdmin):
+    resource_class = PeriodResource
     form = PeriodAdminForm
     list_display = ["title", "directory", "start_date", "end_date", "days_left"]
     search_fields = ["title", "directory"]
@@ -64,7 +69,8 @@ class PeriodAdmin(admin.ModelAdmin):
 
 
 @admin.register(Submissions)
-class SubmissionsAdmin(admin.ModelAdmin):
+class SubmissionsAdmin(ImportExportModelAdmin):
+    resource_class = SubmissionsResource
     list_display = ("title", "date_open", "date_close", "days_left_colored")
     search_fields = ("title",)
     list_filter = ("date_open", "date_close")

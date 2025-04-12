@@ -1,9 +1,13 @@
 from django.contrib import admin
+
+from .resources import DocumentResource
 from .models import Document, StudentSubmission, Feedback
+from import_export.admin import ImportExportModelAdmin
 
 
 @admin.register(Document)
-class DocumentAdmin(admin.ModelAdmin):
+class DocumentAdmin(ImportExportModelAdmin):
+    resource_class = DocumentResource
     list_display = (
         "title",
         "category",

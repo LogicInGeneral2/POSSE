@@ -6,6 +6,8 @@ from django.urls import path, reverse
 from .models import SupervisorsRequest, User, Student
 from django.utils.html import format_html
 from django.contrib import messages
+from import_export.admin import ImportExportModelAdmin
+from .resources import UserResource, StudentResource
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -19,7 +21,8 @@ class CustomUserChangeForm(forms.ModelForm):
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
+    resource_class = UserResource
     form = CustomUserChangeForm
     list_display = ("id", "name", "username", "email", "role")
     list_filter = ("role",)
@@ -66,7 +69,8 @@ class UserAdmin(BaseUserAdmin):
 
 
 @admin.register(Student)
-class StudentAdmin(admin.ModelAdmin):
+class StudentAdmin(ImportExportModelAdmin):
+    resource_class = StudentResource
     list_display = ("id", "user", "student_id", "course", "supervisor_name")
     list_filter = ("course",)
     search_fields = ("user__name", "student_id", "user__email")
@@ -78,7 +82,7 @@ class StudentAdmin(admin.ModelAdmin):
 
 
 @admin.register(SupervisorsRequest)
-class SupervisorsRequestAdmin(admin.ModelAdmin):
+class SupervisorsRequestAdmin(ImportExportModelAdmin):
     list_display = (
         "id",
         "student",

@@ -77,7 +77,7 @@ class Student(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, limit_choices_to={"role": "student"}
     )
-    student_id = models.PositiveIntegerField(unique=True)
+    student_id = models.CharField(max_length=10, null=False, blank=False, unique=True)
     course = models.CharField(max_length=10, choices=COURSE_CHOICES)
     supervisor = models.ForeignKey(
         User,
