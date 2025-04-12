@@ -168,8 +168,7 @@ export const getDocumentColours = async () => {
 
 export const getSupervisees = async () => {
   try {
-    const response = await fetch(`${api}/supervisees_submissions.json`);
-    const data = await response.json();
+    const data = await api2.get(`api/users/supervisees/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -179,8 +178,7 @@ export const getSupervisees = async () => {
 
 export const getEvaluatees = async () => {
   try {
-    const response = await fetch(`${api}/supervisees_submissions.json`);
-    const data = await response.json();
+    const data = await api2.get(`api/users/evaluatees/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);

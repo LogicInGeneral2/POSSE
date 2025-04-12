@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.dispatch import receiver
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 from .models import SupervisorsRequest, User, Student
@@ -8,6 +9,7 @@ from django.utils.html import format_html
 from django.contrib import messages
 from import_export.admin import ImportExportModelAdmin
 from .resources import UserResource, StudentResource
+from django.db.models.signals import post_save
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -66,6 +68,11 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
             if existing.password != obj.password:
                 obj.set_password(obj.password)
         obj.save()
+
+    def delete_model(self, request, obj):
+        if obj.role in ["course_coordinator"]:
+            raise forms.ValidationError("You cannot delete a Course Coordinator.")
+        super().delete_model(request, obj)
 
 
 @admin.register(Student)
@@ -173,25 +180,30 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
             reverse("admin:users_supervisorsrequest_changelist")
         )
 
+    def bulk_approve(self, request, queryset):
+        success, failed = 0, 0
+        for obj in queryset:
+            try:
+                supervisor = User.objects.get(id=obj.supervisor_id, role="supervisor")
+                student_profile = Student.objects.get(user_id=obj.student.id)
+                student_profile.supervisor = supervisor
+                student_profile.save()
+                SupervisorsRequest.objects.filter(student=obj.student).delete()
+                success += 1
+            except Exception as e:  # noqa: F841
+                failed += 1
 
-def bulk_approve(self, request, queryset):
-    success, failed = 0, 0
-    for obj in queryset:
-        try:
-            supervisor = User.objects.get(id=obj.supervisor_id, role="supervisor")
-            student_profile = Student.objects.get(user_id=obj.student.id)
-            student_profile.supervisor = supervisor
-            student_profile.save()
-            SupervisorsRequest.objects.filter(student=obj.student).delete()
-            success += 1
-        except Exception as e:  # noqa: F841
-            failed += 1
+        self.message_user(
+            request,
+            f"{success} approved. {failed} failed. Ensure supervisor IDs are valid and students exist.",
+            messages.INFO,
+        )
 
-    self.message_user(
-        request,
-        f"{success} approved. {failed} failed. Ensure supervisor IDs are valid and students exist.",
-        messages.INFO,
-    )
+    bulk_approve.short_description = "Bulk Approve Selected Requests"
 
 
-bulk_approve.short_description = "Bulk Approve Selected Requests"
+@receiver(post_save, sender=User)
+def create_student_profile(sender, instance, created, **kwargs):
+    if created and instance.role == "Student":
+        if not hasattr(instance, "student"):
+            Student.objects.create(user=instance, student_id="TEMP")

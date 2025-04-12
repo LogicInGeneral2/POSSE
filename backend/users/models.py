@@ -5,7 +5,6 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
-from django.core.exceptions import ValidationError
 
 
 def upload_to_supervisor_requests(instance, filename):
@@ -48,7 +47,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    is_examiner = models.BooleanField(default=False)
+    is_examiner = models.BooleanField(default=True)
     is_available = models.BooleanField(default=True)
 
     objects = CustomUserManager()
@@ -57,6 +56,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ["email", "name", "role"]  # Asked when creating superuser
 
     def save(self, *args, **kwargs):
+        if self.role not in ["supervisor", "examiner"]:
+            self.is_examiner = False
+            self.is_available = False
         if not self.username and self.email:
             base_username = self.email.split("@")[0]
             unique_username = base_username
@@ -91,15 +93,14 @@ class Student(models.Model):
         User,
         blank=True,
         related_name="evaluatees",
-        limit_choices_to={"role": "examiner"},
+        limit_choices_to={"is_examiner": True},
     )
-
-    def clean(self):
-        if self.supervisor and self.evaluators.filter(id=self.supervisor.id).exists():
-            raise ValidationError("A supervisor cannot also be an evaluator.")
 
     def __str__(self):
         return f"{self.user.name} ({self.course})"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
 
 class SupervisorsRequest(models.Model):

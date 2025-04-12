@@ -75,7 +75,6 @@ class CombinedSubmissionSerializer(serializers.Serializer):
             "title": submission.file.name.split("/")[-1],
             "upload_date": submission.upload_date,
             "src": submission.file.url,
-            "progress": "Progress ?",  # Optional field if stored elsewhere
             "status": "Reviewed" if submission.feedback_set.exists() else "Submitted",
             "type": "submission",
             "studentId": student.id,

@@ -234,14 +234,14 @@ export default function DataTable({ data, category }: DataTableProps) {
                     <TableCell align="center">{student.course}</TableCell>
                     {category === "supervisor" ? (
                       <TableCell align="center">
-                        {latestSubmission.progress || "N/A"}
+                        {latestSubmission.progress || "No Submission"}
                       </TableCell>
                     ) : (
                       <TableCell>{student.supervisor || "N/A"}</TableCell>
                     )}
 
                     <TableCell align="center">
-                      {latestSubmission.status || "N/A"}
+                      {latestSubmission.status || "No Submission"}
                     </TableCell>
                     <TableCell align="center">
                       {action_options.map((action) => (

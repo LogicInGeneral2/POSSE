@@ -14,7 +14,7 @@
         { "label": "Evaluated" }
       ],
       "courses_options": [
-        { "label": "FYP 1" },
-        { "label": "FYP 2" }
+        { "label": "FYP1" },
+        { "label": "FYP2" }
       ]
 }

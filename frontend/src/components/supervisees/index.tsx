@@ -53,7 +53,7 @@ export const SuperviseesPage = () => {
     const fetchSupervisees = async () => {
       try {
         const data = await getSupervisees();
-        setSupervisees(data);
+        setSupervisees(data.data);
       } catch (error) {
         console.error("Error fetching supervisees:", error);
       } finally {
@@ -63,7 +63,7 @@ export const SuperviseesPage = () => {
     const fetchEvaluatees = async () => {
       try {
         const data = await getEvaluatees();
-        setEvaluatees(data);
+        setEvaluatees(data.data);
       } catch (error) {
         console.error("Error fetching supervisees:", error);
       } finally {

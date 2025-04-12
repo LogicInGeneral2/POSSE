@@ -137,7 +137,7 @@ export default function NavigationBar() {
       icon: <InfoIcon style={{ color: "#58041D" }} />,
       path: "/course_outline",
     },
-    user?.role === "supervisor" && {
+    user?.role !== "student" && {
       text: "Submissions & Grading",
       icon: <GradingRounded style={{ color: "#58041D" }} />,
       path: "/supervisees",

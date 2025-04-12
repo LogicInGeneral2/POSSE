@@ -2,7 +2,9 @@ import json
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .models import SupervisorsRequest, User
+
+from documents.models import StudentSubmission
+from .models import Student, SupervisorsRequest, User
 from .serializers import (
     SupervisorChoiceSerializer,
     SupervisorsListSerializer,
@@ -111,3 +113,55 @@ class LogoutView(APIView):
             return Response(
                 {"detail": "Invalid refresh token."}, status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class SuperviseeSubmissionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "supervisor":
+            return Response({"detail": "Unauthorized"}, status=403)
+
+        if request.path.endswith("evaluatees/"):
+            target = Student.objects.filter(evaluators=request.user)
+        else:
+            target = Student.objects.filter(supervisor=request.user)
+
+        result = []
+        for student in target:
+            latest_submission = (
+                StudentSubmission.objects.filter(student=student)
+                .order_by("-upload_date")
+                .first()
+            )
+
+            result.append(
+                {
+                    "student": {
+                        "id": student.id,
+                        "name": student.user.name,
+                        "email": student.user.email,
+                        "course": student.course,
+                        "student_id": student.student_id,
+                        "supervisor": request.user.name,
+                    },
+                    "submissions": []
+                    if not latest_submission
+                    else [
+                        {
+                            "id": latest_submission.id,
+                            "title": latest_submission.file.name.split("/")[-1],
+                            "upload_date": latest_submission.upload_date,
+                            "src": latest_submission.file.url,
+                            "status": "Reviewed"
+                            if latest_submission.feedback_set.exists()
+                            else "Submitted",
+                            "type": "submission",
+                            "studentId": student.id,
+                            "assignmentId": latest_submission.submission_phase.id,
+                        }
+                    ],
+                }
+            )
+
+        return Response(result)

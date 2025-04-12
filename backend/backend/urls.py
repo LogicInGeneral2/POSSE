@@ -23,6 +23,7 @@ from users.views import (
     AvailableSupervisorsView,
     CurrentUserView,
     LogoutView,
+    SuperviseeSubmissionsView,
     SupervisorListsView,
 )
 from django.conf.urls.static import static
@@ -35,6 +36,16 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="refresh"),
     path("api/users/me/", CurrentUserView.as_view(), name="current_user"),
     path("api/users/supervisor/", CurrentUserView.as_view(), name="current_supervisor"),
+    path(
+        "api/users/supervisees/",
+        SuperviseeSubmissionsView.as_view(),
+        name="supervisee-submissions",
+    ),
+    path(
+        "api/users/evaluatees/",
+        SuperviseeSubmissionsView.as_view(),
+        name="supervisee-submissions",
+    ),
     path("api-auth/", include("rest_framework.urls")),
     path("api/logout/", LogoutView.as_view(), name="logout"),
     path(
