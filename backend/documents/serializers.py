@@ -24,6 +24,20 @@ class DocumentSerializer(serializers.ModelSerializer):
         return None
 
 
+class MarkingSchemeSerializer(serializers.ModelSerializer):
+    src = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = ["src"]
+
+    def get_src(self, obj):
+        request = self.context.get("request")
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        return None
+
+
 class StudentSubmissionSerializer(serializers.ModelSerializer):
     file = serializers.SerializerMethodField()
 

@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "details",
     "documents",
     "settings",
+    "grades",
     "rest_framework",
     "corsheaders",
     "rest_framework_simplejwt.token_blacklist",
@@ -233,6 +234,8 @@ JAZZMIN_SETTINGS = {
         "users.User": "fas fa-user",
         "users.Student": "fas fa-graduation-cap",
         "users.SupervisorsRequest": "fas fa-user-group",
+        "grades.Grade": "fas fa-clipboard-list",
+        "grades.MarkingScheme": "fas fa-tasks",
     },
     # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",

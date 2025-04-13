@@ -1,8 +1,10 @@
-// components/PDFViewer.tsx
 import "./pdfworker";
 import { Document, Page, DocumentProps } from "react-pdf";
 import { useState } from "react";
 import { useContainerWidth } from "./containerWidth";
+import { IconButton } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 
 interface PDFViewerProps {
   src: string;
@@ -16,8 +18,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   customHeight = "30vh",
 }) => {
   const [numPages, setNumPages] = useState<number>(0);
+  const [zoom, setZoom] = useState<number>(defaultZoom);
   const { ref, width: containerWidth } = useContainerWidth();
-  const zoom = defaultZoom;
   const Height = customHeight;
 
   const onLoadSuccess: DocumentProps["onLoadSuccess"] = ({ numPages }) => {
@@ -26,8 +28,29 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
   const pageWidth = containerWidth ? containerWidth * zoom : 600;
 
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.1, 2));
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.1, 0.5));
+
   return (
-    <div>
+    <div style={{ position: "relative" }}>
+      {/* Zoom Buttons */}
+      <div style={{ position: "absolute", top: 10, left: 10, zIndex: 10 }}>
+        <IconButton
+          onClick={handleZoomOut}
+          size="small"
+          sx={{ background: "#fff", border: "1px solid #ccc", mr: 1 }}
+        >
+          <RemoveIcon fontSize="small" />
+        </IconButton>
+        <IconButton
+          onClick={handleZoomIn}
+          size="small"
+          sx={{ background: "#fff", border: "1px solid #ccc" }}
+        >
+          <AddIcon fontSize="small" />
+        </IconButton>
+      </div>
+
       <div
         ref={ref}
         style={{

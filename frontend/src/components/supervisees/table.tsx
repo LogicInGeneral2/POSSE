@@ -25,16 +25,18 @@ import { JSX, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import DownloadDialog from "./downloadDialog";
 import UploadDialog from "./uploadDialog";
-import { DataTableProps, SuperviseeSubmission } from "../../services/types";
-import { getSuperviseesModal } from "../../services";
+import {
+  courseOptions,
+  DataTableProps,
+  statusOptions,
+  SuperviseeSubmission,
+} from "../../services/types";
 import { Action, action_options } from "./actions";
 
 export default function DataTable({ data, category }: DataTableProps) {
   const [course_options, setCourseOptions] = useState<string[]>([]);
-  const [progress_options, setProgressOptions] = useState<string[]>([]);
   const [status_options, setStatusOptions] = useState<string[]>([]);
   const [courses, setCourses] = useState<string[]>([]);
-  const [progresses, setProgresses] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [page, setPage] = useState(0);
@@ -45,37 +47,12 @@ export default function DataTable({ data, category }: DataTableProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchSuperviseesModal = async () => {
-      try {
-        const data = await getSuperviseesModal();
-
-        setCourseOptions(
-          data.courses_options.map((option: { label: string }) => option.label)
-        );
-        setProgressOptions(
-          data.progress_options.map((option: { label: string }) => option.label)
-        );
-        setStatusOptions(
-          data.status_options.map((option: { label: string }) => option.label)
-        );
-      } catch (error) {
-        console.error("Error fetching supervisees modal:", error);
-      }
-    };
-
-    fetchSuperviseesModal();
+    setCourseOptions(courseOptions.map((option) => option.label));
+    setStatusOptions(statusOptions.map((option) => option.label));
   }, []);
 
   const handleCoursesChange = (event: SelectChangeEvent<string[]>) => {
     setCourses(
-      typeof event.target.value === "string"
-        ? event.target.value.split(",")
-        : event.target.value
-    );
-  };
-
-  const handleProgressesChange = (event: SelectChangeEvent<string[]>) => {
-    setProgresses(
       typeof event.target.value === "string"
         ? event.target.value.split(",")
         : event.target.value
@@ -128,8 +105,6 @@ export default function DataTable({ data, category }: DataTableProps) {
   const filteredData = data.filter(({ student, submissions }) => {
     return (
       (!courses.length || courses.includes(student.course ?? "")) &&
-      (!progresses.length ||
-        submissions.some((sub) => progresses.includes(sub.progress))) &&
       (!statuses.length ||
         submissions.some((sub) => statuses.includes(sub.status))) &&
       (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -173,26 +148,6 @@ export default function DataTable({ data, category }: DataTableProps) {
             ))}
           </Select>
         </FormControl>
-        {category === "supervisor" && (
-          <FormControl sx={{ width: "20%" }} size="small">
-            <InputLabel>Progress</InputLabel>
-            <Select
-              multiple
-              size="small"
-              value={progresses}
-              onChange={handleProgressesChange}
-              input={<OutlinedInput label="Tag" />}
-              renderValue={(selected) => selected.join(", ")}
-            >
-              {progress_options.map((progress) => (
-                <MenuItem key={progress} value={progress}>
-                  <Checkbox checked={progresses.includes(progress)} />
-                  <ListItemText primary={progress} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
 
         <FormControl sx={{ width: "20%" }} size="small">
           <InputLabel>Status</InputLabel>
@@ -265,6 +220,17 @@ export default function DataTable({ data, category }: DataTableProps) {
                                   })
                                 }
                                 disabled={!has_logbook}
+                              >
+                                {action.icon}
+                              </IconButton>
+                            ) : action.label === "Grade Submission" ? (
+                              <IconButton
+                                onClick={() =>
+                                  handleActionClick(action as Action, {
+                                    student,
+                                    submissions,
+                                  })
+                                }
                               >
                                 {action.icon}
                               </IconButton>

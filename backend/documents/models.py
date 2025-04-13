@@ -26,6 +26,7 @@ class Document(models.Model):
         ("Lecture Notes", "Lecture Notes"),
         ("Samples", "Samples"),
         ("Templates", "Templates"),
+        ("Marking Scheme", "Marking Scheme"),
     ]
     title = models.CharField(max_length=255)
     upload_date = models.DateTimeField(auto_now_add=True)

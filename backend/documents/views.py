@@ -9,6 +9,7 @@ from .serializers import (
     CombinedSubmissionSerializer,
     DocumentSerializer,
     LogbookSerializer,
+    MarkingSchemeSerializer,
     StudentAllSubmissionSerializer,
     StudentSubmissionSerializer,
     FeedbackSerializer,
@@ -20,11 +21,19 @@ from rest_framework import status
 
 
 class DocumentListView(APIView):
-    def get(self, request):
-        documents = Document.objects.all()
-        serializer = DocumentSerializer(
-            documents, many=True, context={"request": request}
-        )
+    def get(self, request, title=None):
+        if "scheme" in request.path:
+            document = get_object_or_404(
+                Document, category="Marking Scheme", title=title
+            )
+            serializer = MarkingSchemeSerializer(document, context={"request": request})
+
+        else:
+            documents = Document.objects.all()
+
+            serializer = DocumentSerializer(
+                documents, many=True, context={"request": request}
+            )
         return Response(serializer.data)
 
 

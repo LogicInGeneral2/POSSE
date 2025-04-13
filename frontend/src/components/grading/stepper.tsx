@@ -20,39 +20,46 @@ import LoadingSpinner from "../commons/loading";
 import { GradingContentsType } from "../../services/types";
 import ScoreTable from "./finaltable";
 
-const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
+const GradingStepper = ({ student }: { student: number }) => {
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(true);
   const [gradingContents, setGradingContents] = useState<GradingContentsType[]>(
     []
   );
-  const [grades, setGrades] = useState<number[][]>([]);
+  const [grades, setGrades] = useState<{ [schemeId: number]: number[] }>({});
   const [activeStep, setActiveStep] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const schemeData = await getMarkingScheme();
+        setIsLoading(true);
+        const schemeData = await getMarkingScheme(student);
         if (schemeData) {
           setGradingContents(schemeData);
+          setGrades(
+            schemeData.reduce(
+              (
+                acc: { [schemeId: number]: number[] },
+                scheme: GradingContentsType
+              ) => {
+                acc[scheme.id] = new Array(scheme.contents.length).fill(0);
+                return acc;
+              },
+              {}
+            )
+          );
         }
         const gradesData = await getGrades(student);
-        if (gradesData) {
-          setGrades(
-            schemeData.map((step: GradingContentsType, stepIndex: number) =>
-              step.contents.map(
-                (_, contentIndex: number) =>
-                  gradesData[stepIndex * step.contents.length + contentIndex] ||
-                  0
-              )
-            )
-          );
-        } else {
-          setGrades(
-            schemeData.map((step: GradingContentsType) =>
-              new Array(step.contents.length).fill(0)
-            )
-          );
+        if (gradesData && gradesData.length) {
+          setGrades((prevGrades) => {
+            const updatedGrades = { ...prevGrades };
+            gradesData.forEach(
+              (grade: { scheme: { id: number }; grades: number[] }) => {
+                updatedGrades[grade.scheme.id] = grade.grades;
+              }
+            );
+            return updatedGrades;
+          });
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -61,7 +68,7 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
       }
     };
     fetchData();
-  }, []);
+  }, [student]);
 
   const steps = gradingContents.map((item) => item.label);
 
@@ -70,43 +77,54 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
   }
 
   const handleGradeChange = (
-    stepIndex: number,
+    schemeId: number,
     contentIndex: number,
     value: number
   ): void => {
-    setGrades((prevGrades) => {
-      const updatedGrades = prevGrades.map((step, i) =>
-        i === stepIndex
-          ? step.map((grade, j) => (j === contentIndex ? value : grade))
-          : step
-      );
-      return updatedGrades;
-    });
+    setGrades((prevGrades) => ({
+      ...prevGrades,
+      [schemeId]: prevGrades[schemeId].map((grade, j) =>
+        j === contentIndex ? value : grade
+      ),
+    }));
   };
 
-  const allGraded = grades.every((step) => step.every((grade) => grade > 0));
-  const totalScore = grades.flat().reduce((acc, curr) => acc + curr, 0);
-  const stepScores = grades.map((step) =>
-    step.reduce((acc, curr) => acc + curr, 0)
+  const allGraded = gradingContents.every((scheme) =>
+    grades[scheme.id].every((grade) => grade > 0)
   );
+  const stepScores = gradingContents.map((scheme: GradingContentsType) =>
+    grades[scheme.id].reduce((acc, curr) => acc + curr, 0)
+  );
+  const totalScore = stepScores.reduce((acc, curr) => acc + curr, 0);
 
   const handleNext = () => setActiveStep((prev) => prev + 1);
   const handleBack = () => setActiveStep((prev) => prev - 1);
   const handleSave = async () => {
     try {
-      const payload = {
-        student_id: student,
-        user_id: user?.id,
-        pic: pic,
-        grades: grades.flat(),
-      };
-      console.log(payload);
-      await saveGrades(payload);
+      if (!user?.id) {
+        throw new Error("User ID not found");
+      }
+      const gradesPayload = gradingContents.map(
+        (scheme: GradingContentsType) => ({
+          scheme_id: scheme.id,
+          grades: grades[scheme.id],
+        })
+      );
+      await saveGrades({
+        studentId: student,
+        user_id: user.id,
+        grades: gradesPayload,
+      });
       alert("Grades saved successfully!");
     } catch (error) {
       console.error("Error saving grades:", error);
-      alert("Failed to save grades.");
+      alert("Failed to save grades. Please try again.");
     }
+  };
+
+  const activeScheme = gradingContents[activeStep];
+  const handleGradeChangeWrapper = (contentIndex: number, value: number) => {
+    handleGradeChange(activeScheme.id, contentIndex, value);
   };
 
   return (
@@ -139,7 +157,7 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
               />
             </Box>
           ) : (
-            <Box sx={{ flexGrow: 1, height: "400px", overflow: "auto" }}>
+            <Box sx={{ flexGrow: 1, height: "500px", overflow: "auto" }}>
               <Typography
                 sx={{
                   mt: "20px",
@@ -189,7 +207,7 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
                 </Box>
 
                 {/* Content Rows */}
-                {gradingContents[activeStep].contents.map((content, index) => (
+                {activeScheme.contents.map((content, index) => (
                   <Box
                     key={index}
                     sx={{
@@ -203,26 +221,23 @@ const GradingStepper = ({ pic, student }: { pic: string; student: string }) => {
                     <FormControl>
                       <RadioGroup
                         row
-                        value={grades[activeStep][index]}
+                        value={grades[activeScheme.id][index] || 0}
                         onChange={(e) =>
-                          handleGradeChange(
-                            activeStep,
+                          handleGradeChangeWrapper(
                             index,
                             Number(e.target.value)
                           )
                         }
                         sx={{ display: "flex", gap: 2 }}
                       >
-                        {[...Array(gradingContents[activeStep].marks)].map(
-                          (_, idx) => (
-                            <FormControlLabel
-                              key={idx}
-                              value={idx + 1}
-                              control={<Radio />}
-                              label=""
-                            />
-                          )
-                        )}
+                        {[...Array(activeScheme.marks)].map((_, idx) => (
+                          <FormControlLabel
+                            key={idx}
+                            value={idx + 1}
+                            control={<Radio />}
+                            label=""
+                          />
+                        ))}
                       </RadioGroup>
                     </FormControl>
                   </Box>

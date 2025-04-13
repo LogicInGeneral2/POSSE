@@ -112,6 +112,7 @@ export interface DataTableProps {
 }
 
 export interface GradingContentsType {
+  id: number;
   label: string;
   marks: number;
   weightage: number;
@@ -147,3 +148,18 @@ export interface SelectionContextType {
   loading: boolean;
   refreshStatus: () => void;
 }
+
+export interface Option {
+  label: string;
+}
+
+export const statusOptions: Option[] = [
+  { label: "Reviewed" },
+  { label: "Pending" },
+  { label: "Submitted" },
+  { label: "Behind" },
+  { label: "Completed" },
+  { label: "Evaluated" },
+];
+
+export const courseOptions: Option[] = [{ label: "FYP1" }, { label: "FYP2" }];

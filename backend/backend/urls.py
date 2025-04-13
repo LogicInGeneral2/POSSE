@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from grades.views import GetGradesView, GetMarkingSchemeView, SaveGradesView
 from settings.views import (
     DocumentCategoryListView,
     DocumentThemeListView,
@@ -64,6 +65,11 @@ urlpatterns = [
     path("periods/", AllPeriodsView.as_view(), name="all-periods"),
     path("documents/", DocumentListView.as_view(), name="documents"),
     path(
+        "documents/scheme/<str:title>/",
+        DocumentListView.as_view(),
+        name="marking-scheme",
+    ),
+    path(
         "submissions/supervisors/choices/",
         SupervisorListsView.as_view(),
         name="student-submissions",
@@ -118,4 +124,13 @@ urlpatterns = [
     path("logbooks/<int:pk>/", LogbookCreateUpdateView.as_view()),
     path("logbooks/<int:pk>/status/", LogbookStatusUpdateView.as_view()),
     path("logbooks/student/<int:student_id>/", LogbookListView.as_view()),
+    path(
+        "grades/scheme/<int:student_id>/",
+        GetMarkingSchemeView.as_view(),
+        name="get-marking-scheme",
+    ),
+    path(
+        "grades/student/<int:student_id>/", GetGradesView.as_view(), name="get-grades"
+    ),
+    path("grades/save/<int:student_id>/", SaveGradesView.as_view(), name="save-grades"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
