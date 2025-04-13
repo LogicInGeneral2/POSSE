@@ -49,7 +49,12 @@ urlpatterns = [
     path(
         "api/users/evaluatees/",
         SuperviseeSubmissionsView.as_view(),
-        name="supervisee-submissions",
+        name="evaluatees-submissions",
+    ),
+    path(
+        "api/users/students/<str:category>/",
+        SuperviseeSubmissionsView.as_view(),
+        name="students-submissions",
     ),
     path("api-auth/", include("rest_framework.urls")),
     path("api/logout/", LogoutView.as_view(), name="logout"),

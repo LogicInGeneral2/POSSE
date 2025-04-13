@@ -185,6 +185,16 @@ export const getEvaluatees = async () => {
   }
 };
 
+export const getStudents = async (category: string) => {
+  try {
+    const data = await api.get(`api/users/students/${category}/`);
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
 export const getUserSubmissions = async (student: number) => {
   try {
     const data = await api.get(`submissions/${student}/all/`);

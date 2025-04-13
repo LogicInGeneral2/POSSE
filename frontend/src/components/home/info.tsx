@@ -7,6 +7,7 @@ export function Info() {
   const { user } = useUser();
   const student = user as Student;
   const supervisor = user as Supervisor;
+  console.log(user);
 
   return (
     <Grid
@@ -105,8 +106,8 @@ export function Info() {
             }}
           >
             <SupervisorAccountRounded sx={{ mr: 1 }} /> SUPERVISEES:{" "}
-            {(supervisor.supervisees_FYP1?.length || 0) +
-              (supervisor.supervisees_FYP2?.length || 0)}
+            {(supervisor.supervisees_FYP1 || 0) +
+              (supervisor.supervisees_FYP2 || 0)}
           </Grid>
 
           <Grid
@@ -118,8 +119,8 @@ export function Info() {
             }}
           >
             <GradingRounded sx={{ mr: 1 }} /> EVALUATEES:{" "}
-            {(supervisor.evaluatees_FYP1?.length || 0) +
-              (supervisor.evaluatees_FYP2?.length || 0)}
+            {(supervisor.evaluatees_FYP1 || 0) +
+              (supervisor.evaluatees_FYP2 || 0)}
           </Grid>
         </>
       )}

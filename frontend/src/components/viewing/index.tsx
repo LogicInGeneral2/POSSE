@@ -7,12 +7,11 @@ import Breadcrumb from "../commons/breadcrumbs";
 export const ViewingPage = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const studentName =
-    searchParams.get("name") || location.state.rowData?.student?.name;
   const studentId =
     searchParams.get("student") || location.state.rowData?.student?.id;
-  const studentLists = location.state?.lists || [];
-  const category = location.state?.category || "supervisor";
+  const studentName =
+    searchParams.get("name") || location.state.rowData?.student?.name;
+  const category = searchParams.get("category") || location.state?.category;
 
   return (
     <>
@@ -30,9 +29,8 @@ export const ViewingPage = () => {
         </Typography>
         <Breadcrumb
           receivedName={studentName}
-          category={category}
+          category={category || "supervisor"}
           currentPage="Viewing"
-          lists={studentLists}
         />
         <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
         <Box sx={{ marginTop: "20px" }}>

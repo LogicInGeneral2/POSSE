@@ -89,15 +89,8 @@ export default function DataTable({ data, category }: DataTableProps) {
       );
       setOpenDialog(true);
     } else if (action.type === "navigate" && action.path) {
-      const studentsList = data
-        .filter((item) => item.submissions.length > 0 || item.has_logbook)
-        .map((item) => ({
-          id: item.student.id,
-          name: item.student.name,
-        }));
-
       navigate(action.path, {
-        state: { rowData: row, category, lists: studentsList },
+        state: { rowData: row, category },
       });
     }
   };

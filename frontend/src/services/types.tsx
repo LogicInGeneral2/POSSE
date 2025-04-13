@@ -14,10 +14,10 @@ export interface Student extends User {
 
 export interface Supervisor extends User {
   supervisor_id: number;
-  supervisees_FYP1?: string[];
-  supervisees_FYP2?: string[];
-  evaluatees_FYP1?: string[];
-  evaluatees_FYP2?: string[];
+  supervisees_FYP1?: number;
+  supervisees_FYP2?: number;
+  evaluatees_FYP1?: number;
+  evaluatees_FYP2?: number;
 }
 
 export interface UserContextType {
@@ -104,6 +104,13 @@ export interface SuperviseeSubmission {
   student: Student;
   submissions: SubmissionType[];
   has_logbook?: boolean;
+}
+
+export interface BreadCrumbData {
+  id: number;
+  name: string;
+  submissionsLength: number;
+  has_logbook: boolean;
 }
 
 export interface DataTableProps {

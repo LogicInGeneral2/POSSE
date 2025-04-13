@@ -25,6 +25,8 @@ class UserSerializer(serializers.ModelSerializer):
             data["supervisees_FYP2"] = instance.supervisees.filter(
                 course="FYP2"
             ).count()
+            data["evaluatees_FYP1"] = instance.evaluatees.filter(course="FYP1").count()
+            data["evaluatees_FYP2"] = instance.evaluatees.filter(course="FYP2").count()
 
         return data
 

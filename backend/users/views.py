@@ -118,9 +118,31 @@ class LogoutView(APIView):
 class SuperviseeSubmissionsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request, category=None):  # Add 'category=None' here
         if request.user.role != "supervisor":
             return Response({"detail": "Unauthorized"}, status=403)
+
+        if category:  # Check if category is provided
+            if (
+                category == "supervisor"
+            ):  # You can now compare the category to determine the logic
+                target = Student.objects.filter(supervisor=request.user)
+            else:
+                target = Student.objects.filter(evaluators=request.user)
+
+            result = []
+            for student in target:
+                submissions = StudentSubmission.objects.filter(student=student)
+                has_logbook = Logbook.objects.filter(student=student).exists()
+                result.append(
+                    {
+                        "id": student.id,
+                        "name": student.user.name,
+                        "submissionsLength": submissions.count(),
+                        "has_logbook": has_logbook,
+                    }
+                )
+            return Response(result)
 
         if request.path.endswith("evaluatees/"):
             target = Student.objects.filter(evaluators=request.user)

@@ -10,13 +10,13 @@ import LoadingSpinner from "../commons/loading";
 export const GradingPage = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const [isLoading, setIsLoading] = useState(true);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const studentName =
     searchParams.get("name") || location.state.rowData?.student?.name;
   const studentId =
     searchParams.get("student") || location.state.rowData?.student?.id;
-  const category = location.state?.category || "supervisor";
-  const [isLoading, setIsLoading] = useState(true);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const category = searchParams.get("category") || location.state?.category;
 
   useEffect(() => {
     const fetchDoc = async () => {
@@ -49,7 +49,6 @@ export const GradingPage = () => {
             receivedName={studentName}
             category={category}
             currentPage="Grading"
-            lists={location.state?.lists}
           />
         </Box>
 

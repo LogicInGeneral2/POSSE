@@ -22,6 +22,12 @@ export default function DataTable({
         Current Logs
       </Typography>
 
+      {data.length === 0 && (
+        <Typography sx={{ fontWeight: "bold", textAlign: "center", mt: 2 }}>
+          No data available.
+        </Typography>
+      )}
+
       {data.map((row, index) => {
         const statusDetail: StatusInfo = status_info.find(
           (info) => info.value === row.status

@@ -14,24 +14,22 @@ import LoadingSpinner from "../commons/loading";
 
 export const LogbooksPage = () => {
   const { user } = useUser();
-  const [data, setData] = useState<LogType[]>([]);
+  const [logData, setlogData] = useState<LogType[]>([]);
   const [logDates, setLogDates] = useState<string[]>([]);
   const [selectedLog, setSelectedLog] = useState<LogType | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
   const [searchParams] = useSearchParams();
-
   const [studentName, setStudentName] = useState<string | null>(null);
   const [studentId, setStudentId] = useState<string | null>(null);
-  const [category, setCategory] = useState<string>("supervisor");
+  const category = searchParams.get("category") || location.state?.category;
 
   useEffect(() => {
     if (user !== null && user.role !== "student") {
       const stateData = location.state?.rowData?.student || {};
       setStudentName(searchParams.get("name") || stateData.name);
       setStudentId(searchParams.get("student") || stateData.id);
-      setCategory(location.state?.category || "supervisor");
     }
   }, [location.state, searchParams, user]);
 
@@ -43,11 +41,11 @@ export const LogbooksPage = () => {
 
       try {
         const fetchedData = await getLogbookList(idToFetch as number);
-        setData(fetchedData.data);
+        setlogData(fetchedData.data);
         setLogDates(fetchedData.data.map((log: { date: any }) => log.date));
       } catch (error) {
         console.error("Failed to fetch logs", error);
-        setData([]);
+        setlogData([]);
       } finally {
         setIsLoading(false);
       }
@@ -63,7 +61,7 @@ export const LogbooksPage = () => {
 
   const handleSave = async (updatedLog: LogType) => {
     try {
-      const isUpdate = data.some((log) => log.id === updatedLog.id);
+      const isUpdate = logData.some((log) => log.id === updatedLog.id);
       const payload = {
         id: isUpdate ? updatedLog.id : undefined,
         date: updatedLog.date,
@@ -78,7 +76,7 @@ export const LogbooksPage = () => {
 
       const result = await saveLogbook(payload);
 
-      setData((prevData) =>
+      setlogData((prevData) =>
         isUpdate
           ? prevData.map((log) =>
               log.id === result.data.id ? result.data : log
@@ -87,7 +85,7 @@ export const LogbooksPage = () => {
       );
 
       setLogDates((prevDates) => {
-        const oldDate = data.find((log) => log.id === updatedLog.id)?.date;
+        const oldDate = logData.find((log) => log.id === updatedLog.id)?.date;
         const newDates = oldDate
           ? prevDates.filter((date) => date !== oldDate)
           : prevDates;
@@ -110,7 +108,7 @@ export const LogbooksPage = () => {
   const handleDelete = async (id: number) => {
     try {
       await deleteLogbook(id);
-      setData((prevData) => {
+      setlogData((prevData) => {
         const updatedData = prevData.filter((log) => log.id !== id);
         setLogDates(updatedData.map((log) => log.date));
         return updatedData;
@@ -126,7 +124,7 @@ export const LogbooksPage = () => {
   const handleDateClick = (selectedDate: Date) => {
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
     setSelectedDate(formattedDate);
-    const existingLog = data.find((log) => log.date === formattedDate);
+    const existingLog = logData.find((log) => log.date === formattedDate);
 
     if (existingLog) {
       setSelectedLog(existingLog);
@@ -160,10 +158,9 @@ export const LogbooksPage = () => {
       {user.role !== "student" ? (
         <Box sx={{ justifyContent: "space-between", display: "flex" }}>
           <Breadcrumb
-            receivedName={studentName ?? ""}
-            category={category}
-            currentPage="Grading"
-            lists={location.state?.lists}
+            receivedName={studentName!}
+            category={category || "supervisor"}
+            currentPage="Logs"
           />
         </Box>
       ) : null}
@@ -193,7 +190,7 @@ export const LogbooksPage = () => {
             selectedDate={selectedDate}
             onDateClick={handleDateClick}
           />
-          <DataTable data={data} onRowClick={handleSelectLog} />
+          <DataTable data={logData} onRowClick={handleSelectLog} />
         </Box>
         <Box
           sx={{

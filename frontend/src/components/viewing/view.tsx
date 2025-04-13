@@ -8,7 +8,6 @@ import SideBar from "./sidebar";
 import { Box, Button, Typography } from "@mui/material";
 import Loader from "./loader";
 import { getLatestUserSubmission } from "../../services";
-import ErrorNotice from "../commons/error";
 
 export default function FileUpload({ student }: { student: number }) {
   const contextValues = useButtons();
@@ -79,7 +78,22 @@ export default function FileUpload({ student }: { student: number }) {
   };
 
   if (!Source) {
-    return <ErrorNotice />;
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography
+          sx={{ textAlign: "center", fontWeight: "bold", color: "error" }}
+        >
+          No data available.
+        </Typography>
+      </div>
+    );
   }
 
   return (
