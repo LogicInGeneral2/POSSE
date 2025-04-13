@@ -1,12 +1,7 @@
 import { Box, Divider, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { LogType } from "../../services/types";
-import {
-  deleteLogbook,
-  getLogbookList,
-  saveLogbook,
-  updateLogbookStatus,
-} from "../../services";
+import { deleteLogbook, getLogbookList, saveLogbook } from "../../services";
 import ErrorNotice from "../commons/error";
 import DataTable from "./table";
 import Details from "./details";
@@ -125,24 +120,6 @@ export const LogbooksPage = () => {
     } catch (error: any) {
       console.error("Error deleting log:", error);
       alert(error.detail || "Failed to delete logbook.");
-    }
-  };
-
-  const handleStatusChange = async (logId: number, newStatus: string) => {
-    try {
-      const result = await updateLogbookStatus(logId, newStatus);
-      setData((prevData) =>
-        prevData.map((log) =>
-          log.id === logId ? { ...log, status: newStatus } : log
-        )
-      );
-      if (selectedLog?.id === logId) {
-        setSelectedLog({ ...selectedLog, status: newStatus });
-      }
-      alert(result.data.detail || "Status updated successfully.");
-    } catch (error: any) {
-      console.error("Error updating status:", error);
-      alert(error.detail || "Failed to update status.");
     }
   };
 

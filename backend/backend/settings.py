@@ -224,6 +224,7 @@ JAZZMIN_SETTINGS = {
         "details.Period": "fas fa-calendar",
         "details.Submissions": "fas fa-file-import",
         "documents.Document": "fas fa-file",
+        "documents.Logbook": "fas fa-book",
         "documents.StudentSubmission": "fas fa-file-circle-exclamation",
         "documents.Feedback": "fas fa-file-circle-check",
         "settings.documentCategories": "fas fa-swatchbook",

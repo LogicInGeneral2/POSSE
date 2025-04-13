@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { LogType } from "../../services/types";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 import { status_info } from "./status";
+import { updateLogbookStatus } from "../../services";
 
 interface DetailsProps {
   selectedLog: LogType | null;
@@ -20,11 +21,6 @@ interface DetailsProps {
   onDelete: (id: number) => void;
   userRole: string | null;
 }
-
-const mockSaveLog = async (log: LogType) => {
-  console.log("Saving log:", log);
-  return new Promise((resolve) => setTimeout(() => resolve(log), 1000));
-};
 
 const mockDeleteLog = async (id: number) => {
   console.log("Deleting log with ID:", id);
@@ -71,7 +67,7 @@ export default function Details({
   const statusDetail = status_info.find(
     (info) => info.value === logDetails.status
   ) || {
-    value: "Unknown",
+    value: "N/A",
     color: "default",
     icon: <></>,
   };
@@ -91,7 +87,6 @@ export default function Details({
 
   const handleSave = async () => {
     if (logDetails) {
-      await mockSaveLog(logDetails);
       onSave(logDetails);
     }
   };
@@ -102,11 +97,17 @@ export default function Details({
   };
 
   const handleApprove = async () => {
-    if (logDetails && logDetails.status !== "Approved") {
-      const updatedLog = { ...logDetails, status: "Approved" };
-      await mockSaveLog(updatedLog);
-      setLogDetails(updatedLog);
-      onSave(updatedLog);
+    if (logDetails && logDetails.status !== "approved") {
+      try {
+        const result = await updateLogbookStatus(logDetails.id, "approved");
+        const updatedLog = { ...logDetails, status: "approved" };
+        setLogDetails(updatedLog);
+        onSave(updatedLog);
+        alert(result.data.detail || "Logbook approved successfully.");
+      } catch (error: any) {
+        console.error("Failed to approve logbook:", error);
+        alert(error.detail || "Failed to approve logbook.");
+      }
     }
   };
 
@@ -128,7 +129,7 @@ export default function Details({
           Log Details
         </Typography>
         <Chip
-          label={statusDetail.value}
+          label={statusDetail.value.toUpperCase()}
           icon={statusDetail.icon}
           color={statusDetail.color}
           variant="outlined"
@@ -180,7 +181,7 @@ export default function Details({
           fullWidth
           sx={{ mt: 2 }}
           onClick={handleApprove}
-          disabled={logDetails.status === "Approved"}
+          disabled={logDetails.status === "approved" || !logDetails.status}
         >
           {logDetails.status === "Approved" ? "Approved" : "Approve"}
         </Button>

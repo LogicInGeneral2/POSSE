@@ -284,7 +284,6 @@ class LogbookStatusUpdateView(APIView):
 
         log = get_object_or_404(Logbook, id=pk)
 
-        # Check if supervisor is authorized
         if request.user.role == "supervisor" and log.supervisor != request.user:
             return Response(
                 {"detail": "Not authorized to update this logbook's status."},
@@ -312,15 +311,17 @@ class LogbookListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, student_id):
-        student = get_object_or_404(Student, user__id=student_id)
-
         if request.user.role == "student":
+            student = get_object_or_404(Student, user__id=student_id)
+
             if request.user != student.user:
                 return Response(
                     {"detail": "Not authorized to view these logbooks."},
                     status=status.HTTP_403_FORBIDDEN,
                 )
         elif request.user.role == "supervisor":
+            student = get_object_or_404(Student, id=student_id)
+
             if student.supervisor != request.user:
                 return Response(
                     {"detail": "Not authorized to view these logbooks."},

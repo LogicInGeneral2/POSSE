@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .resources import DocumentResource
-from .models import Document, StudentSubmission, Feedback
+from .models import Document, Logbook, StudentSubmission, Feedback
 from import_export.admin import ImportExportModelAdmin
 
 
@@ -59,3 +59,59 @@ class FeedbackAdmin(admin.ModelAdmin):
         (None, {"fields": ("supervisor", "submission", "file")}),
         ("Timestamps", {"fields": ("upload_date",), "classes": ("collapse",)}),
     )
+
+
+@admin.register(Logbook)
+class LogbookAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "student_name",
+        "supervisor_name",
+        "date",
+        "status",
+    )
+    list_filter = ("status", "date", "supervisor", "student")
+    search_fields = (
+        "student__user__name",
+        "student__user__username",
+        "supervisor__name",
+        "supervisor__username",
+        "activities",
+        "feedbacks",
+        "plan",
+    )
+    date_hierarchy = "date"
+    ordering = ("-date",)
+    readonly_fields = ("date",)
+
+    fieldsets = (
+        (
+            "Student Info",
+            {
+                "fields": ("student", "supervisor", "status"),
+            },
+        ),
+        (
+            "Logbook Details",
+            {
+                "fields": ("activities", "feedbacks", "plan"),
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": ("date",),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    def student_name(self, obj):
+        return obj.student.user.name
+
+    student_name.short_description = "Student"
+
+    def supervisor_name(self, obj):
+        return obj.supervisor.name
+
+    supervisor_name.short_description = "Supervisor"

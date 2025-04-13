@@ -7,20 +7,7 @@ import {
   Typography,
 } from "@mui/material";
 import { LogType } from "../../services/types";
-import { status_info } from "./status";
-
-interface StatusInfo {
-  value: string;
-  color:
-    | "default"
-    | "primary"
-    | "secondary"
-    | "error"
-    | "info"
-    | "success"
-    | "warning";
-  icon: React.ReactElement;
-}
+import { status_info, StatusInfo } from "./status";
 
 export default function DataTable({
   data,
@@ -39,9 +26,9 @@ export default function DataTable({
         const statusDetail: StatusInfo = status_info.find(
           (info) => info.value === row.status
         ) || {
-          value: "Unknown",
+          value: "N/A",
           color: "default",
-          icon: <></>, // Fallback to empty fragment
+          icon: <></>,
         };
 
         return (
@@ -52,7 +39,8 @@ export default function DataTable({
               overflow: "auto",
               cursor: "pointer",
               transition: "0.3s",
-              backgroundColor: "primary.main",
+              border: "1px solid",
+              backgroundColor: "transparent",
               "&:hover": {
                 boxShadow: 3,
                 bgcolor: "secondary.main",
@@ -66,18 +54,18 @@ export default function DataTable({
             <CardContent>
               <Grid container spacing={2} textAlign="center">
                 <Grid size={2}>
-                  <Typography variant="body1" color="secondary">
+                  <Typography variant="body1" color="primary">
                     {index + 1}
                   </Typography>
                 </Grid>
                 <Grid size={5}>
-                  <Typography variant="body1" color="secondary">
+                  <Typography variant="body1" color="primary">
                     {row.date}
                   </Typography>
                 </Grid>
                 <Grid size={5}>
                   <Chip
-                    label={row.status}
+                    label={row.status.toUpperCase()}
                     icon={statusDetail.icon}
                     variant="outlined"
                     size="small"

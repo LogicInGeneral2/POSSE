@@ -103,6 +103,7 @@ export interface SupervisorsList {
 export interface SuperviseeSubmission {
   student: Student;
   submissions: SubmissionType[];
+  has_logbook?: boolean;
 }
 
 export interface DataTableProps {

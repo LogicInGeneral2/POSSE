@@ -113,7 +113,7 @@ export default function DataTable({ data, category }: DataTableProps) {
       setOpenDialog(true);
     } else if (action.type === "navigate" && action.path) {
       const studentsList = data
-        .filter((item) => item.submissions.length > 0)
+        .filter((item) => item.submissions.length > 0 || item.has_logbook)
         .map((item) => ({
           id: item.student.id,
           name: item.student.name,
@@ -233,7 +233,7 @@ export default function DataTable({ data, category }: DataTableProps) {
           <TableBody>
             {filteredData
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map(({ student, submissions }) => {
+              .map(({ student, submissions, has_logbook }) => {
                 const latestSubmission =
                   submissions[submissions.length - 1] || {};
                 return (
@@ -256,17 +256,31 @@ export default function DataTable({ data, category }: DataTableProps) {
                       {action_options.map((action) => (
                         <Tooltip key={action.label} title={action.label} arrow>
                           <span>
-                            <IconButton
-                              onClick={() =>
-                                handleActionClick(action as Action, {
-                                  student,
-                                  submissions,
-                                })
-                              }
-                              disabled={!latestSubmission.src}
-                            >
-                              {action.icon}
-                            </IconButton>
+                            {action.label === "View Logbook" ? (
+                              <IconButton
+                                onClick={() =>
+                                  handleActionClick(action as Action, {
+                                    student,
+                                    submissions,
+                                  })
+                                }
+                                disabled={!has_logbook}
+                              >
+                                {action.icon}
+                              </IconButton>
+                            ) : (
+                              <IconButton
+                                onClick={() =>
+                                  handleActionClick(action as Action, {
+                                    student,
+                                    submissions,
+                                  })
+                                }
+                                disabled={!latestSubmission.src}
+                              >
+                                {action.icon}
+                              </IconButton>
+                            )}
                           </span>
                         </Tooltip>
                       ))}

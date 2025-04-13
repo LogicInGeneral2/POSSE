@@ -1,6 +1,6 @@
 import { CheckCircle, PendingRounded } from "@mui/icons-material";
 
-interface StatusInfo {
+export interface StatusInfo {
   value: string;
   color:
     | "default"
@@ -15,12 +15,12 @@ interface StatusInfo {
 
 const status_info: StatusInfo[] = [
   {
-    value: "Approved",
+    value: "approved",
     color: "success",
     icon: <CheckCircle />,
   },
   {
-    value: "Sent",
+    value: "sent",
     color: "info",
     icon: <PendingRounded />,
   },

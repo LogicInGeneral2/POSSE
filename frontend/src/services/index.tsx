@@ -287,7 +287,6 @@ export const saveGrades = async (payload: any) => {
 export const getUserSubmissionData = async (student: number) => {
   try {
     const data = await api2.get(`/submissions/${student}/`);
-    console.log(data);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -332,7 +331,6 @@ export const deleteSubmission = async (
 export const getLogbookList = async (student: number) => {
   try {
     const data = await api2.get(`/logbooks/student/${student}/`);
-    console.log(data);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -373,22 +371,6 @@ export const saveLogbook = async ({
     return response;
   } catch (error: any) {
     throw error.response?.data || { detail: "Failed to save logbook." };
-  }
-};
-
-export const updateLogbook = async (logId: number, log: Partial<LogType>) => {
-  try {
-    const response = await api2.put(`/logbooks/${logId}/`, {
-      date: log.date,
-      activities: log.activities || "",
-      feedbacks: log.feedbacks || "",
-      plan: log.plan || "",
-      ...(log.student_id && { student: log.student_id }),
-      ...(log.supervisor_id && { supervisor: log.supervisor_id }),
-    });
-    return response;
-  } catch (error: any) {
-    throw error.response?.data || { detail: "Failed to update logbook." };
   }
 };
 

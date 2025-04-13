@@ -135,20 +135,7 @@ class SuperviseeSubmissionsView(APIView):
                 .first()
             )
 
-            logbooks = Logbook.objects.filter(student=student).order_by("-date")
-            logbook_data = [
-                {
-                    "id": log.id,
-                    "date": log.date,
-                    "activities": log.activities,
-                    "feedbacks": log.feedbacks,
-                    "plan": log.plan,
-                    "status": log.status,
-                    "studentId": student.id,
-                    "supervisorId": log.supervisor.id,
-                }
-                for log in logbooks
-            ]
+            has_logbook = Logbook.objects.filter(student=student).exists()
 
             result.append(
                 {
@@ -176,7 +163,7 @@ class SuperviseeSubmissionsView(APIView):
                             "assignmentId": latest_submission.submission_phase.id,
                         }
                     ],
-                    "logbooks": logbook_data,
+                    "has_logbook": has_logbook,
                 }
             )
 
