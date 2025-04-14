@@ -27,7 +27,7 @@ export const ErrorRoute = () => {
           to="/"
           sx={{ marginTop: 2 }}
         >
-          Go to Homepage
+          Go Back
         </Button>
       </Container>
     </Box>

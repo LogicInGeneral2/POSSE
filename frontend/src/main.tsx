@@ -25,11 +25,21 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 import ProtectedRoute from "./routes/ProtectedRoute.tsx";
 import { Logout } from "./routes/logout.tsx";
+import { ResetPassword } from "./routes/request_reset.tsx";
+import { ConfirmPassword } from "./routes/confirm_reset.tsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPassword />,
+  },
+  {
+    path: "/reset-password/confirm/:uid/:token",
+    element: <ConfirmPassword />,
   },
   {
     path: "/",

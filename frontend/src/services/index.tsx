@@ -1,6 +1,6 @@
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../api/constants";
 import { Student, Supervisor, User } from "./types";
-import api from "../api";
+import { api, api_public } from "../api";
 
 export const loginUser = async (
   username: string,
@@ -16,6 +16,57 @@ export const loginUser = async (
 
   return { user: userData };
 };
+
+export const refreshAccessToken = async (): Promise<boolean> => {
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN);
+
+  if (!refreshToken) {
+    console.warn("No refresh token found");
+    return false;
+  }
+
+  try {
+    const res = await api.post("/api/token/refresh/", {
+      refresh: refreshToken,
+    });
+
+    if (res.status === 200) {
+      localStorage.setItem(ACCESS_TOKEN, res.data.access);
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error("Refresh token error:", error);
+    return false;
+  }
+};
+
+export const resetPasswordRequest = async (email: string) => {
+  try {
+    const response = await api_public.post("/api/password-reset/request/", {
+      email,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Password reset request failed:", error);
+  }
+};
+
+export const resetPasswordConfirm = async (
+  uid: string,
+  token: string,
+  password: string
+) => {
+  const response = await api_public.post("/api/password-reset/confirm/", {
+    uid,
+    token,
+    password,
+  });
+  return response.data;
+};
+
+export { api, api_public };
 
 export const logoutUser = async () => {
   const refreshToken = localStorage.getItem("refresh");

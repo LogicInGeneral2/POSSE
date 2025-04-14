@@ -28,6 +28,8 @@ from users.views import (
     AvailableSupervisorsView,
     CurrentUserView,
     LogoutView,
+    PasswordResetConfirmView,
+    PasswordResetRequestView,
     SuperviseeSubmissionsView,
     SupervisorListsView,
 )
@@ -58,6 +60,16 @@ urlpatterns = [
     ),
     path("api-auth/", include("rest_framework.urls")),
     path("api/logout/", LogoutView.as_view(), name="logout"),
+    path(
+        "api/password-reset/request/",
+        PasswordResetRequestView.as_view(),
+        name="password_reset_request",
+    ),
+    path(
+        "api/password-reset/confirm/",
+        PasswordResetConfirmView.as_view(),
+        name="password_reset_confirm",
+    ),
     path(
         "users/supervisors/lists/",
         AvailableSupervisorsView.as_view(),

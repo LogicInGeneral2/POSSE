@@ -4,8 +4,6 @@ import {
   TextField,
   Button,
   Typography,
-  Checkbox,
-  FormControlLabel,
   InputAdornment,
   IconButton,
   CircularProgress,
@@ -166,32 +164,17 @@ export const LoginPage = () => {
                   }}
                 />
               </Box>
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{ justifyContent: "space-between", fontSize: 4 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <FormControlLabel
-                    control={<Checkbox />}
-                    label="Remember Me"
-                    sx={{
-                      "& .MuiSvgIcon-root": { fontSize: "01rem" },
-                      "& .MuiTypography-root": { fontSize: "0.75rem" },
-                    }}
-                  />
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Typography
-                    component="a"
-                    href=""
-                    color="primary"
-                    sx={{ fontSize: "0.75rem" }}
-                  >
-                    Forgot Password?
-                  </Typography>
-                </Box>
-              </Stack>
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                <Typography
+                  component="a"
+                  href="/reset-password"
+                  color="primary"
+                  sx={{ fontSize: "0.75rem" }}
+                >
+                  Forgot Password?
+                </Typography>
+              </Box>
 
               {loading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>

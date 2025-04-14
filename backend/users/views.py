@@ -1,8 +1,9 @@
 import json
+from django.template import TemplateDoesNotExist
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-
+from backend import settings
 from documents.models import Logbook, StudentSubmission
 from .models import Student, SupervisorsRequest, User
 from .serializers import (
@@ -12,6 +13,13 @@ from .serializers import (
 )
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework import status
+from rest_framework.permissions import AllowAny
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.template.loader import render_to_string
+import smtplib
 
 
 class CurrentUserView(APIView):
@@ -190,3 +198,126 @@ class SuperviseeSubmissionsView(APIView):
             )
 
         return Response(result)
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            # Use DRF's request.data instead of json.loads
+            email = request.data.get("email")
+
+            if not email:
+                return Response(
+                    {"error": "Email is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                user = User.objects.get(email=email)
+
+                token_generator = PasswordResetTokenGenerator()
+                token = token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+                reset_url = (
+                    f"http://localhost:5173/reset-password/confirm/{uid}/{token}"
+                )
+
+                try:
+                    email_body = render_to_string(
+                        "password_reset_email.html",
+                        {
+                            "user": user,
+                            "reset_url": reset_url,
+                        },
+                    )
+                except TemplateDoesNotExist:
+                    return Response(
+                        {"error": "Email template not found"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
+                try:
+                    send_mail(
+                        subject="POSSE Password Reset Request",
+                        message=email_body,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[email],
+                        fail_silently=False,
+                    )
+                except smtplib.SMTPAuthenticationError:
+                    return Response(
+                        {"error": "Invalid email configuration"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+                except smtplib.SMTPException:
+                    return Response(
+                        {"error": "Failed to send email"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
+                return Response(
+                    {"message": "Password reset email sent successfully"},
+                    status=status.HTTP_200_OK,
+                )
+
+            except User.DoesNotExist:
+                return Response(
+                    {"message": "Password reset email sent successfully"},
+                    status=status.HTTP_200_OK,
+                )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            # Use DRF's request.data instead of json.loads
+            uidb64 = request.data.get("uid")
+            token = request.data.get("token")
+            password = request.data.get("password")
+
+            if not all([uidb64, token, password]):
+                return Response(
+                    {"error": "Missing required fields"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                uid = force_str(urlsafe_base64_decode(uidb64))
+                user = User.objects.get(pk=uid)
+
+                token_generator = PasswordResetTokenGenerator()
+                if token_generator.check_token(user, token):
+                    user.set_password(password)
+                    user.save()
+                    return Response(
+                        {"message": "Password reset successful"},
+                        status=status.HTTP_200_OK,
+                    )
+                else:
+                    return Response(
+                        {"error": "Invalid or expired token"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+                return Response(
+                    {"error": "Invalid token or user"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

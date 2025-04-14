@@ -26,6 +26,5 @@ dist-ssr
 # Ignore env directory and API
 .env
 /env/
-/frontend/src/api/
 **/node_modules/
 /frontend/.env

@@ -1,9 +1,9 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Navigate } from "react-router";
 import { jwtDecode } from "jwt-decode";
-import api from "../api";
-import { REFRESH_TOKEN, ACCESS_TOKEN } from "../api/constants";
+import { ACCESS_TOKEN } from "../api/constants";
 import LoadingSpinner from "../components/commons/loading";
+import { refreshAccessToken } from "../services";
 
 interface JWTPayload {
   exp: number;
@@ -23,26 +23,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }, []);
 
   const refreshToken = async () => {
-    if (isRefreshing) return; // Prevent multiple refresh requests
+    if (isRefreshing) return;
     setIsRefreshing(true);
 
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN);
-    try {
-      const res = await api.post("/api/token/refresh/", {
-        refresh: refreshToken,
-      });
-      if (res.status === 200) {
-        localStorage.setItem(ACCESS_TOKEN, res.data.access);
-        setIsAuthorized(true);
-      } else {
-        setIsAuthorized(false);
-      }
-    } catch (error) {
-      console.error("Refresh token error:", error);
-      setIsAuthorized(false);
-    } finally {
-      setIsRefreshing(false);
-    }
+    const success = await refreshAccessToken();
+
+    setIsAuthorized(success);
+    setIsRefreshing(false);
   };
 
   const auth = async () => {
