@@ -71,7 +71,7 @@ export const HomePage = () => {
           <Grid size={8} sx={{ height: "100%" }}>
             <Stack spacing={2} sx={{ width: "100%" }}>
               <Status isStudent={user.role === "student" ? true : false} />
-              <DashboardCalender />
+              <DashboardCalender id={user.id} />
             </Stack>
           </Grid>
         </Grid>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useButtons } from "./canvas";
-import { Popover, Slider, Tooltip } from "@mui/material";
+import { Divider, Popover, Slider, Tooltip } from "@mui/material";
 import { SketchPicker } from "react-color";
 import {
   AddPhotoAlternateRounded,
@@ -14,33 +14,30 @@ import {
   RestartAltRounded,
   DeleteForeverRounded,
   BrushRounded,
+  StraightenRounded,
 } from "@mui/icons-material";
 import Loader from "./loader";
 
 export default function SideBar() {
   const contextValues = useButtons();
 
-  // Handle Delete key press
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: { key: string }) => {
       if (event.key === "Delete") {
         contextValues.deleteBtn();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [contextValues]); // Ensure it updates when contextValues changes
+  }, [contextValues]);
 
-  // State variables with proper types
-  const [openColor, setOpenColor] = useState<HTMLElement | null>(null);
-  const [openBorderColor, setOpenBorderColor] = useState<HTMLElement | null>(
-    null
-  );
-  const [openStroke, setOpenStroke] = useState<HTMLElement | null>(null);
+  const [openColor, setOpenColor] = useState(null);
+  const [openBorderColor, setOpenBorderColor] = useState(null);
+  const [openStroke, setOpenStroke] = useState(null);
+  const [openHighlightSize, setOpenHighlightSize] = useState(null);
 
   return (
     <div>
@@ -51,7 +48,7 @@ export default function SideBar() {
           style={{
             position: "fixed",
             zIndex: 50,
-            top: "50%",
+            top: "45%",
             right: 10,
             height: "15vh",
             width: "auto",
@@ -99,16 +96,6 @@ export default function SideBar() {
               </div>
             </Tooltip>
 
-            <Tooltip title="TextBox" placement="left">
-              <div>
-                <TextFieldsRounded
-                  sx={{ color: "#F8B628" }}
-                  style={{ cursor: "pointer", fontSize: "1.5rem" }}
-                  onClick={() => contextValues.addText(contextValues.canvas)}
-                />
-              </div>
-            </Tooltip>
-
             <Tooltip title="Add Image" placement="left">
               <div>
                 <label htmlFor="img-input">
@@ -129,27 +116,45 @@ export default function SideBar() {
               </div>
             </Tooltip>
 
+            <Tooltip title="TextBox" placement="left">
+              <div>
+                <TextFieldsRounded
+                  sx={{ color: "#F8B628" }}
+                  style={{ cursor: "pointer", fontSize: "1.5rem" }}
+                  onClick={() => contextValues.addText(contextValues.canvas)}
+                />
+              </div>
+            </Tooltip>
+
+            <Divider flexItem color="#F8B628" />
+
             <Tooltip title="Draw" placement="left">
               <div>
                 <ModeEditRounded
-                  sx={{ color: "#F8B628" }}
+                  sx={{
+                    color: contextValues.isDrawingMode ? "#F8B628" : "gray",
+                  }}
                   style={{ cursor: "pointer", fontSize: "1.5rem" }}
                   onClick={() => contextValues.toggleDraw(contextValues.canvas)}
                 />
               </div>
             </Tooltip>
 
-            <Tooltip title="Highlight" placement="left">
+            <Tooltip title="Highlight Mode" placement="left">
               <div>
                 <BrushRounded
-                  sx={{ color: "#F8B628" }}
+                  sx={{
+                    color: contextValues.isHighlightMode ? "#F8B628" : "gray",
+                  }}
                   style={{ cursor: "pointer", fontSize: "1.5rem" }}
                   onClick={() =>
-                    contextValues.addHighlight(contextValues.canvas)
+                    contextValues.setIsHighlightMode((prev: any) => !prev)
                   }
                 />
               </div>
             </Tooltip>
+
+            <Divider flexItem color="#F8B628" />
 
             <Tooltip title="Delete Selected" placement="left">
               <div>
@@ -171,6 +176,8 @@ export default function SideBar() {
               </div>
             </Tooltip>
 
+            <Divider flexItem color="#F8B628" />
+
             <Tooltip title="Download Current Page" placement="left">
               <div>
                 <SimCardDownloadOutlined
@@ -191,6 +198,8 @@ export default function SideBar() {
               </div>
             </Tooltip>
 
+            <Divider flexItem color="#F8B628" />
+
             <Tooltip title="Border Color" placement="left">
               <div
                 style={{
@@ -200,7 +209,7 @@ export default function SideBar() {
                   borderRadius: "50%",
                   border: `4px dotted ${contextValues.borderColor}`,
                 }}
-                onClick={(e) => setOpenBorderColor(e.currentTarget)}
+                onClick={(e) => setOpenBorderColor(e.currentTarget as any)}
               />
             </Tooltip>
             <Popover
@@ -234,7 +243,7 @@ export default function SideBar() {
                   backgroundColor: contextValues.color,
                   border: `4px dotted #F8B628`,
                 }}
-                onClick={(e) => setOpenColor(e.currentTarget)}
+                onClick={(e) => setOpenColor(e.currentTarget as any)}
               />
             </Tooltip>
             <Popover
@@ -260,9 +269,7 @@ export default function SideBar() {
               <div style={{ cursor: "pointer" }}>
                 <BorderAllRounded
                   sx={{ color: "#F8B628" }}
-                  onClick={(e) =>
-                    setOpenStroke(e.currentTarget as unknown as HTMLElement)
-                  }
+                  onClick={(e) => setOpenStroke(e.currentTarget as any)}
                 />
               </div>
             </Tooltip>
@@ -298,8 +305,67 @@ export default function SideBar() {
                   step={1}
                   min={0}
                   max={10}
+                  onChange={(_e, value) => contextValues.setStrokeWidth(value)}
+                  valueLabelDisplay="auto"
+                />
+              </div>
+            </Popover>
+
+            {/* New Highlight Size Control */}
+            <Tooltip title="Highlight Size" placement="left">
+              <div style={{ cursor: "pointer" }}>
+                <StraightenRounded
+                  sx={{ color: "#F8B628" }}
+                  onClick={(e) => setOpenHighlightSize(e.currentTarget as any)}
+                />
+              </div>
+            </Tooltip>
+            <Popover
+              open={Boolean(openHighlightSize)}
+              anchorEl={openHighlightSize}
+              onClose={() => setOpenHighlightSize(null)}
+              anchorOrigin={{
+                vertical: "center",
+                horizontal: "left",
+              }}
+              transformOrigin={{
+                vertical: "center",
+                horizontal: "right",
+              }}
+            >
+              <div
+                style={{
+                  minWidth: "20vw",
+                  minHeight: "12vh",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "start",
+                  justifyContent: "center",
+                  padding: "8px",
+                  gap: "8px",
+                }}
+              >
+                <div>Highlight Width</div>
+                <Slider
+                  aria-label="Highlight Width"
+                  value={contextValues.highlightWidth}
+                  step={10}
+                  min={50}
+                  max={800}
                   onChange={(_e, value) =>
-                    contextValues.setStrokeWidth(value as number)
+                    contextValues.setHighlightWidth(value)
+                  }
+                  valueLabelDisplay="auto"
+                />
+                <div>Highlight Height</div>
+                <Slider
+                  aria-label="Highlight Height"
+                  value={contextValues.highlightHeight}
+                  step={5}
+                  min={10}
+                  max={100}
+                  onChange={(_e, value) =>
+                    contextValues.setHighlightHeight(value)
                   }
                   valueLabelDisplay="auto"
                 />

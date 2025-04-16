@@ -8,6 +8,7 @@ from .models import Document, Feedback, Logbook, StudentSubmission
 from .serializers import (
     CombinedSubmissionSerializer,
     DocumentSerializer,
+    LogbookCallSerializer,
     LogbookSerializer,
     MarkingSchemeSerializer,
     StudentAllSubmissionSerializer,
@@ -342,5 +343,9 @@ class LogbookListView(APIView):
             )
 
         logbooks = Logbook.objects.filter(student=student).order_by("-date")
+
+        if request.path.endswith("calendar/"):
+            serializer = LogbookCallSerializer(logbooks, many=True)
+
         serializer = LogbookSerializer(logbooks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

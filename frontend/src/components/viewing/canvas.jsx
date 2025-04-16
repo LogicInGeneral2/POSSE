@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { fabric } from "fabric";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -10,73 +10,117 @@ export const useButtons = () => {
 };
 
 export const CanvasProvider = ({ children }) => {
-  const [numPages, setNumPages] = React.useState(null);
-  const [currPage, setCurrPage] = React.useState(1);
-  const [selectedFile, setFile] = React.useState(null);
-  const [color, setColor] = React.useState("#000");
-  const [borderColor, setBorderColor] = React.useState("#f4a261");
-  const [strokeWidth, setStrokeWidth] = React.useState(1);
-  const [canvas, setCanvas] = React.useState("");
-  const [isExporting, setExporting] = React.useState(false);
-  const [hideCanvas, setHiddenCanvas] = React.useState(false);
-  const [pageCanvases, setPageCanvases] = React.useState({}); // Stores canvas state per page
+  const [numPages, setNumPages] = useState(null);
+  const [currPage, setCurrPage] = useState(1);
+  const [selectedFile, setFile] = useState(null);
+  const [color, setColor] = useState("#000");
+  const [borderColor, setBorderColor] = useState("#f4a261");
+  const [strokeWidth, setStrokeWidth] = useState(1);
+  const [canvas, setCanvas] = useState("");
+  const [isExporting, setExporting] = useState(false);
+  const [hideCanvas, setHiddenCanvas] = useState(false);
+  const [pageCanvases, setPageCanvases] = useState({});
+  const [edits, setEdits] = useState({});
+  const [isHighlightMode, setIsHighlightMode] = useState(false);
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [highlightWidth, setHighlightWidth] = useState(400); // Default width
+  const [highlightHeight, setHighlightHeight] = useState(20); // Default height
 
   const exportPage = useRef(null);
-  const [exportPages, setExportPages] = React.useState([]);
-  // canvas edits
-  const [edits, setEdits] = React.useState({});
-  // uploaded image
+  const [exportPages, setExportPages] = useState([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (document.getElementById("canvasWrapper"))
-      document.getElementById("canvasWrapper").style.visibility =
-        document.getElementById("canvasWrapper").style.visibility == "hidden"
-          ? "visible"
-          : "hidden";
+      document.getElementById("canvasWrapper").style.visibility = hideCanvas
+        ? "hidden"
+        : "visible";
   }, [hideCanvas]);
 
-  React.useEffect(() => {
-    if (canvas != "") {
-      var activeObject = canvas.getActiveObject();
+  useEffect(() => {
+    if (canvas) {
+      const activeObject = canvas.getActiveObject();
       if (activeObject) {
         activeObject.set("fill", color);
         canvas.renderAll();
       }
     }
-  }, [color]);
+  }, [color, canvas]);
 
-  React.useEffect(() => {
-    if (canvas.isDrawingMode) canvas.freeDrawingBrush.color = borderColor;
-    if (canvas != "") {
-      var activeObject = canvas.getActiveObject();
+  useEffect(() => {
+    if (canvas) {
+      if (canvas.isDrawingMode) canvas.freeDrawingBrush.color = borderColor;
+      const activeObject = canvas.getActiveObject();
       if (activeObject) {
         activeObject.set("stroke", borderColor);
         canvas.renderAll();
       }
     }
-  }, [borderColor]);
+  }, [borderColor, canvas]);
 
-  React.useEffect(() => {
-    if (canvas.isDrawingMode) canvas.freeDrawingBrush.width = strokeWidth;
-    if (canvas != "") {
-      var activeObject = canvas.getActiveObject();
+  useEffect(() => {
+    if (canvas) {
+      if (canvas.isDrawingMode) canvas.freeDrawingBrush.width = strokeWidth;
+      const activeObject = canvas.getActiveObject();
       if (activeObject) {
         activeObject.set("strokeWidth", strokeWidth);
         canvas.renderAll();
       }
     }
-  }, [strokeWidth]);
+  }, [strokeWidth, canvas]);
+
+  useEffect(() => {
+    if (canvas && isHighlightMode) {
+      canvas.isDrawingMode = false;
+      setIsDrawingMode(false);
+    }
+  }, [isHighlightMode, canvas]);
+
+  useEffect(() => {
+    if (canvas && isDrawingMode) {
+      canvas.isHighlightMode = false;
+      setIsHighlightMode(false);
+    }
+  }, [isDrawingMode, canvas]);
+
+  useEffect(() => {
+    if (!canvas) return;
+
+    const handleCanvasClick = (opt) => {
+      if (!isHighlightMode) return;
+
+      const pointer = canvas.getPointer(opt.e);
+      const rect = new fabric.Rect({
+        left: pointer.x,
+        top: pointer.y,
+        width: highlightWidth, // Use dynamic width
+        height: highlightHeight, // Use dynamic height
+        fill: color,
+        opacity: 0.4,
+        cornerStyle: "circle",
+        editable: true,
+      });
+
+      canvas.add(rect);
+      canvas.renderAll();
+      setIsHighlightMode(false); 
+    };
+
+    canvas.on("mouse:down", handleCanvasClick);
+    return () => {
+      canvas.off("mouse:down", handleCanvasClick);
+    };
+  }, [canvas, isHighlightMode, color, highlightWidth, highlightHeight]);
 
   const downloadPage = () => {
     setExporting(true);
     const doc = document.querySelector("#singlePageExport");
-  
+
     if (!doc) {
       console.error("Error: Element #singlePageExport not found.");
       setExporting(false);
       return;
     }
-  
+
     html2canvas(doc, { scale: 2, useCORS: true }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
@@ -84,10 +128,10 @@ export const CanvasProvider = ({ children }) => {
         unit: "mm",
         format: "a4",
       });
-  
+
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  
+
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
       pdf.save("marked_submission.pdf");
       setExporting(false);
@@ -95,18 +139,19 @@ export const CanvasProvider = ({ children }) => {
   };
 
   const addImage = (e, canvi) => {
-    var file = e.target.files[0];
-    var reader = new FileReader();
+    const file = e.target.files[0];
+    const reader = new FileReader();
     reader.onload = function (f) {
-      var data = f.target.result;
+      const data = f.target.result;
       fabric.Image.fromURL(data, function (img) {
         img.scaleToWidth(300);
         canvi.add(img).renderAll();
-        var dataURL = canvi.toDataURL({ format: "png", quality: 0.8 });
       });
     };
     reader.readAsDataURL(file);
     canvi.isDrawingMode = false;
+    setIsHighlightMode(false);
+    setIsDrawingMode(false);
   };
 
   const addNote = (canvi) => {
@@ -115,26 +160,26 @@ export const CanvasProvider = ({ children }) => {
       function (img) {
         img.scaleToWidth(100);
         canvi.add(img).renderAll();
-        var dataURL = canvi.toDataURL({ format: "png", quality: 0.8 });
       }
     );
     canvi.isDrawingMode = false;
+    setIsHighlightMode(false);
+    setIsDrawingMode(false);
   };
 
   const deleteBtn = () => {
-    const activeObjects = canvas.getActiveObjects(); 
-  
+    const activeObjects = canvas.getActiveObjects();
+
     if (activeObjects.length > 0) {
       activeObjects.forEach((obj) => {
-        canvas.remove(obj); 
+        canvas.remove(obj);
       });
-  
-      canvas.discardActiveObject(); 
-      canvas.requestRenderAll(); // Refresh canvas
+
+      canvas.discardActiveObject();
+      canvas.requestRenderAll();
     }
   };
 
-  // add a rectangle
   const addRect = (canvi) => {
     const rect = new fabric.Rect({
       height: 180,
@@ -148,6 +193,8 @@ export const CanvasProvider = ({ children }) => {
     canvi.add(rect);
     canvi.renderAll();
     canvi.isDrawingMode = false;
+    setIsHighlightMode(false);
+    setIsDrawingMode(false);
   };
 
   const addCircle = (canvi) => {
@@ -162,20 +209,8 @@ export const CanvasProvider = ({ children }) => {
     canvi.add(rect);
     canvi.renderAll();
     canvi.isDrawingMode = false;
-  };
-
-  const addHighlight = (canvi) => {
-    const rect = new fabric.Rect({
-      height: 20,
-      width: 400,
-      fill: color,
-      opacity: 0.4,
-      cornerStyle: "circle",
-      editable: true,
-    });
-    canvi.add(rect);
-    canvi.renderAll();
-    canvi.isDrawingMode = false;
+    setIsHighlightMode(false);
+    setIsDrawingMode(false);
   };
 
   const addText = (canvi) => {
@@ -185,14 +220,18 @@ export const CanvasProvider = ({ children }) => {
     text.set({ fill: color, fontFamily: "Times New Roman" });
     canvi.add(text);
     canvi.renderAll();
-    canvi.isDrawingMode = false;
+    canvi.isDrawingMode = false;    
+    setIsHighlightMode(false);
+    setIsDrawingMode(false);
   };
 
   const toggleDraw = (canvi) => {
-    canvi.isDrawingMode = !canvi.isDrawingMode;
-    var brush = canvas.freeDrawingBrush;
+    const newDrawingMode = !canvi.isDrawingMode;
+    canvi.isDrawingMode = newDrawingMode;
+    setIsDrawingMode(newDrawingMode);
+    const brush = canvi.freeDrawingBrush;
     brush.color = borderColor;
-    brush.strokeWidth = strokeWidth;
+    brush.width = strokeWidth;
   };
 
   const exportPdf = async () => {
@@ -202,25 +241,24 @@ export const CanvasProvider = ({ children }) => {
       unit: "mm",
       format: "a4",
     });
-  
-    let pageIndex = 1; // Start from the first page
-    const totalPages = numPages; // Total number of pages in the document
-  
+
+    let pageIndex = 1;
+    const totalPages = numPages;
+
     const exportNextPage = async () => {
       if (pageIndex > totalPages) {
-        pdf.save("marked_submission.pdf"); // Save the final PDF file
+        pdf.save("marked_submission.pdf");
         setExporting(false);
         return;
       }
-  
-      // Change to the correct page before exporting
-      setCurrPage(pageIndex); // Ensure this updates your displayed page
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Allow time for UI to update
-  
+
+      setCurrPage(pageIndex);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       if (edits[pageIndex]) {
         canvas.loadFromJSON(edits[pageIndex], () => {
           canvas.renderAll();
-  
+
           setTimeout(() => {
             const docElement = document.querySelector("#singlePageExport");
             if (!docElement) {
@@ -228,31 +266,31 @@ export const CanvasProvider = ({ children }) => {
               setExporting(false);
               return;
             }
-  
+
             html2canvas(docElement, { scale: 2, useCORS: true }).then((canvas) => {
               const imgData = canvas.toDataURL("image/png");
               const imgWidth = 210;
               const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  
+
               if (pageIndex > 1) {
-                pdf.addPage(); // Add new page after the first
+                pdf.addPage();
               }
               pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-  
-              pageIndex += 1; // Move to the next page
-              exportNextPage(); // Recursively export the next page
+
+              pageIndex += 1;
+              exportNextPage();
             });
-          }, 600); // Delay to ensure rendering
+          }, 600);
         });
       } else {
         pageIndex += 1;
         exportNextPage();
       }
     };
-  
-    exportNextPage(); // Start exporting pages
+
+    exportNextPage();
   };
-  
+
   return (
     <funButtons.Provider
       value={{
@@ -268,7 +306,6 @@ export const CanvasProvider = ({ children }) => {
         setCurrPage,
         selectedFile,
         setFile,
-        addHighlight,
         toggleDraw,
         color,
         setColor,
@@ -286,6 +323,13 @@ export const CanvasProvider = ({ children }) => {
         setStrokeWidth,
         hideCanvas,
         setHiddenCanvas,
+        isHighlightMode,
+        setIsHighlightMode,
+        highlightWidth, // Add to context
+        setHighlightWidth, // Add to context
+        highlightHeight, // Add to context
+        setHighlightHeight, // Add to context
+        isDrawingMode,
       }}
     >
       {children}

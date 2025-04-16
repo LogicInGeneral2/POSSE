@@ -7,7 +7,6 @@ export function Info() {
   const { user } = useUser();
   const student = user as Student;
   const supervisor = user as Supervisor;
-  console.log(user);
 
   return (
     <Grid

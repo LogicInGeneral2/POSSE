@@ -141,6 +141,7 @@ urlpatterns = [
     path("logbooks/<int:pk>/", LogbookCreateUpdateView.as_view()),
     path("logbooks/<int:pk>/status/", LogbookStatusUpdateView.as_view()),
     path("logbooks/student/<int:student_id>/", LogbookListView.as_view()),
+    path("logbooks/<int:student_id>/calendar/", LogbookListView.as_view()),
     path(
         "grades/scheme/<int:student_id>/",
         GetMarkingSchemeView.as_view(),

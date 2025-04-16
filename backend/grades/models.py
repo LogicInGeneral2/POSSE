@@ -7,8 +7,8 @@ class MarkingScheme(models.Model):
     label = models.CharField(max_length=255)
     marks = models.FloatField()
     weightage = models.FloatField()
-    pic = models.CharField(max_length=50)  # e.g., "supervisor" or "evaluator"
-    contents = models.JSONField()  # List of content items, e.g., ["Log Book", ...]
+    pic = models.CharField(max_length=50)
+    contents = models.JSONField()
 
     def __str__(self):
         return self.label

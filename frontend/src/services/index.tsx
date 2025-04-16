@@ -105,6 +105,16 @@ export const getEvents = async () => {
   }
 };
 
+export const getLogsLists = async (id: number) => {
+  try {
+    const data = await api.get(`/logbooks/${id}/calendar/`);
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
 export const getAnnouncements = async () => {
   try {
     const data = await api.get(`/announcement/`);

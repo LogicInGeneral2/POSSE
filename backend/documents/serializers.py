@@ -189,3 +189,15 @@ class LogbookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Logbook
         fields = "__all__"
+
+
+class LogbookCallSerializer(serializers.Serializer):
+    class Meta:
+        model = Logbook
+        fields = [
+            "date",
+            "activities",
+            "feedbacks",
+            "plan",
+            "id",
+        ]
