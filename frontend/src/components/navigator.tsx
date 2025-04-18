@@ -20,6 +20,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ExitToAppRoundedIcon from "@mui/icons-material/ExitToAppRounded";
 import ListItemText from "@mui/material/ListItemText";
 import HomeIcon from "@mui/icons-material/Home";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { useNavigate } from "react-router";
 import logo from "../assets/icon.png";
 import {
@@ -163,6 +164,12 @@ export default function NavigationBar() {
       icon: <BookRounded style={{ color: "#58041D" }} />,
       path: "/logs",
     },
+    user?.role === "course_coordinator" && {
+      text: "POSSE Admin",
+      icon: <AdminPanelSettingsIcon style={{ color: "#58041D" }} />,
+      path: "http://127.0.0.1:8000/admin",
+      external: true,
+    },
     {
       text: "Logout",
       icon: <ExitToAppRoundedIcon style={{ color: "#58041D" }} />,
@@ -252,7 +259,7 @@ export default function NavigationBar() {
                       }}
                       onClick={() => {
                         if (item.external) {
-                          window.location.href = item.path;
+                          window.open(item.path, "_blank");
                         } else {
                           navigate(item.path);
                         }

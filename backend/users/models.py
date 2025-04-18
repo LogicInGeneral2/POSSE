@@ -16,8 +16,6 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError("Email is required")
         email = self.normalize_email(email)
-
-        # Do NOT pass username here — let it auto-generate in save()
         user = self.model(email=email, name=name, role=role, **extra_fields)
         user.set_password(password)
         user.save()
@@ -52,13 +50,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = "username"  # Login with username
-    REQUIRED_FIELDS = ["email", "name", "role"]  # Asked when creating superuser
+    USERNAME_FIELD = "username"
+    REQUIRED_FIELDS = ["email", "name", "role"]
 
     def save(self, *args, **kwargs):
+        # Enforce is_examiner and is_available for students
+        if self.role == "student":
+            self.is_examiner = False
+            self.is_available = False
         if self.role not in ["supervisor", "examiner"]:
             self.is_examiner = False
             self.is_available = False
+        # Auto-generate username
         if not self.username and self.email:
             base_username = self.email.split("@")[0]
             unique_username = base_username
@@ -104,11 +107,7 @@ class Student(models.Model):
 
 
 class SupervisorsRequest(models.Model):
-    PRIORITY_CHOICES = [
-        (1, "First Choice"),
-        (2, "Second Choice"),
-        (3, "Third Choice"),
-    ]
+    PRIORITY_CHOICES = [(1, "First Choice"), (2, "Second Choice"), (3, "Third Choice")]
 
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -119,7 +118,6 @@ class SupervisorsRequest(models.Model):
     supervisor_id = models.PositiveIntegerField(null=True, blank=True)
     supervisor_name = models.CharField(max_length=255, null=True, blank=True)
     priority = models.PositiveSmallIntegerField(choices=PRIORITY_CHOICES)
-
     proof = models.FileField(
         upload_to=upload_to_supervisor_requests,
         null=True,

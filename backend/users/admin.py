@@ -17,8 +17,14 @@ class CustomUserChangeForm(forms.ModelForm):
         model = User
         fields = "__all__"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Disable is_examiner and is_available for students
+        if self.instance and self.instance.role == "student":
+            self.fields["is_examiner"].disabled = True
+            self.fields["is_available"].disabled = True
+
     def clean_password(self):
-        # Return the initial value (unchanged)
         return self.initial.get("password")
 
 
@@ -70,9 +76,40 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         obj.save()
 
     def delete_model(self, request, obj):
+        if obj.is_superuser:
+            self.message_user(
+                request, "Cannot delete a superadmin user.", messages.ERROR
+            )
+            return
+        if obj == request.user:
+            self.message_user(
+                request, "Cannot delete the currently logged-in user.", messages.ERROR
+            )
+            return
         if obj.role in ["course_coordinator"]:
-            raise forms.ValidationError("You cannot delete a Course Coordinator.")
+            self.message_user(
+                request, "Cannot delete a Course Coordinator.", messages.ERROR
+            )
+            return
         super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        restricted_users = []
+        for obj in queryset:
+            if obj.is_superuser:
+                restricted_users.append(f"{obj.email} (superadmin)")
+            if obj == request.user:
+                restricted_users.append(f"{obj.email} (current user)")
+            if obj.role in ["course_coordinator"]:
+                restricted_users.append(f"{obj.email} (course coordinator)")
+        if restricted_users:
+            self.message_user(
+                request,
+                f"Cannot delete the following users: {', '.join(restricted_users)}.",
+                messages.ERROR,
+            )
+            return
+        super().delete_queryset(request, queryset)
 
 
 @admin.register(Student)
@@ -138,26 +175,19 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
 
     def process_approve(self, request, request_id):
         supervisor_request = self.get_object(request, request_id)
-
-        # Check if supervisor_id is valid
         try:
             supervisor = User.objects.get(
                 id=supervisor_request.supervisor_id, role="supervisor"
             )
         except User.DoesNotExist:
             self.message_user(
-                request,
-                "Please create the user (Supervisor) first.",
-                messages.WARNING,
+                request, "Please create the user (Supervisor) first.", messages.WARNING
             )
             url = (
                 reverse("admin:users_user_add")
                 + f"?name={supervisor_request.supervisor_name}&role=supervisor"
             )
-
             return HttpResponseRedirect(url)
-
-        # Get or create student profile
         try:
             student_profile = Student.objects.get(user_id=supervisor_request.student.id)
         except Student.DoesNotExist:
@@ -165,14 +195,9 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
             return HttpResponseRedirect(
                 reverse("admin:users_supervisorsrequest_changelist")
             )
-
-        # Assign supervisor (overwrite)
         student_profile.supervisor = supervisor
         student_profile.save()
-
-        # Delete other requests for this student
         SupervisorsRequest.objects.filter(student=supervisor_request.student).delete()
-
         self.message_user(
             request, "Supervisor assigned and other requests deleted.", messages.SUCCESS
         )
@@ -190,9 +215,8 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 student_profile.save()
                 SupervisorsRequest.objects.filter(student=obj.student).delete()
                 success += 1
-            except Exception as e:  # noqa: F841
+            except Exception:
                 failed += 1
-
         self.message_user(
             request,
             f"{success} approved. {failed} failed. Ensure supervisor IDs are valid and students exist.",
@@ -200,10 +224,3 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
         )
 
     bulk_approve.short_description = "Bulk Approve Selected Requests"
-
-
-@receiver(post_save, sender=User)
-def create_student_profile(sender, instance, created, **kwargs):
-    if created and instance.role == "Student":
-        if not hasattr(instance, "student"):
-            Student.objects.create(user=instance, student_id="TEMP")

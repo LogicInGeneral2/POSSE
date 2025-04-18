@@ -21,9 +21,11 @@ import "./Calender.css";
 import { LogType, periodTypes } from "../../services/types";
 import { getEvents, getLogsLists } from "../../services";
 import { useNavigate } from "react-router";
+import LoadingSpinner from "../commons/loading";
 
 interface DashboardCalenderProps {
   id: number;
+  role: string;
 }
 
 interface LocalizerConfig {
@@ -39,16 +41,17 @@ interface CustomEvent extends RBCEvent {
   details: periodTypes | LogType;
 }
 
-const DashboardCalender: FC<DashboardCalenderProps> = ({ id }) => {
+const DashboardCalender: FC<DashboardCalenderProps> = ({ id, role }) => {
   const [events, setEvents] = useState<CustomEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CustomEvent | null>(null);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        // Fetch events
         const eventsData: periodTypes[] = (await getEvents()).data;
         const eventItems: CustomEvent[] = eventsData.map((period) => ({
           title: period.title.toString(),
@@ -58,25 +61,30 @@ const DashboardCalender: FC<DashboardCalenderProps> = ({ id }) => {
           details: period,
         }));
 
-        // Fetch logs
-        const logsData: LogType[] = (await getLogsLists(id)).data;
-        const logItems: CustomEvent[] = logsData.map((log) => ({
-          title: `LOG ${log.date.toString()}`,
-          start: new Date(log.date),
-          end: new Date(log.date),
-          tag: "log" as const,
-          details: log,
-        }));
+        let allEvents: CustomEvent[] = [...eventItems];
 
-        // Combine events and logs
-        setEvents([...eventItems, ...logItems]);
+        if (role === "student") {
+          const logsData: LogType[] = (await getLogsLists(id)).data;
+          const logItems: CustomEvent[] = logsData.map((log) => ({
+            title: `LOG ${log.date.toString()}`,
+            start: new Date(log.date),
+            end: new Date(log.date),
+            tag: "log" as const,
+            details: log,
+          }));
+          allEvents = [...allEvents, ...logItems];
+        }
+
+        setEvents(allEvents);
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
-  }, [id]);
+  }, [id, role]);
 
   const handleSelectEvent = useCallback((event: CustomEvent) => {
     setSelectedEvent(event);
@@ -87,6 +95,10 @@ const DashboardCalender: FC<DashboardCalenderProps> = ({ id }) => {
     setModalOpen(false);
     setSelectedEvent(null);
   };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   const modalStyle = {
     position: "absolute" as const,
