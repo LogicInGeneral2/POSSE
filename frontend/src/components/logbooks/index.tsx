@@ -1,5 +1,5 @@
 import { Box, Divider, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LogType } from "../../services/types";
 import { deleteLogbook, getLogbookList, saveLogbook } from "../../services";
 import ErrorNotice from "../commons/error";
@@ -33,14 +33,19 @@ export const LogbooksPage = () => {
     }
   }, [location.state, searchParams, user]);
 
+  const idToFetch = useMemo(() => {
+    if (!user) return null;
+    if (user.role === "supervisor") return studentId ? Number(studentId) : null;
+    if (user.role === "student") return user.id;
+    return null;
+  }, [user, studentId]);
+
   useEffect(() => {
     const fetchLogs = async () => {
-      const idToFetch = user?.role === "supervisor" ? studentId : user?.id;
-
       if (!idToFetch) return;
 
       try {
-        const fetchedData = await getLogbookList(idToFetch as number);
+        const fetchedData = await getLogbookList(idToFetch);
         setlogData(fetchedData.data);
         setLogDates(fetchedData.data.map((log: { date: any }) => log.date));
       } catch (error) {
@@ -52,7 +57,7 @@ export const LogbooksPage = () => {
     };
 
     fetchLogs();
-  }, [user, studentId]);
+  }, [idToFetch]);
 
   const handleSelectLog = (log: LogType) => {
     setSelectedLog(log);
@@ -190,7 +195,11 @@ export const LogbooksPage = () => {
             selectedDate={selectedDate}
             onDateClick={handleDateClick}
           />
-          <DataTable data={logData} onRowClick={handleSelectLog} />
+          <DataTable
+            data={logData}
+            onRowClick={handleSelectLog}
+            studentId={idToFetch ?? 0}
+          />
         </Box>
         <Box
           sx={{

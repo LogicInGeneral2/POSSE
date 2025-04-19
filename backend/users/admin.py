@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.dispatch import receiver
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 from .models import SupervisorsRequest, User, Student
@@ -9,7 +8,6 @@ from django.utils.html import format_html
 from django.contrib import messages
 from import_export.admin import ImportExportModelAdmin
 from .resources import UserResource, StudentResource
-from django.db.models.signals import post_save
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -132,11 +130,13 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
         "student",
         "supervisor_id",
         "supervisor_name",
+        "topic",
+        "mode",
         "priority",
         "proof_link",
         "approve_button",
     )
-    list_filter = ("priority",)
+    list_filter = ("priority", "mode")
     search_fields = (
         "student__user__name",
         "student__student_id",
@@ -174,20 +174,30 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
         return custom_urls + urls
 
     def process_approve(self, request, request_id):
+        """Process approval of a single supervisor request and update student profile."""
         supervisor_request = self.get_object(request, request_id)
+        if not supervisor_request:
+            self.message_user(request, "Supervisor request not found.", messages.ERROR)
+            return HttpResponseRedirect(
+                reverse("admin:users_supervisorsrequest_changelist")
+            )
+
         try:
             supervisor = User.objects.get(
                 id=supervisor_request.supervisor_id, role="supervisor"
             )
         except User.DoesNotExist:
             self.message_user(
-                request, "Please create the user (Supervisor) first.", messages.WARNING
+                request,
+                f"Supervisor '{supervisor_request.supervisor_name}' not found. Please create the user first.",
+                messages.WARNING,
             )
             url = (
                 reverse("admin:users_user_add")
                 + f"?name={supervisor_request.supervisor_name}&role=supervisor"
             )
             return HttpResponseRedirect(url)
+
         try:
             student_profile = Student.objects.get(user_id=supervisor_request.student.id)
         except Student.DoesNotExist:
@@ -195,31 +205,55 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
             return HttpResponseRedirect(
                 reverse("admin:users_supervisorsrequest_changelist")
             )
-        student_profile.supervisor = supervisor
-        student_profile.save()
-        SupervisorsRequest.objects.filter(student=supervisor_request.student).delete()
-        self.message_user(
-            request, "Supervisor assigned and other requests deleted.", messages.SUCCESS
-        )
+
+        try:
+            # Update student profile with supervisor, mode, and topic
+            student_profile.supervisor = supervisor
+            student_profile.topic = supervisor_request.topic or ""
+            student_profile.save()
+
+            # Delete other supervisor requests for the student
+            SupervisorsRequest.objects.filter(
+                student=supervisor_request.student
+            ).delete()
+
+            self.message_user(
+                request,
+                f"Supervisor '{supervisor_request.supervisor_name}' assigned, "
+                f"mode set to '{student_profile.mode}', topic set to '{student_profile.topic}', "
+                f"and other requests deleted.",
+                messages.SUCCESS,
+            )
+        except Exception as e:
+            self.message_user(
+                request,
+                f"Failed to process approval: {str(e)}",
+                messages.ERROR,
+            )
+
         return HttpResponseRedirect(
             reverse("admin:users_supervisorsrequest_changelist")
         )
 
     def bulk_approve(self, request, queryset):
+        """Bulk approve selected supervisor requests and update student profiles."""
         success, failed = 0, 0
-        for obj in queryset:
-            try:
-                supervisor = User.objects.get(id=obj.supervisor_id, role="supervisor")
-                student_profile = Student.objects.get(user_id=obj.student.id)
-                student_profile.supervisor = supervisor
-                student_profile.save()
-                SupervisorsRequest.objects.filter(student=obj.student).delete()
-                success += 1
-            except Exception:
-                failed += 1
+        for obj in queryset.select_related("student"):
+            supervisor = User.objects.get(id=obj.supervisor_id, role="supervisor")
+            student_profile = Student.objects.get(user_id=obj.student.id)
+
+            # Update student profile with supervisor, mode, and topic
+            student_profile.supervisor = supervisor
+            student_profile.topic = obj.topic or ""
+            student_profile.save()
+
+            # Delete other supervisor requests for the student
+            SupervisorsRequest.objects.filter(student=obj.student).delete()
+
         self.message_user(
             request,
-            f"{success} approved. {failed} failed. Ensure supervisor IDs are valid and students exist.",
+            f"{success} requests approved successfully with student profiles updated. "
+            f"{failed} failed. Ensure supervisor and student records exist.",
             messages.INFO,
         )
 

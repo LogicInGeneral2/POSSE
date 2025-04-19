@@ -4,23 +4,48 @@ import {
   CardContent,
   Chip,
   Grid2 as Grid,
+  IconButton,
   Typography,
 } from "@mui/material";
 import { LogType } from "../../services/types";
 import { status_info, StatusInfo } from "./status";
-
+import GetAppIcon from "@mui/icons-material/GetApp";
+import { useState } from "react";
+import { exportLogs } from "../../services";
 export default function DataTable({
   data,
+  studentId,
   onRowClick,
 }: {
   data: LogType[];
+  studentId: number;
   onRowClick: (log: LogType) => void;
 }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const handleExport = async () => {
+    setIsLoading(true);
+    try {
+      await exportLogs(studentId);
+    } catch (error) {
+      alert(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Box sx={{ p: 2, flexGrow: 1, overflow: "auto" }}>
       <Typography sx={{ fontWeight: "bold", textAlign: "Left" }}>
         Current Logs
       </Typography>
+
+      <IconButton
+        aria-label="Export"
+        onClick={handleExport}
+        disabled={isLoading}
+      >
+        <GetAppIcon />
+      </IconButton>
 
       {data.length === 0 && (
         <Typography sx={{ fontWeight: "bold", textAlign: "center", mt: 2 }}>

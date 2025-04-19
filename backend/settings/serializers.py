@@ -29,3 +29,9 @@ class documentCategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = documentCategories
         fields = "__all__"
+
+
+class documentModeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = documentCategories
+        fields = "__all__"

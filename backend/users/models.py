@@ -78,6 +78,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class Student(models.Model):
     COURSE_CHOICES = [("FYP1", "FYP1"), ("FYP2", "FYP2")]
+    MODE_CHOICES = [("research", "research"), ("development", "development")]
 
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, limit_choices_to={"role": "student"}
@@ -99,6 +100,9 @@ class Student(models.Model):
         limit_choices_to={"is_examiner": True},
     )
 
+    mode = models.CharField(max_length=20, choices=MODE_CHOICES, default="development")
+    topic = models.CharField(max_length=255, null=True, blank=True)
+
     def __str__(self):
         return f"{self.user.name} ({self.course})"
 
@@ -108,6 +112,7 @@ class Student(models.Model):
 
 class SupervisorsRequest(models.Model):
     PRIORITY_CHOICES = [(1, "First Choice"), (2, "Second Choice"), (3, "Third Choice")]
+    MODE_CHOICES = [("research", "research"), ("development", "development")]
 
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -124,6 +129,9 @@ class SupervisorsRequest(models.Model):
         blank=True,
         help_text="Proof of request (image or PDF)",
     )
+
+    mode = models.CharField(max_length=20, choices=MODE_CHOICES, default="development")
+    topic = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         unique_together = ("student", "priority")

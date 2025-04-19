@@ -74,11 +74,11 @@ export const SupervisorsPage = () => {
                 textAlign: "left",
               }}
             >
-              Supervisor Selection Period is currently ongoing. Rank your top
-              three preffered supervisors. Alternatively, add a new supervisor
-              below if they are not from the SE program, together with a
-              screenshot as a proof of agreement. *Type in a name to add new
-              lecturers.
+              Supervisor Selection Period is currently ongoing. Select your FYP
+              mode and topic (if any) and Rank your top three preffered
+              supervisors. Alternatively, add a new supervisor below if they are
+              not from the SE program, together with a screenshot as a proof of
+              agreement. *Type in a name to add new lecturers.
             </Typography>
           </Box>
           <Box>

@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from grades.views import GetGradesView, GetMarkingSchemeView, SaveGradesView
 from settings.views import (
     DocumentCategoryListView,
+    DocumentModeListView,
     DocumentThemeListView,
     OutlineListView,
 )
@@ -18,6 +19,7 @@ from documents.views import (
     LogbookStatusUpdateView,
     StudentSubmissionsView,
     UploadStudentSubmissionView,
+    export_logs_pdf,
 )
 from details.views import (
     AllPeriodsView,
@@ -97,12 +99,12 @@ urlpatterns = [
         name="student-submissions",
     ),
     path(
-        "submissions/<int:student_id>/",
+        "submissions/all/<int:student_id>/",
         StudentSubmissionsView.as_view(),
-        name="student-submissions",
+        name="all-student-submissions",
     ),
     path(
-        "submissions/<int:student_id>/all/",
+        "submissions/<int:student_id>/",
         StudentSubmissionsView.as_view(),
         name="student-submissions",
     ),
@@ -137,11 +139,17 @@ urlpatterns = [
         DocumentCategoryListView.as_view(),
         name="document-categories",
     ),
+    path(
+        "documents/modes/",
+        DocumentModeListView.as_view(),
+        name="document-categories",
+    ),
     path("logbooks/", LogbookCreateUpdateView.as_view()),
     path("logbooks/<int:pk>/", LogbookCreateUpdateView.as_view()),
     path("logbooks/<int:pk>/status/", LogbookStatusUpdateView.as_view()),
     path("logbooks/student/<int:student_id>/", LogbookListView.as_view()),
     path("logbooks/<int:student_id>/calendar/", LogbookListView.as_view()),
+    path("logbooks/export/<int:student_id>/", export_logs_pdf, name="export_logs_pdf"),
     path(
         "grades/scheme/<int:student_id>/",
         GetMarkingSchemeView.as_view(),

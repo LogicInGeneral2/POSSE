@@ -3,6 +3,7 @@ from django.db import models
 from django.core.files.base import ContentFile
 import os
 import fitz
+from settings.models import documentCategories
 
 
 def pdf_thumbnail_upload_path(instance, filename):
@@ -22,19 +23,16 @@ def feedback_upload_path(instance, filename):
 
 
 class Document(models.Model):
-    CATEGORY_CHOICES = [
-        ("Lecture Notes", "Lecture Notes"),
-        ("Samples", "Samples"),
-        ("Templates", "Templates"),
-        ("Marking Scheme", "Marking Scheme"),
-    ]
     title = models.CharField(max_length=255)
     upload_date = models.DateTimeField(auto_now_add=True)
     file = models.FileField(upload_to=document_upload_path)
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    category = models.ForeignKey(
+        documentCategories, on_delete=models.CASCADE, default=1
+    )
     thumbnail = models.ImageField(
         upload_to=pdf_thumbnail_upload_path, blank=True, null=True
     )
+    mode = models.ForeignKey("settings.documentModes", on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

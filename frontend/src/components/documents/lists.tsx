@@ -13,10 +13,15 @@ import {
 } from "@mui/material";
 import FileCard from "./cards";
 import React, { useEffect, useMemo, useState } from "react";
-import { getDocumentOptions, getDocuments } from "../../services";
+import {
+  getDocumentModes,
+  getDocumentOptions,
+  getDocuments,
+} from "../../services";
 import ErrorNotice from "../commons/error";
 import { DocumentType, OptionType } from "../../services/types";
 import LoadingSpinner from "../commons/loading";
+
 const DocumentsList = () => {
   const [alignment, setAlignment] = useState("descending");
   const [sortBy, setSortBy] = useState("date");
@@ -26,6 +31,8 @@ const DocumentsList = () => {
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, boolean>
   >({});
+  const [modeFilter, setModeFilter] = useState<OptionType[]>([]);
+  const [selectedMode, setSelectedMode] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -40,7 +47,18 @@ const DocumentsList = () => {
         data.reduce((acc, option) => ({ ...acc, [option.label]: true }), {})
       );
     };
+    const fetchModes = async () => {
+      const data: OptionType[] = (await getDocumentModes()).data;
+      setModeFilter(data);
+      setSelectedMode(
+        data.reduce(
+          (acc, modeFilter) => ({ ...acc, [modeFilter.label]: true }),
+          {}
+        )
+      );
+    };
     fetchDocuments();
+    fetchModes();
     fetchOptions();
   }, []);
 
@@ -64,11 +82,26 @@ const DocumentsList = () => {
     }));
   };
 
+  const handleModeFilterChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSelectedMode((prev) => ({
+      ...prev,
+      [event.target.name]: event.target.checked,
+    }));
+  };
+
   const filteredAndSortedDocuments = useMemo(() => {
-    if (Object.keys(selectedFilters).length === 0) return [];
+    if (
+      Object.keys(selectedFilters).length === 0 ||
+      Object.keys(selectedMode).length === 0
+    )
+      return [];
 
     return documents
-      .filter((file) => selectedFilters[file.category])
+      .filter(
+        (file) => selectedFilters[file.category] && selectedMode[file.mode]
+      )
       .sort((a, b) => {
         if (sortBy === "date") {
           return alignment === "ascending"
@@ -89,7 +122,7 @@ const DocumentsList = () => {
         }
         return 0;
       });
-  }, [documents, alignment, sortBy, selectedFilters]);
+  }, [documents, alignment, sortBy, selectedFilters, selectedMode]);
 
   return (
     <Grid container spacing={2} sx={{ marginTop: "20px", height: "100%" }}>
@@ -156,9 +189,9 @@ const DocumentsList = () => {
             </RadioGroup>
           </FormControl>
 
-          {/* FILTER FOR FILTERING RESULT */}
+          {/* FILTER FOR FILTERING BY CATEGORY */}
           <FormGroup>
-            <FormLabel>Filter By</FormLabel>
+            <FormLabel>Filter By Category</FormLabel>
             {options.map((option) => (
               <FormControlLabel
                 key={option.label}
@@ -170,6 +203,24 @@ const DocumentsList = () => {
                   />
                 }
                 label={option.label}
+              />
+            ))}
+          </FormGroup>
+
+          {/* FILTER FOR FILTERING BY MODE */}
+          <FormGroup>
+            <FormLabel>Filter By Mode</FormLabel>
+            {modeFilter.map((mode) => (
+              <FormControlLabel
+                key={mode.label}
+                control={
+                  <Checkbox
+                    checked={selectedMode[mode.label] ?? false}
+                    onChange={handleModeFilterChange}
+                    name={mode.label}
+                  />
+                }
+                label={mode.label}
               />
             ))}
           </FormGroup>

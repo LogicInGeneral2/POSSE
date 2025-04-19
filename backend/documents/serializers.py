@@ -6,22 +6,34 @@ from details.models import Submissions
 class DocumentSerializer(serializers.ModelSerializer):
     src = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
+    category = serializers.StringRelatedField()
+    mode = serializers.StringRelatedField()
 
     class Meta:
         model = Document
-        fields = ["id", "title", "category", "upload_date", "src", "thumbnail_url"]
+        fields = [
+            "id",
+            "title",
+            "category",
+            "upload_date",
+            "src",
+            "thumbnail_url",
+            "mode",
+        ]
 
     def get_src(self, obj):
         request = self.context.get("request")
-        if obj.file and request:
-            return request.build_absolute_uri(obj.file.url)
-        return None
+        return (
+            request.build_absolute_uri(obj.file.url) if obj.file and request else None
+        )
 
     def get_thumbnail_url(self, obj):
         request = self.context.get("request")
-        if obj.thumbnail and request:
-            return request.build_absolute_uri(obj.thumbnail.url)
-        return None
+        return (
+            request.build_absolute_uri(obj.thumbnail.url)
+            if obj.thumbnail and request
+            else None
+        )
 
 
 class MarkingSchemeSerializer(serializers.ModelSerializer):

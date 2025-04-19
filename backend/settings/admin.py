@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Outline, documentCategories, documentTheme
+from .models import Outline, documentCategories, documentModes, documentTheme
 from .utils import themeForm
 
 
@@ -45,6 +45,13 @@ class documentThemeAdmin(admin.ModelAdmin):
 
 @admin.register(documentCategories)
 class documentCategoriesAdmin(admin.ModelAdmin):
+    list_display = ["label"]
+    search_fields = ["label"]
+    list_per_page = 20
+
+
+@admin.register(documentModes)
+class documentModesAdmin(admin.ModelAdmin):
     list_display = ["label"]
     search_fields = ["label"]
     list_per_page = 20

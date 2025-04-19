@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<!-- Title Page -->
+<div class="container">
+    <div class="header">
+        <div class="header-text">
+            <p class="bold">SCHOOL OF COMPUTING</p>
+            <p>FACULTY OF ENGINEERING</p>
+            <p>UNIVERSITI TEKNOLOGI MALAYSIA</p>
+        </div>
+    </div>
+    <h1>FINAL YEAR PROJECT (PSM)<br>STUDENT LOG BOOK</h1>
+
+    <p class="section-title">PROJECT TITLE</p>
+    <p class="dotted">{{ project_title }}</p>
+
+    <p class="section-title">STUDENT INFO</p>
+    <div class="info-field">
+        <span class="field-label">Name:</span>
+        <span class="dotted">{{ student_name }}</span>
+    </div>
+    <div class="info-field">
+        <span class="field-label">Student ID:</span>
+        <span class="dotted">{{ student_id }}</span>
+    </div>
+    <div class="info-field">
+        <span class="field-label">Email:</span>
+        <span class="dotted">{{ student_email }}</span>
+    </div>
+    <div class="info-field">
+        <span class="field-label">Mobile No:</span>
+        <span class="dotted">{{ student_mobile }}</span>
+    </div>
+    <div class="info-field">
+        <span class="field-label">Department:</span>
+        <span class="dotted">{{ student_department }}</span>
+    </div>
+
+    <p class="section-title">SUPERVISOR INFO</p>
+    <div class="info-field">
+        <span class="field-label">Main Supervisor:</span>
+        <span class="dotted">{{ supervisor_name }}</span>
+    </div>
+    <div class="info-field">
+        <span class="field-label">Email:</span>
+        <span class="dotted">{{ supervisor_email }}</span>
+    </div>
+    <div class="info-field">
+        <span class="field-label">Co-Supervisor:</span>
+        <span class="dotted">{{ co_supervisor_name }}</span>
+    </div>
+</div>
+<div class="page-break"></div>
+
+<!-- Notes Page -->
+<div class="container">
+    <h1>STUDENT LOG BOOK NOTES</h1>
+    <ol>
+        <li>This log book must be used by PSM 1 and PSM 2 students for reporting all progress of their PSM projects.</li>
+        <li>The student is responsible for keeping the log book up to date and complying with the Supervisor’s feedback.</li>
+        <li>Meetings with the supervisor must be held at least once every two weeks (minimum of 6 per semester).</li>
+        <li>Failure to comply may result in disqualification from presenting the project.</li>
+        <li>The log book must be submitted with the proposal (PSM 1) or final thesis (PSM 2).</li>
+        <li>The Faculty reserves the right to reject the thesis if the log book is not properly maintained.</li>
+    </ol>
+</div>
+<div class="page-break"></div>
+
+<!-- Log Pages -->
+{% for log in logs %}
+<div class="container">
+    <div class="header">
+        <div class="header-text">
+            <p class="bold">FACULTY OF COMPUTING</p>
+            <p>UNIVERSITI TEKNOLOGI MALAYSIA</p>
+            <p class="bold">PSM LOG BOOK</p>
+            <p>SEMESTER: {{ log.semester|default:"N/A" }} &nbsp;&nbsp; TYPE: {{ log.psm_type|default:"N/A" }}</p>
+        </div>
+    </div>
+    <table class="table">
+        <tr>
+            <td><b>Date</b></td>
+            <td>: {{ log.date }} &nbsp;&nbsp; <b>Meeting:</b> {{ log.meeting_number|default:"N/A" }}</td>
+        </tr>
+        <tr>
+            <td><b>Student<br>(Meeting Minute / Achievements / Activities)</b></td>
+            <td>: {{ log.activities|linebreaksbr }}</td>
+        </tr>
+        <tr>
+            <td><b>Supervisor<br>(Suggestion & Comments)</b></td>
+            <td>: {{ log.feedbacks|linebreaksbr }}</td>
+        </tr>
+        <tr>
+            <td><b>Next Meeting Plan</b></td>
+            <td>: {{ log.plan|linebreaksbr }}</td>
+        </tr>
+        <tr>
+            <td><b>Supervisor’s Signature</b></td>
+            <td>__________________ Date: {{ log.date }}</td>
+        </tr>
+    </table>
+</div>
+{% if not forloop.last %}<div class="page-break"></div>{% endif %}
+{% empty %}
+<div class="container">
+    <p>No logs available.</p>
+</div>
+{% endfor %}
+</body>
+</html>

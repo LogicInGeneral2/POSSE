@@ -46,13 +46,18 @@ class SupervisorListsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, student_id):
-        choices = SupervisorsRequest.objects.filter(student_id=student_id).order_by(
-            "priority"
-        )
-        serializer = SupervisorChoiceSerializer(
-            choices, many=True, context={"request": request}
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            choices = SupervisorsRequest.objects.filter(student_id=student_id).order_by(
+                "priority"
+            )
+            serializer = SupervisorChoiceSerializer(
+                choices, many=True, context={"request": request}
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def post(self, request):
         try:
@@ -64,10 +69,19 @@ class SupervisorListsView(APIView):
             else:
                 choices = raw_choices
 
-            if not student_id or not isinstance(choices, list):
+            if not student_id or not isinstance(choices, list) or not choices:
                 return Response(
-                    {"error": "Invalid payload"}, status=status.HTTP_400_BAD_REQUEST
+                    {"error": "Invalid payload: studentId and choices are required"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            # Validate choices
+            for choice in choices:
+                if not choice.get("supervisorName") or not choice.get("priority"):
+                    return Response(
+                        {"error": "Each choice must have supervisorName and priority"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
             # Delete existing choices for student
             SupervisorsRequest.objects.filter(student_id=student_id).delete()
@@ -75,7 +89,7 @@ class SupervisorListsView(APIView):
             instances = []
             for choice in choices:
                 priority = choice.get("priority")
-                proof_field_name = f"proof_{priority}"  # Expect proof_1, proof_2, etc.
+                proof_field_name = f"proof_{priority}"
                 proof_file = request.FILES.get(proof_field_name)
 
                 instance = SupervisorsRequest(
@@ -83,17 +97,23 @@ class SupervisorListsView(APIView):
                     supervisor_id=choice.get("supervisorId"),
                     supervisor_name=choice.get("supervisorName"),
                     priority=priority,
-                    proof=proof_file or None,
+                    proof=proof_file,
+                    topic=choice.get("topic") or "",
+                    mode=choice.get("mode") or "development",
                 )
                 instances.append(instance)
 
             SupervisorsRequest.objects.bulk_create(instances)
 
             return Response(
-                {"message": "Supervisor choices saved successfully."},
+                {"message": "Supervisor choices saved successfully"},
                 status=status.HTTP_201_CREATED,
             )
 
+        except json.JSONDecodeError:
+            return Response(
+                {"error": "Invalid JSON in choices"}, status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR

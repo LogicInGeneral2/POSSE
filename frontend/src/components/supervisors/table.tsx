@@ -5,7 +5,16 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import SupervisorsSelection from "./select";
-import { Button } from "@mui/material";
+import {
+  Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  SelectChangeEvent,
+  TextField,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import { useUser } from "../../../context/UserContext";
 import { Student, SupervisorsSelectionType } from "../../services/types";
@@ -21,7 +30,9 @@ export default function SupervisorsTable({
   const student = user as Student;
   const [supervisorChoices, setSupervisorChoices] = useState<
     (SupervisorsSelectionType | null)[]
-  >([null, null, null]); // Store selected supervisors for each priority
+  >([null, null, null]);
+  const [mode, setMode] = useState<string>("development"); // Default to valid option
+  const [topic, setTopic] = useState<string>("");
 
   const handleToggleEdit = () => {
     setIsEditing((prev) => !prev);
@@ -41,7 +52,6 @@ export default function SupervisorsTable({
   const handleSave = async () => {
     try {
       const formData = new FormData();
-
       formData.append("studentId", student.id.toString());
 
       const simplifiedChoices = supervisorChoices.map((supervisor, index) => {
@@ -49,16 +59,18 @@ export default function SupervisorsTable({
 
         if (!supervisor?.name) {
           alert(`Supervisor name is required for choice #${priority}`);
-          return;
+          throw new Error(`Missing supervisor name for priority ${priority}`);
         }
 
         const choice = {
           priority,
-          supervisorId: supervisor?.id || null,
+          supervisorId: supervisor.id || null,
           supervisorName: supervisor.name,
+          topic: topic || null,
+          mode: mode || "development",
         };
 
-        if (supervisor?.proof instanceof File) {
+        if (supervisor.proof instanceof File) {
           formData.append(`proof_${priority}`, supervisor.proof);
         }
 
@@ -71,26 +83,36 @@ export default function SupervisorsTable({
       setIsEditing(false);
     } catch (error) {
       console.error("Error saving supervisor choices:", error);
+      alert("Failed to save choices. Please try again.");
     }
   };
 
   useEffect(() => {
     const fetchSupervisorChoices = async () => {
       try {
-        const data = await getSupervisorChoices(student.id);
+        const response = await getSupervisorChoices(student.id);
+        const data = response.data; // Assuming API returns data directly
+
         const filledChoices: (SupervisorsSelectionType | null)[] = [
           null,
           null,
           null,
         ];
 
-        data.data.forEach((choice: any) => {
+        // Process choices
+        data.forEach((choice: any) => {
           const index = choice.priority - 1;
           filledChoices[index] = {
             name: choice.supervisor_name,
             id: choice.supervisor_id,
           };
         });
+
+        // Set topic and mode from first choice (since they're shared)
+        if (data.length > 0) {
+          setTopic(data[0].topic || "");
+          setMode(data[0].mode || "development");
+        }
 
         setSupervisorChoices(filledChoices);
       } catch (error) {
@@ -101,8 +123,43 @@ export default function SupervisorsTable({
     fetchSupervisorChoices();
   }, [student.id]);
 
+  const handleChange = (event: SelectChangeEvent) => {
+    setMode(event.target.value as string);
+  };
+
   return (
     <>
+      <Paper
+        sx={{
+          padding: "10px",
+          textAlign: "left",
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          mb: "10px",
+        }}
+      >
+        <FormControl fullWidth>
+          <InputLabel>FYP Mode</InputLabel>
+          <Select
+            value={mode || "development"} // Ensure valid value
+            label="FYP Mode"
+            onChange={handleChange}
+            disabled={!isEditing}
+          >
+            <MenuItem value="development">Development</MenuItem>
+            <MenuItem value="research">Research</MenuItem>
+          </Select>
+        </FormControl>
+        <TextField
+          label="FYP Topic"
+          variant="outlined"
+          fullWidth
+          disabled={!isEditing}
+          value={topic || ""}
+          onChange={(e) => setTopic(e.target.value)}
+        />
+      </Paper>
       <TableContainer>
         <Table>
           <TableHead>
@@ -138,7 +195,6 @@ export default function SupervisorsTable({
           </TableBody>
         </Table>
       </TableContainer>
-
       <Button
         variant="contained"
         color="secondary"

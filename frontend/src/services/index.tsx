@@ -180,19 +180,23 @@ export const saveSupervisorChoices = async (formData: FormData) => {
     if (response.status !== 200 && response.status !== 201) {
       throw new Error("Failed to save supervisor choices");
     }
+    return response.data;
   } catch (error: any) {
     console.error("Error saving choices:", error);
-    throw new Error(error);
+    throw error;
   }
 };
 
-export const getSupervisorChoices = async (student: number) => {
+export const getSupervisorChoices = async (studentId: number) => {
   try {
-    const data = await api.get(`/submissions/supervisors/choices/${student}/`);
-    return data;
+    const response = await api.get(
+      `/submissions/supervisors/choices/${studentId}/`
+    );
+    console.log(response);
+    return response;
   } catch (error: any) {
-    console.error("Error fetching period:", error);
-    throw new Error(error);
+    console.error("Error fetching choices:", error);
+    throw error;
   }
 };
 
@@ -209,6 +213,16 @@ export const getDocuments = async () => {
 export const getDocumentOptions = async () => {
   try {
     const data = await api.get(`/documents/categories/`);
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const getDocumentModes = async () => {
+  try {
+    const data = await api.get(`/documents/modes/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -258,7 +272,7 @@ export const getStudents = async (category: string) => {
 
 export const getUserSubmissions = async (student: number) => {
   try {
-    const data = await api.get(`submissions/${student}/all/`);
+    const data = await api.get(`submissions/all/${student}/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -464,5 +478,27 @@ export const deleteLogbook = async (logId: number) => {
     await api.delete(`/logbooks/${logId}/`);
   } catch (error: any) {
     throw error.response?.data || { detail: "Failed to delete logbook." };
+  }
+};
+
+export const exportLogs = async (student: number) => {
+  try {
+    const response = await api.post(
+      `/logbooks/export/${student}/`,
+      {},
+      { responseType: "blob" }
+    );
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "logs_export.pdf");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error exporting PDF:", error);
+    throw new Error("Failed to export PDF. Please try again.");
   }
 };

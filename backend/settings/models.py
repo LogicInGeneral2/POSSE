@@ -18,6 +18,15 @@ HEX_COLOR_VALIDATOR = RegexValidator(
 
 class documentCategories(models.Model):
     label = models.CharField(max_length=255)
+    visibility = models.BooleanField(default=True)
+
+    def __str__(self):
+        return str(self.label)
+
+
+class documentModes(models.Model):
+    label = models.CharField(max_length=255)
+    visibility = models.BooleanField(default=True)
 
     def __str__(self):
         return str(self.label)
@@ -30,4 +39,3 @@ class documentTheme(models.Model):
 
     def __str__(self):
         return str(self.value)
-

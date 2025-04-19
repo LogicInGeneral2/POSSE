@@ -97,29 +97,87 @@ export function Info() {
       ) : (
         <>
           <Grid
-            size={6}
+            size={3}
             sx={{
               display: "flex",
               alignItems: "center",
               padding: "4px",
             }}
           >
-            <SupervisorAccountRounded sx={{ mr: 1 }} /> SUPERVISEES:{" "}
-            {(supervisor.supervisees_FYP1 || 0) +
-              (supervisor.supervisees_FYP2 || 0)}
+            {" "}
+            <Tooltip
+              title="Assigned FYP1 Supervisees"
+              placement="top"
+              arrow
+              slotProps={{
+                popper: {
+                  modifiers: [
+                    {
+                      name: "offset",
+                      options: {
+                        offset: [0, -8],
+                      },
+                    },
+                  ],
+                },
+              }}
+            >
+              <SupervisorAccountRounded sx={{ mr: 0.5 }} />
+            </Tooltip>
+            FYP1: {supervisor.supervisees_FYP1 || 0}
           </Grid>
-
           <Grid
-            size={6}
+            size={3}
             sx={{
               display: "flex",
               alignItems: "center",
               padding: "4px",
             }}
           >
-            <GradingRounded sx={{ mr: 1 }} /> EVALUATEES:{" "}
-            {(supervisor.evaluatees_FYP1 || 0) +
-              (supervisor.evaluatees_FYP2 || 0)}
+            {" "}
+            FYP2: {supervisor.supervisees_FYP2 || 0}
+          </Grid>
+          <Grid
+            size={3}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              padding: "4px",
+            }}
+          >
+            {" "}
+            <Tooltip
+              title="Assigned FYP1 Evaluatees"
+              placement="top"
+              arrow
+              slotProps={{
+                popper: {
+                  modifiers: [
+                    {
+                      name: "offset",
+                      options: {
+                        offset: [0, -8],
+                      },
+                    },
+                  ],
+                },
+              }}
+            >
+              <GradingRounded sx={{ mr: 0.5 }} />
+            </Tooltip>{" "}
+            FYP1: {supervisor.evaluatees_FYP1 || 0}
+          </Grid>{" "}
+          <Grid
+            size={3}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              padding: "4px",
+            }}
+          >
+            {" "}
+            FYP2:
+            {supervisor.evaluatees_FYP2 || 0}
           </Grid>
         </>
       )}

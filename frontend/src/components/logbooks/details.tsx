@@ -141,7 +141,7 @@ export default function Details({
         value={logDetails?.date ? new Date(logDetails.date) : null}
         onChange={handleDateChange}
         slotProps={{ textField: { fullWidth: true, margin: "normal" } }}
-        disabled={userRole === "supervisor"}
+        disabled={userRole === "supervisor" || logDetails.status === "approved"}
       />
       <TextField
         fullWidth
@@ -151,7 +151,7 @@ export default function Details({
         value={logDetails.activities}
         onChange={handleChange}
         margin="normal"
-        disabled={userRole === "supervisor"}
+        disabled={userRole === "supervisor" || logDetails.status === "approved"}
       />
       <TextField
         fullWidth
@@ -161,7 +161,7 @@ export default function Details({
         value={logDetails.feedbacks}
         onChange={handleChange}
         margin="normal"
-        disabled={userRole === "supervisor"}
+        disabled={userRole === "supervisor" || logDetails.status === "approved"}
       />
       <TextField
         fullWidth
@@ -171,7 +171,7 @@ export default function Details({
         value={logDetails.plan}
         onChange={handleChange}
         margin="normal"
-        disabled={userRole === "supervisor"}
+        disabled={userRole === "supervisor" || logDetails.status === "approved"}
       />
 
       {userRole === "supervisor" ? (
@@ -187,7 +187,7 @@ export default function Details({
         </Button>
       ) : null}
 
-      {userRole === "student" && (
+      {userRole === "student" && logDetails.status !== "approved" && (
         <Box mt={2} display="flex" justifyContent="space-between">
           <Button variant="contained" color="primary" onClick={handleSave}>
             Save

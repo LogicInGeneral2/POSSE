@@ -32,7 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class StudentSerializer(serializers.ModelSerializer):
-    user = UserSerializer()  # Embed user data
+    user = UserSerializer()
     supervisor = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.filter(role="supervisor"), allow_null=True
     )
@@ -99,7 +99,14 @@ class SupervisorChoiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SupervisorsRequest
-        fields = ["priority", "supervisor_id", "supervisor_name", "proof"]
+        fields = [
+            "priority",
+            "supervisor_id",
+            "supervisor_name",
+            "proof",
+            "topic",
+            "mode",
+        ]
 
     def get_proof(self, obj):
         request = self.context.get("request")

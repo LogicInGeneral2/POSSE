@@ -1,8 +1,10 @@
 import {
+  Box,
   Card,
   CardActionArea,
   CardContent,
   CardMedia,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { ColorType, DocumentType } from "../../services/types";
@@ -10,6 +12,8 @@ import { format } from "date-fns";
 import { getDocumentColours } from "../../services";
 import { useEffect, useState } from "react";
 import ErrorNotice from "../commons/error";
+import DeveloperModeIcon from "@mui/icons-material/DeveloperMode";
+import ScienceIcon from "@mui/icons-material/Science";
 
 export const getFile = async (fileUrl: string) => {
   try {
@@ -76,32 +80,37 @@ function FileCard({ file }: { file: DocumentType }) {
             paddingTop: 0,
           }}
         >
-          <Typography
-            gutterBottom
-            variant="h6"
-            component="div"
+          <Box
             sx={{
-              paddingLeft: 1,
-              paddingRight: 1,
-              paddingBottom: 0,
-              paddingTop: 1,
+              display: "flex",
+              justifyContent: "space-between",
               color: colors.secondary,
             }}
           >
-            {file.title}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: colors.secondary,
-              paddingLeft: 1,
-              paddingRight: 1,
-              paddingBottom: 1,
-              paddingTop: 0,
-            }}
-          >
-            {format(file.upload_date, "d MMMM yyyy")}
-          </Typography>
+            <Box>
+              <Typography
+                gutterBottom
+                variant="h6"
+                component="div"
+                sx={{ px: 1, pt: 1 }}
+              >
+                {file.title}
+              </Typography>
+              <Typography variant="body2" sx={{ px: 1, pb: 1 }}>
+                {format(file.upload_date, "d MMMM yyyy")}
+              </Typography>
+            </Box>
+            <Box sx={{ px: 1, py: 1 }}>
+              <Tooltip title={file.mode}>
+                {file.mode === "Research" ? (
+                  <ScienceIcon sx={{ fontSize: 50 }} />
+                ) : (
+                  <DeveloperModeIcon sx={{ fontSize: 50 }} />
+                )}
+              </Tooltip>
+            </Box>
+          </Box>
+
           <Typography
             variant="body2"
             sx={{

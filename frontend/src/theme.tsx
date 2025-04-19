@@ -39,7 +39,7 @@ const theme = createTheme({
         root: {
           color: "#58041D",
           "& .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#58041D !important", // Ensure it matches TextField
+            borderColor: "#58041D !important",
           },
           "&:hover .MuiOutlinedInput-notchedOutline": {
             borderColor: "#F8B628",

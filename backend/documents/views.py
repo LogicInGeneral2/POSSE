@@ -16,22 +16,41 @@ from .serializers import (
     FeedbackSerializer,
     SubmissionUploadSerializer,
 )
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    Paragraph,
+    PageBreak,
+    Frame,
+    PageTemplate,
+    BaseDocTemplate,
+    Table,
+    TableStyle,
+    Image,
+)
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from datetime import datetime
+import os
+from django.conf import settings
+import html.parser
 
 
 class DocumentListView(APIView):
     def get(self, request, title=None):
-        if "scheme" in request.path:
+        if title:
             document = get_object_or_404(
-                Document, category="Marking Scheme", title=title
+                Document, category__label="Marking Scheme", title=title
             )
             serializer = MarkingSchemeSerializer(document, context={"request": request})
-
         else:
-            documents = Document.objects.all()
-
+            documents = Document.objects.select_related("category", "mode").all()
             serializer = DocumentSerializer(
                 documents, many=True, context={"request": request}
             )
@@ -42,9 +61,11 @@ class StudentSubmissionsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, student_id):
-        student = get_object_or_404(Student, user__id=student_id)
+        student = get_object_or_404(Student, id=student_id)
+        url_name = request.resolver_match.url_name
+        print("Request path:", request.path)
 
-        if request.path.endswith("all/"):
+        if url_name == "all-student-submissions":
             if request.user.role not in [
                 "supervisor",
                 "examiner",
@@ -349,3 +370,267 @@ class LogbookListView(APIView):
 
         serializer = LogbookSerializer(logbooks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class HTMLToReportLabParser(html.parser.HTMLParser):
+    def __init__(self, styles):
+        super().__init__()
+        self.styles = styles
+        self.flowables = []
+        self.current_text = []
+        self.current_style = "Normal"
+        self.current_table = None
+        self.current_row = None
+        self.in_table = False
+        self.in_header = False
+        self.header_text = []
+        self.style_stack = []  # To handle nested styles
+
+    def handle_starttag(self, tag, attrs):
+        # Push current style to stack to preserve for nested tags
+        self.style_stack.append(self.current_style)
+
+        if tag == "h1":
+            self.current_style = "CustomTitle"
+        elif tag == "p":
+            self.current_style = "CustomBody"
+            for attr in attrs:
+                if attr[0] == "class" and attr[1] == "section-title":
+                    self.current_style = "SectionTitle"
+                elif attr[0] == "class" and attr[1] == "underline":
+                    self.current_style = "DottedUnderline"
+        elif tag == "span":
+            for attr in attrs:
+                if attr[0] == "class" and attr[1] == "field-label":
+                    self.current_style = "CustomBold"
+                elif attr[0] == "class" and attr[1] == "dotted":
+                    self.current_style = "Dotted"
+                elif attr[0] == "class" and attr[1] == "dotted-content":
+                    self.current_style = "DottedContent"
+        elif tag == "li":
+            self.current_style = "CustomBody"
+            self.current_text.append("• ")  # Use bullet instead of hyphen
+        elif tag == "table":
+            self.in_table = True
+            self.current_table = []
+        elif tag == "tr":
+            self.current_row = []
+        elif tag == "td":
+            self.current_text = []
+        elif tag == "div":
+            for attr in attrs:
+                if attr[0] == "class" and attr[1] == "header":
+                    self.in_header = True
+                    self.header_text = []
+                elif attr[0] == "class" and attr[1] == "page-break":
+                    self.flowables.append(PageBreak())
+        elif tag == "img":
+            src = None
+            for attr in attrs:
+                if attr[0] == "src":
+                    src = attr[1]
+                    break
+            if src:
+                try:
+                    img_path = os.path.join(
+                        settings.STATIC_ROOT, src.replace("/static/", "")
+                    )
+                    if os.path.exists(img_path):
+                        self.flowables.append(Image(img_path, width=80, height=32))
+                except Exception as e:
+                    print(f"Error loading image: {e}")
+
+    def handle_endtag(self, tag):
+        if tag in ("h1", "p", "span", "li"):
+            if self.current_text:
+                text = "".join(self.current_text).strip()
+                if text:
+                    self.flowables.append(
+                        Paragraph(text, self.styles[self.current_style])
+                    )
+                self.current_text = []
+            # Pop style from stack instead of resetting to "Normal"
+            self.current_style = (
+                self.style_stack.pop() if self.style_stack else "Normal"
+            )
+        elif tag == "td":
+            text = "".join(self.current_text).strip()
+            # Wrap text in Paragraph for better control within table cells
+            self.current_row.append(Paragraph(text, self.styles[self.current_style]))
+            self.current_text = []
+        elif tag == "tr":
+            self.current_table.append(self.current_row)
+            self.current_row = []
+        elif tag == "table":
+            self.in_table = False
+            # Dynamic column widths based on page size
+            table = Table(self.current_table, colWidths=[2.5 * inch, 4.5 * inch])
+            table.setStyle(
+                TableStyle(
+                    [
+                        ("LINEBELOW", (0, 0), (-1, -1), 0.25, colors.black),
+                        ("FONTSIZE", (0, 0), (-1, -1), 11),
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                        ("TOPPADDING", (0, 0), (-1, -1), 4),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                        ("FONTNAME", (0, 0), (-1, -1), "Times-Roman"),
+                        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                    ]
+                )
+            )
+            self.flowables.append(table)
+        elif tag == "div" and self.in_header:
+            self.in_header = False
+            header_text = "".join(self.header_text).strip()
+            if header_text:
+                self.flowables.append(Paragraph(header_text, self.styles["HeaderText"]))
+        # Ensure style is restored from stack
+        self.current_style = self.style_stack.pop() if self.style_stack else "Normal"
+
+    def handle_data(self, data):
+        if self.in_header:
+            self.header_text.append(data)
+        else:
+            self.current_text.append(data)
+
+
+@csrf_exempt
+def export_logs_pdf(request, student_id):
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="logs_export.pdf"'
+
+    default_font = "Times-Roman"
+    default_font_bold = "Times-Bold"
+
+    # Define styles with improved spacing and typography
+    styles = getSampleStyleSheet()
+    styles.add(
+        ParagraphStyle(
+            name="CustomTitle",
+            fontName=default_font_bold,
+            fontSize=18,
+            leading=22,
+            spaceAfter=16,
+            spaceBefore=20,
+            alignment=1,  # Center
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="SectionTitle",
+            fontName=default_font_bold,
+            fontSize=14,
+            leading=18,
+            spaceAfter=12,
+            spaceBefore=12,
+            alignment=1,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="CustomBody",
+            fontName=default_font,
+            fontSize=12,
+            leading=16,
+            spaceAfter=8,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="CustomBold",
+            fontName=default_font_bold,
+            fontSize=12,
+            leading=16,
+            spaceAfter=4,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="DottedUnderline",
+            fontName=default_font,
+            fontSize=12,
+            leading=16,
+            spaceAfter=10,
+            alignment=1,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="Dotted",
+            fontName=default_font,
+            fontSize=12,
+            leading=16,
+            spaceAfter=4,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="DottedContent",
+            fontName=default_font,
+            fontSize=12,
+            leading=16,
+            spaceAfter=6,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="HeaderText",
+            fontName=default_font_bold,
+            fontSize=12,
+            leading=14,
+            spaceAfter=8,
+            alignment=1,
+        )
+    )
+
+    try:
+        student = (
+            Student.objects.get(user__id=student_id)
+            if Student.objects.filter(user__id=student_id).exists()
+            else Student.objects.get(student_id=student_id)
+        )
+    except Student.DoesNotExist:
+        return HttpResponse("Student not found.", status=404)
+
+    logs = Logbook.objects.filter(student=student).order_by("date")
+    if not logs.exists():
+        return HttpResponse("No logs available for export.", status=404)
+
+    context = {
+        "logs": logs,
+        "project_title": student.topic or "No topic assigned",
+        "student_name": student.user.name,
+        "student_id": student.student_id,
+        "student_email": student.user.email,
+        "student_mobile": "N/A",
+        "student_department": "IS / SE / CS",
+        "supervisor_name": student.supervisor.name if student.supervisor else "N/A",
+        "supervisor_email": student.supervisor.email if student.supervisor else "N/A",
+        "generate_date": datetime.now(),
+    }
+
+    html_content = render_to_string("logbooks.html", context)
+    parser = HTMLToReportLabParser(styles)
+    parser.feed(html_content)
+    story = parser.flowables
+
+    class CustomDocTemplate(BaseDocTemplate):
+        def __init__(self, filename, **kwargs):
+            super().__init__(filename, **kwargs)
+            self.addPageTemplates(self._create_page_template())
+
+        def _create_page_template(self):
+            frame = Frame(
+                0.75 * inch,
+                0.75 * inch,
+                letter[0] - 1.5 * inch,
+                letter[1] - 1.5 * inch,
+                id="normal",
+            )
+            return PageTemplate(id="custom", frames=[frame])
+
+    doc = CustomDocTemplate(response, pagesize=letter)
+    doc.build(story)
+    return response

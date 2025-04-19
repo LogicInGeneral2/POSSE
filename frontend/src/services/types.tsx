@@ -66,6 +66,7 @@ interface FileType {
 export interface DocumentType extends FileType {
   type: "document";
   category: string;
+  mode: string;
   thumbnail_url: string;
 }
 

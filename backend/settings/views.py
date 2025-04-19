@@ -1,7 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Outline, documentTheme, documentCategories
+from .models import Outline, documentModes, documentTheme, documentCategories
 from .serializers import (
+    documentModeSerializer,
     documentThemeSerializer,
     documentCategoriesSerializer,
     OutlineSerializer,
@@ -26,6 +27,13 @@ class DocumentThemeListView(APIView):
 
 class DocumentCategoryListView(APIView):
     def get(self, request):
-        categories = documentCategories.objects.all()
+        categories = documentCategories.objects.filter(visibility=True)
         serializer = documentCategoriesSerializer(categories, many=True)
+        return Response(serializer.data)
+
+
+class DocumentModeListView(APIView):
+    def get(self, request):
+        categories = documentModes.objects.filter(visibility=True)
+        serializer = documentModeSerializer(categories, many=True)
         return Response(serializer.data)
