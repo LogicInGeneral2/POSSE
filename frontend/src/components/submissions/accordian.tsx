@@ -5,6 +5,7 @@ import {
   AccordionSummary,
   Box,
   Button,
+  Collapse,
   Divider,
   IconButton,
   Stack,
@@ -13,18 +14,17 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
-  ErrorRounded,
   EventAvailableRounded,
   EventBusyRounded,
   HourglassBottom,
   OutboxRounded,
 } from "@mui/icons-material";
-import { status_info } from "./status";
 import UploadIcon from "@mui/icons-material/Upload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import React, { useState } from "react";
 import {
   FeedbackType,
+  StatusInfo,
   SubmissionsMetaType,
   SubmissionType,
 } from "../../services/types";
@@ -49,29 +49,14 @@ function SubmissionCards({
   feedback,
   meta,
   refreshSubmissions,
+  statusInfo,
 }: {
   submission: SubmissionType | null;
   feedback: FeedbackType | null;
   meta: SubmissionsMetaType;
   refreshSubmissions: () => void;
+  statusInfo: StatusInfo[];
 }) {
-  const themes = status_info.find((color) => color.value === meta.status) || {
-    color: "#ffffff",
-    icon: (
-      <ErrorRounded
-        sx={{
-          mr: 1,
-          fontSize: "1.5rem",
-          backgroundColor: "#ffda07",
-          height: "3.25rem",
-          width: "2rem",
-          padding: "0.25rem",
-          borderRight: "1px solid",
-          borderTopLeftRadius: "8px",
-        }}
-      />
-    ),
-  };
   const { user } = useUser();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
@@ -125,20 +110,25 @@ function SubmissionCards({
     }
   };
 
+  const status = statusInfo.find((s) => s.value === meta.status);
+  const statusIcon = status?.icon || null;
+  const [expanded, setExpanded] = useState(false);
+  const maxPreviewLines = 2;
+
   return (
     <Accordion sx={{ m: 0, p: 0 }}>
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
         id="submissions-header"
         sx={{
-          backgroundColor: "#E9DADD",
+          backgroundColor: "base.main",
           border: "1px solid",
           borderTopRightRadius: "8px",
           borderTopLeftRadius: "8px",
         }}
       >
         <Stack direction="row" spacing={2}>
-          {themes.icon}
+          {statusIcon}
           <Box>
             <Typography
               sx={{
@@ -183,7 +173,7 @@ function SubmissionCards({
           </Box>
         </Stack>
       </AccordionSummary>
-      <AccordionDetails sx={{ backgroundColor: "#E9DADD" }}>
+      <AccordionDetails sx={{ backgroundColor: "base.main" }}>
         {meta.description}
       </AccordionDetails>
 
@@ -192,16 +182,53 @@ function SubmissionCards({
         meta.status === "Completed" ||
         meta.status === "Feedback" ||
         meta.status === "Closed") && (
-        <AccordionActions sx={{ backgroundColor: "#E9DADD" }}>
+        <AccordionActions sx={{ backgroundColor: "base.main" }}>
           {meta.status === "Feedback" && feedback && (
-            <>
-              <Download_Button
-                fileUrl={feedback.src}
-                text={feedback.title}
-                variants="contained"
-                disabled={false}
-              />
-            </>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                m: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  border: "2px solid",
+                  p: 2,
+                  borderRadius: "8px",
+                }}
+              >
+                <Typography variant="subtitle2" gutterBottom>
+                  SV's Comment:
+                </Typography>
+                <Collapse in={expanded} collapsedSize={maxPreviewLines * 24}>
+                  <Typography
+                    sx={{
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {feedback.comment}
+                  </Typography>
+                </Collapse>
+                <Button
+                  size="small"
+                  onClick={() => setExpanded(!expanded)}
+                  sx={{ mt: 1 }}
+                >
+                  {expanded ? "Show less" : "Read more"}
+                </Button>
+              </Box>
+              {feedback.src && (
+                <Download_Button
+                  fileUrl={feedback.src}
+                  text={feedback.title}
+                  variants="contained"
+                  disabled={false}
+                />
+              )}
+            </Box>
           )}
           {meta.status === "Closed" && submission && (
             <>

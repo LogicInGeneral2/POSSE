@@ -9,6 +9,7 @@ import {
   MenuItem,
   Select,
   SelectChangeEvent,
+  TextField,
 } from "@mui/material";
 import Upload_Button from "./uploadButton";
 
@@ -36,11 +37,13 @@ function UploadDialog({
   const [submissionList, setSubmissionList] = useState<SubmissionType[]>([]);
   const [uploadedFile, setUploadedFile] = useState<File>();
   const [isLoading, setIsloading] = useState(true);
+  const [comment, setComment] = useState("");
 
   const fetchSubmissionList = async () => {
     setIsloading(true);
     try {
       const data = await getUserSubmissions(id);
+      console.log(data.data);
       setSubmissionList(data.data);
 
       if (selectedSubmission) {
@@ -83,6 +86,7 @@ function UploadDialog({
     const found = submissionList.find((item) => item.id === id);
     if (!found) return;
     setSelectedSubmission(found);
+    setComment(found.feedback?.comment || "");
   };
 
   const handleFileUpload = (files: File | File[]) => {
@@ -103,6 +107,7 @@ function UploadDialog({
         studentId: id,
         file: uploadedFile,
         submissionId: selectedSubmission.id,
+        comment: comment,
       });
 
       if (response.status >= 200 && response.status < 300) {
@@ -172,6 +177,17 @@ function UploadDialog({
                   </>
                 )}
               </Box>
+              <TextField
+                label="Comments"
+                multiline
+                maxRows={4}
+                fullWidth
+                size="small"
+                required
+                value={comment}
+                onChange={(event) => setComment(event.target.value)}
+                sx={{ mb: 2 }}
+              />
               <Upload_Button
                 size="small"
                 icon={false}
@@ -192,7 +208,7 @@ function UploadDialog({
         <Button onClick={() => setOpenDialog(false)}>Close</Button>
         <Button
           onClick={handleSubmit}
-          disabled={!selectedSubmission || !uploadedFile}
+          disabled={!selectedSubmission || !comment}
         >
           Confirm
         </Button>

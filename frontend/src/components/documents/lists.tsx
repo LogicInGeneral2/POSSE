@@ -152,7 +152,7 @@ const DocumentsList = () => {
       <Grid
         size={2}
         sx={{
-          backgroundColor: "#E9DADD",
+          backgroundColor: "base.main",
           borderRadius: "8px",
           padding: "20px",
         }}

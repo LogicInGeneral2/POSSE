@@ -62,7 +62,7 @@ function FileCard({ file }: { file: DocumentType }) {
         maxWidth: 345,
         backgroundColor: colors.primary,
         borderRadius: "8px",
-        border: "1px solid #58041D",
+        border: "1px solid",
       }}
     >
       <CardActionArea onClick={() => getFile(file.src)}>

@@ -1,5 +1,11 @@
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../api/constants";
-import { Student, Supervisor, User } from "./types";
+import {
+  Student,
+  SubmissionTheme,
+  Supervisor,
+  User,
+  SystemTheme,
+} from "./types";
 import { api, api_public } from "../api";
 
 export const loginUser = async (
@@ -82,6 +88,16 @@ export const logoutUser = async () => {
     localStorage.removeItem("refresh");
   } catch (error) {
     console.error("Logout failed", error);
+  }
+};
+
+export const getSystemTheme = async (): Promise<SystemTheme[]> => {
+  try {
+    const response = await api_public.get<SystemTheme[]>("/theme/");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching theme details:", error);
+    return [];
   }
 };
 
@@ -270,6 +286,19 @@ export const getStudents = async (category: string) => {
   }
 };
 
+export const getSubmissionStatusThemes = async (): Promise<
+  SubmissionTheme[]
+> => {
+  try {
+    const response = await api.get<SubmissionTheme[]>("submissions/themes/");
+    console.log(response);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching theme details:", error);
+    return [];
+  }
+};
+
 export const getUserSubmissions = async (student: number) => {
   try {
     const data = await api.get(`submissions/all/${student}/`);
@@ -294,15 +323,17 @@ export const uploadFeedback = async ({
   studentId,
   file,
   submissionId,
+  comment,
 }: {
   studentId: number;
-  file: File;
+  file?: File;
   submissionId: number;
+  comment: string;
 }) => {
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", file ?? "");
+  formData.append("comment", comment);
   formData.append("submission", submissionId.toString());
-
   return api.post(`feedback/upload/${studentId}/`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",

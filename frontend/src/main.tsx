@@ -3,17 +3,13 @@ import { createRoot } from "react-dom/client";
 import { RootRoute } from "./routes/root.tsx";
 import { ErrorRoute } from "./routes/error.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router";
-import "./index.css";
-import App from "./App.tsx";
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-import { ThemeProvider } from "@mui/material";
 import { Home } from "./routes/home.tsx";
 import { CourseOuline } from "./routes/course_outline.tsx";
 import { Supervisors } from "./routes/supervisors.tsx";
-import theme from "./theme.tsx";
 import { Documents } from "./routes/documents.tsx";
 import { Submissions } from "./routes/submissions.tsx";
 import { Supervisees } from "./routes/supervisees.tsx";
@@ -27,6 +23,10 @@ import ProtectedRoute from "./routes/ProtectedRoute.tsx";
 import { Logout } from "./routes/logout.tsx";
 import { ResetPassword } from "./routes/request_reset.tsx";
 import { ConfirmPassword } from "./routes/confirm_reset.tsx";
+import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
+import { useDynamicTheme } from "./theme.tsx";
+import { ThemeProvider as CustomThemeProvider } from "../context/ThemeContext.tsx";
+import App from "./App.tsx";
 
 const router = createBrowserRouter([
   {
@@ -130,14 +130,23 @@ const router = createBrowserRouter([
   },
 ]);
 
+function AppWrapper() {
+  const theme = useDynamicTheme();
+  return (
+    <MuiThemeProvider theme={theme}>
+      <RouterProvider router={router} />
+    </MuiThemeProvider>
+  );
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <UserProvider>
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <ThemeProvider theme={theme}>
-          <RouterProvider router={router} />
-        </ThemeProvider>
-      </LocalizationProvider>
+      <CustomThemeProvider>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <AppWrapper />
+        </LocalizationProvider>
+      </CustomThemeProvider>
     </UserProvider>
   </StrictMode>
 );

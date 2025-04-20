@@ -1,3 +1,5 @@
+import { JSX } from "react";
+
 export interface User {
   id: number;
   name: string;
@@ -26,6 +28,12 @@ export interface UserContextType {
   logout: () => void;
 }
 
+export interface SystemTheme {
+  id: number;
+  main: string;
+  label: string;
+}
+
 export interface periodTypes {
   title: String;
   description: String;
@@ -33,6 +41,23 @@ export interface periodTypes {
   start_date: Date;
   end_date: Date;
   days_left: number;
+}
+
+export interface StatusIcon {
+  icon: JSX.Element;
+}
+
+export interface StatusInfo {
+  value: string;
+  color: string;
+  icon: JSX.Element;
+  legend: JSX.Element;
+}
+
+export interface SubmissionTheme {
+  label: string;
+  primary: string;
+  secondary: string;
 }
 
 export interface SubmissonsEntry extends periodTypes {}
@@ -84,6 +109,7 @@ export interface FeedbackType extends FileType {
   type: "feedback";
   supervisorId: number;
   submissionId: number;
+  comment: string;
 }
 
 export interface OptionType {

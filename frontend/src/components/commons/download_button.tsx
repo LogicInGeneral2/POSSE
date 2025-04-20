@@ -14,17 +14,6 @@ function Download_Button({
   variants?: "text" | "outlined" | "contained";
   icon?: boolean;
 }) {
-  {
-    /*  const handleDownload = () => {
-    if (!fileUrl) return;
-    const link = document.createElement("a");
-    link.href = fileUrl;
-    link.download = fileUrl.split("/").pop() || "download";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }; */
-  }
   const handleDownload = async () => {
     try {
       if (!fileUrl) return;

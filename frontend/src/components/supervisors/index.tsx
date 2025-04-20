@@ -57,7 +57,7 @@ export const SupervisorsPage = () => {
         <Box
           sx={{
             marginTop: "20px",
-            backgroundColor: "#E9DADD",
+            backgroundColor: "base.main",
             borderRadius: "8px",
             padding: "20px",
             display: "flex",

@@ -4,15 +4,20 @@ import SubmissionCards from "./accordian";
 import LegendCard from "./card";
 import { useEffect, useState } from "react";
 import ErrorNotice from "../commons/error";
-import { getUserSubmissionData } from "../../services";
-import { SubmissionsMetaType } from "../../services/types";
+import {
+  getSubmissionStatusThemes,
+  getUserSubmissionData,
+} from "../../services";
+import { StatusInfo, SubmissionsMetaType } from "../../services/types";
 import LoadingSpinner from "../commons/loading";
 import { useUser } from "../../../context/UserContext";
+import { getStatusInfo } from "./status";
 
 export const SubmissionsPage = () => {
   const [meta, setMeta] = useState<SubmissionsMetaType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useUser();
+  const [statusInfo, setStatusInfo] = useState<StatusInfo[]>([]);
 
   const fetchSubmissions = async () => {
     if (user && user.id) {
@@ -29,6 +34,15 @@ export const SubmissionsPage = () => {
       }
     }
   };
+
+  useEffect(() => {
+    const loadThemes = async () => {
+      const themes = await getSubmissionStatusThemes();
+      const statusData = getStatusInfo(themes);
+      setStatusInfo(statusData);
+    };
+    loadThemes();
+  }, []);
 
   useEffect(() => {
     fetchSubmissions();
@@ -83,13 +97,14 @@ export const SubmissionsPage = () => {
                 feedback={submissionMeta.feedback || []}
                 meta={submissionMeta}
                 refreshSubmissions={fetchSubmissions}
+                statusInfo={statusInfo}
               />
             ))}
           </Box>
         )}
 
         <Box>
-          <LegendCard />
+          <LegendCard statusInfo={statusInfo} />
         </Box>
       </div>
     </>

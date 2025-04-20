@@ -117,6 +117,7 @@ class FeedbackUploadView(APIView):
     def post(self, request, student_id):
         submission_id = request.data.get("submission")
         file = request.FILES.get("file")
+        comment = request.data.get("comment", "")  # get comment from request
 
         if not submission_id or not file:
             return Response({"detail": "Missing file or submission."}, status=400)
@@ -129,11 +130,14 @@ class FeedbackUploadView(APIView):
             return Response({"detail": "Student submission not found."}, status=404)
 
         feedback, created = Feedback.objects.get_or_create(
-            submission=submission, supervisor=request.user, defaults={"file": file}
+            submission=submission,
+            supervisor=request.user,
+            defaults={"file": file, "comment": comment},
         )
 
         if not created:
             feedback.file = file
+            feedback.comment = comment  # update comment
             feedback.save()
 
         serializer = FeedbackSerializer(feedback, context={"request": request})

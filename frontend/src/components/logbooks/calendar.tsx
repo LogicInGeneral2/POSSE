@@ -45,7 +45,7 @@ export default function Calendar({
       sx={{
         width: "100%",
         height: "150vh",
-        backgroundColor: "#E9DADD",
+        backgroundColor: "base.main",
         borderTopLeftRadius: "8px",
         borderTopRightRadius: "8px",
         color: "white",

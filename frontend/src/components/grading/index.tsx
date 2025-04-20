@@ -74,7 +74,7 @@ export const GradingPage = () => {
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
-                backgroundColor: "#E9DADD",
+                backgroundColor: "base.main",
                 padding: "20px",
                 borderRadius: "8px",
                 border: "1px solid",

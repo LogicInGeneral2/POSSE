@@ -1,203 +1,246 @@
 import { createTheme } from "@mui/material/styles";
+import { useTheme } from "../context/ThemeContext";
+import { useMemo } from "react";
 import type {} from "@mui/x-date-pickers/themeAugmentation";
 
-const theme = createTheme({
-  palette: {
-    primary: { main: "#58041D" },
-    secondary: { main: "#F8B628" },
-    error: { main: "#d32f2f" },
-    warning: { main: "#ed6c02" },
-    info: { main: "#0d6efd" },
-    success: { main: "#28a745" },
-  },
-  typography: {
-    fontFamily: ["Roboto", "sans-serif"].join(","),
-    allVariants: { color: "#58041D" }, // Applies color to all text elements
-  },
-  components: {
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Change text color
-          "& .MuiInputBase-input": {
-            color: "#58041D", // Input text color
-          },
-          "& .MuiInputLabel-root": {
-            color: "#58041D", // Label color
-          },
-          "& .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#58041D", // Outline color
-          },
-          "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#F8B628", // Border color on hover
-          },
-        },
-      },
-    },
-    MuiSelect: {
-      styleOverrides: {
-        root: {
-          color: "#58041D",
-          "& .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#58041D !important",
-          },
-          "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#F8B628",
-          },
-          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#58041D",
-          },
-        },
-      },
-    },
-    MuiInputBase: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Applies to all InputBase variants
-        },
-      },
-    },
-    MuiRadio: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Applies to all Radio variants
-        },
-      },
-    },
-    MuiRadioGroup: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Applies to all RadioGroup variants
-        },
-      },
-    },
-    MuiToggleButton: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Applies to all ToggleButton variants
-        },
-      },
-    },
-    MuiToggleButtonGroup: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Applies to all ToggleButtonGroup variants
-        },
-      },
-    },
-    MuiAccordion: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Applies to all ToggleButtonGroup variants
-        },
-      },
-    },
-    MuiAccordionActions: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Applies to all ToggleButtonGroup variants
-        },
-      },
-    },
-    MuiAccordionDetails: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Applies to all ToggleButtonGroup variants
-        },
-      },
-    },
-    MuiAccordionSummary: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Applies to all ToggleButtonGroup variants
-        },
-      },
-    },
-    MuiTableContainer: {
-      styleOverrides: {
-        root: {
-          borderRadius: "8px",
-          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-          overflow: "hidden",
-        },
-      },
-    },
-    MuiTableHead: {
-      styleOverrides: {
-        root: {
-          backgroundColor: "#58041D !important", // Ensures color remains applied
-        },
-      },
-    },
-    MuiTableRow: {
-      styleOverrides: {
-        root: {
-          "&:nth-of-type(odd)": {
-            backgroundColor: "#F8F8F8",
-          },
-          "&:hover": {
-            backgroundColor: "#F8B6281A",
-          },
-        },
-      },
-    },
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          padding: "5px",
-          color: "#58041D",
-        },
-        head: {
-          backgroundColor: "#58041D !important",
-          color: "#FFFFFF",
-          fontWeight: "bold",
-          fontSize: "1rem",
-        },
-        body: {
-          fontSize: "1rem",
-        },
-      },
-    },
-    MuiTableBody: {
-      styleOverrides: {
-        root: {
-          backgroundColor: "#FFFFFF",
-        },
-      },
-    },
-    MuiPickersDay: {
-      styleOverrides: {
-        root: {
-          color: "#58041D", // Default date text color
-          "&.Mui-selected": {
-            backgroundColor: "#58041D", // Selected date background
-            color: "#FFFFFF", // Selected date text color
-          },
-          "&:hover": {
-            backgroundColor: "#F8B628",
-            color: "#58041D",
-          },
-        },
-      },
-    },
-    MuiDayCalendar: {
-      styleOverrides: {
-        weekDayLabel: {
-          color: "#58041D", // Weekday labels (S, M, T, W, T, F, S)
-          fontWeight: "bold",
-        },
-      },
-    },
-    MuiDateCalendar: {
-      styleOverrides: {
-        root: {
-          backgroundColor: "#fff",
-          color: "#58041D",
-          borderRadius: "8px",
-        },
-      },
-    },
-  },
-});
+declare module "@mui/material/styles" {
+  interface Palette {
+    base: {
+      main: string;
+      light: string;
+      dark: string;
+      contrastText: string;
+    };
+  }
+  interface PaletteOptions {
+    base?: {
+      main: string;
+    };
+  }
+}
 
-export default theme;
+export const useDynamicTheme = () => {
+  const { theme } = useTheme();
+
+  // Use fetched colors or fallbacks
+  const primaryColor = theme?.primary || "#58041D";
+  const secondaryColor = theme?.secondary || "#F8B628";
+  const errorColor = theme?.error || "#d32f2f";
+  const infoColor = theme?.info || "#0d6efd";
+  const successColor = theme?.success || "#28a745";
+  const baseColor = theme?.base || "#E9DADD";
+  const warningColor = theme?.warning || "#ed6c02";
+
+  // Memoize the theme to prevent unnecessary re-creation
+  return useMemo(
+    () =>
+      createTheme({
+        palette: {
+          primary: { main: primaryColor },
+          secondary: { main: secondaryColor },
+          error: { main: errorColor },
+          warning: { main: warningColor },
+          info: { main: infoColor },
+          success: { main: successColor },
+          base: { main: baseColor },
+        },
+        typography: {
+          fontFamily: ["Roboto", "sans-serif"].join(","),
+          allVariants: { color: primaryColor },
+        },
+        components: {
+          MuiTextField: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+                "& .MuiInputBase-input": {
+                  color: primaryColor,
+                },
+                "& .MuiInputLabel-root": {
+                  color: primaryColor,
+                },
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: primaryColor,
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: secondaryColor,
+                },
+              },
+            },
+          },
+          MuiSelect: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: `${primaryColor} !important`,
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: secondaryColor,
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: primaryColor,
+                },
+              },
+            },
+          },
+          MuiInputBase: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+              },
+            },
+          },
+          MuiRadio: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+              },
+            },
+          },
+          MuiRadioGroup: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+              },
+            },
+          },
+          MuiToggleButton: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+              },
+            },
+          },
+          MuiToggleButtonGroup: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+              },
+            },
+          },
+          MuiAccordion: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+              },
+            },
+          },
+          MuiAccordionActions: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+              },
+            },
+          },
+          MuiAccordionDetails: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+              },
+            },
+          },
+          MuiAccordionSummary: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+              },
+            },
+          },
+          MuiTableContainer: {
+            styleOverrides: {
+              root: {
+                borderRadius: "8px",
+                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+                overflow: "hidden",
+              },
+            },
+          },
+          MuiTableHead: {
+            styleOverrides: {
+              root: {
+                backgroundColor: `${primaryColor} !important`,
+              },
+            },
+          },
+          MuiTableRow: {
+            styleOverrides: {
+              root: {
+                "&:nth-of-type(odd)": {
+                  backgroundColor: "#F8F8F8",
+                },
+                "&:hover": {
+                  backgroundColor: `${secondaryColor}1A`,
+                },
+              },
+            },
+          },
+          MuiTableCell: {
+            styleOverrides: {
+              root: {
+                padding: "5px",
+                color: primaryColor,
+              },
+              head: {
+                backgroundColor: `${primaryColor} !important`,
+                color: "#FFFFFF",
+                fontWeight: "bold",
+                fontSize: "1rem",
+              },
+              body: {
+                fontSize: "1rem",
+              },
+            },
+          },
+          MuiTableBody: {
+            styleOverrides: {
+              root: {
+                backgroundColor: "#FFFFFF",
+              },
+            },
+          },
+          MuiPickersDay: {
+            styleOverrides: {
+              root: {
+                color: primaryColor,
+                "&.Mui-selected": {
+                  backgroundColor: primaryColor,
+                  color: "#FFFFFF",
+                },
+                "&:hover": {
+                  backgroundColor: secondaryColor,
+                  color: primaryColor,
+                },
+              },
+            },
+          },
+          MuiDayCalendar: {
+            styleOverrides: {
+              weekDayLabel: {
+                color: primaryColor,
+                fontWeight: "bold",
+              },
+            },
+          },
+          MuiDateCalendar: {
+            styleOverrides: {
+              root: {
+                backgroundColor: "#fff",
+                color: primaryColor,
+                borderRadius: "8px",
+              },
+            },
+          },
+        },
+      }),
+    [
+      primaryColor,
+      secondaryColor,
+      errorColor,
+      infoColor,
+      successColor,
+      baseColor,
+      warningColor,
+    ]
+  );
+};

@@ -1,7 +1,14 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Outline, documentCategories, documentModes, documentTheme
-from .utils import themeForm
+from .models import (
+    Outline,
+    documentCategories,
+    documentModes,
+    documentTheme,
+    submissionStatusTheme,
+    systemTheme,
+)
+from .utils import systemThemeForm, themeForm
 
 
 @admin.register(Outline)
@@ -55,3 +62,41 @@ class documentModesAdmin(admin.ModelAdmin):
     list_display = ["label"]
     search_fields = ["label"]
     list_per_page = 20
+
+
+@admin.register(submissionStatusTheme)
+class submissionStatusThemeAdmin(admin.ModelAdmin):
+    list_display = ["label", "get_primary_color", "get_secondary_color"]
+    search_fields = ["label"]
+    list_per_page = 20
+    form = themeForm
+
+    def get_primary_color(self, obj):
+        return format_html(
+            '<div style="width: 50px; height: 20px; background:{};"></div>', obj.primary
+        )
+
+    get_primary_color.short_description = "Primary Color"
+
+    def get_secondary_color(self, obj):
+        return format_html(
+            '<div style="width: 50px; height: 20px; background:{};"></div>',
+            obj.secondary,
+        )
+
+    get_secondary_color.short_description = "Secondary Color"
+
+
+@admin.register(systemTheme)
+class systemThemeAdmin(admin.ModelAdmin):
+    list_display = ["label", "get_main_color"]
+    search_fields = ["label"]
+    list_per_page = 20
+    form = systemThemeForm
+
+    def get_main_color(self, obj):
+        return format_html(
+            '<div style="width: 50px; height: 20px; background:{};"></div>', obj.main
+        )
+
+    get_main_color.short_description = "Main Color"

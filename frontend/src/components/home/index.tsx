@@ -40,8 +40,8 @@ export const HomePage = () => {
                 spacing={2}
                 sx={{
                   mt: "20px",
-                  border: "1px solid #58041D",
-                  backgroundColor: "#E9DADD",
+                  border: "1px solid",
+                  backgroundColor: "base.main",
                   borderRadius: "8px",
                   padding: "12px",
                   height: "100%",

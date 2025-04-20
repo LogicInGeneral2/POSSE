@@ -9,7 +9,6 @@ export const ErrorRoute = () => {
         alignItems: "center",
         justifyContent: "center",
         height: "100vh",
-        backgroundColor: "#f5f5f5",
       }}
     >
       <Container maxWidth="sm" sx={{ textAlign: "center" }}>

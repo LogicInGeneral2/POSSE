@@ -2,7 +2,7 @@ import "./pdfworker";
 import { Document, Page, DocumentProps } from "react-pdf";
 import { useState } from "react";
 import { useContainerWidth } from "./containerWidth";
-import { IconButton } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 
@@ -38,27 +38,28 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         <IconButton
           onClick={handleZoomOut}
           size="small"
-          sx={{ background: "#fff", border: "1px solid #ccc", mr: 1 }}
+          sx={{ background: "primary.main", border: "1px solid", mr: 1 }}
         >
           <RemoveIcon fontSize="small" />
         </IconButton>
         <IconButton
           onClick={handleZoomIn}
           size="small"
-          sx={{ background: "#fff", border: "1px solid #ccc" }}
+          sx={{ background: "primary.main", border: "1px solid" }}
         >
           <AddIcon fontSize="small" />
         </IconButton>
       </div>
 
-      <div
+      <Box
         ref={ref}
-        style={{
+        sx={{
           width: "100%",
           maxHeight: Height,
           overflowY: "auto",
-          border: "1px solid #ccc",
+          border: "1px solid",
           justifyContent: "center",
+          borderRadius: "8px",
           display: "flex",
         }}
       >
@@ -80,7 +81,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             />
           ))}
         </Document>
-      </div>
+      </Box>
     </div>
   );
 };

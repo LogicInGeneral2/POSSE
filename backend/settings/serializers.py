@@ -1,6 +1,12 @@
 from rest_framework import serializers
 
-from .models import Outline, documentCategories, documentTheme
+from .models import (
+    Outline,
+    documentCategories,
+    documentTheme,
+    submissionStatusTheme,
+    systemTheme,
+)
 
 
 class OutlineSerializer(serializers.ModelSerializer):
@@ -34,4 +40,16 @@ class documentCategoriesSerializer(serializers.ModelSerializer):
 class documentModeSerializer(serializers.ModelSerializer):
     class Meta:
         model = documentCategories
+        fields = "__all__"
+
+
+class submissionStatusThemeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = submissionStatusTheme
+        fields = "__all__"
+
+
+class systemThemeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = systemTheme
         fields = "__all__"

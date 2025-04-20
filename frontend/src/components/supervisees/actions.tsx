@@ -18,9 +18,9 @@ export const action_options = [
     icon: (
       <SearchIcon
         sx={{
-          color: "#F8B628",
+          color: "secondary.main",
           fontSize: "1rem",
-          backgroundColor: "#58041D",
+          backgroundColor: "primary.main",
           padding: "0.25rem",
           borderRadius: "50%",
         }}
@@ -34,9 +34,9 @@ export const action_options = [
     icon: (
       <BookRounded
         sx={{
-          color: "#F8B628",
+          color: "secondary.main",
           fontSize: "1rem",
-          backgroundColor: "#58041D",
+          backgroundColor: "primary.main",
           padding: "0.25rem",
           borderRadius: "50%",
         }}
@@ -50,9 +50,9 @@ export const action_options = [
     icon: (
       <DownloadIcon
         sx={{
-          color: "#F8B628",
+          color: "secondary.main",
           fontSize: "1rem",
-          backgroundColor: "#58041D",
+          backgroundColor: "primary.main",
           padding: "0.25rem",
           borderRadius: "50%",
         }}
@@ -65,9 +65,9 @@ export const action_options = [
     icon: (
       <FileUploadIcon
         sx={{
-          color: "#F8B628",
+          color: "secondary.main",
           fontSize: "1rem",
-          backgroundColor: "#58041D",
+          backgroundColor: "primary.main",
           padding: "0.25rem",
           borderRadius: "50%",
         }}
@@ -80,9 +80,9 @@ export const action_options = [
     icon: (
       <EditNoteIcon
         sx={{
-          color: "#F8B628",
+          color: "secondary.main",
           fontSize: "1rem",
-          backgroundColor: "#58041D",
+          backgroundColor: "primary.main",
           padding: "0.25rem",
           borderRadius: "50%",
         }}

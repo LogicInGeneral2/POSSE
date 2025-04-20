@@ -5,6 +5,7 @@ import {
   Chip,
   Grid2 as Grid,
   IconButton,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { LogType } from "../../services/types";
@@ -35,17 +36,29 @@ export default function DataTable({
 
   return (
     <Box sx={{ p: 2, flexGrow: 1, overflow: "auto" }}>
-      <Typography sx={{ fontWeight: "bold", textAlign: "Left" }}>
-        Current Logs
-      </Typography>
-
-      <IconButton
-        aria-label="Export"
-        onClick={handleExport}
-        disabled={isLoading}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          mb: 2,
+          alignItems: "center",
+        }}
       >
-        <GetAppIcon />
-      </IconButton>
+        {" "}
+        <Typography sx={{ fontWeight: "bold", textAlign: "Left" }}>
+          Current Logs
+        </Typography>
+        <Tooltip title="Export All Logs" placement="top">
+          <IconButton
+            aria-label="Export"
+            onClick={handleExport}
+            disabled={isLoading}
+            color="primary"
+          >
+            <GetAppIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
 
       {data.length === 0 && (
         <Typography sx={{ fontWeight: "bold", textAlign: "center", mt: 2 }}>

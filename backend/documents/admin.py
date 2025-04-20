@@ -71,10 +71,7 @@ class FeedbackAdmin(admin.ModelAdmin):
     search_fields = ("supervisor__name", "submission__id")
     date_hierarchy = "upload_date"
 
-    fieldsets = (
-        (None, {"fields": ("supervisor", "submission", "file")}),
-        ("Timestamps", {"fields": ("upload_date",), "classes": ("collapse",)}),
-    )
+    fieldsets = ((None, {"fields": ("supervisor", "submission", "file", "comment")}),)
 
 
 @admin.register(Logbook)

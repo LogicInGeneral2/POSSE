@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useButtons } from "./canvas";
-import { Divider, Popover, Slider, Tooltip } from "@mui/material";
+import { Divider, Paper, Popover, Slider, Tooltip } from "@mui/material";
 import { SketchPicker } from "react-color";
 import {
   AddPhotoAlternateRounded,
@@ -58,8 +58,8 @@ export default function SideBar() {
             justifyContent: "center",
           }}
         >
-          <div
-            style={{
+          <Paper
+            sx={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -69,8 +69,8 @@ export default function SideBar() {
               textAlign: "center",
               minWidth: "1vw",
               gap: "8px",
-              border: "1px solid #F8B628",
-              backgroundColor: "#58041D",
+              border: "1px solid secondary.main",
+              backgroundColor: "primary.main",
               color: "black",
               borderRadius: "8px",
               boxShadow: "0px 0px 8px rgba(0,0,0,0.1)",
@@ -79,7 +79,7 @@ export default function SideBar() {
             <Tooltip title="Square" placement="left">
               <div>
                 <SquareRounded
-                  sx={{ color: "#F8B628" }}
+                  sx={{ color: "secondary.main" }}
                   style={{ cursor: "pointer", fontSize: "1.3rem" }}
                   onClick={() => contextValues.addRect(contextValues.canvas)}
                 />
@@ -89,7 +89,7 @@ export default function SideBar() {
             <Tooltip title="Circle" placement="left">
               <div>
                 <CircleRounded
-                  sx={{ color: "#F8B628" }}
+                  sx={{ color: "secondary.main" }}
                   style={{ cursor: "pointer" }}
                   onClick={() => contextValues.addCircle(contextValues.canvas)}
                 />
@@ -100,7 +100,7 @@ export default function SideBar() {
               <div>
                 <label htmlFor="img-input">
                   <AddPhotoAlternateRounded
-                    sx={{ color: "#F8B628" }}
+                    sx={{ color: "secondary.main" }}
                     style={{ cursor: "pointer", fontSize: "1.5rem" }}
                   />
                 </label>
@@ -119,20 +119,22 @@ export default function SideBar() {
             <Tooltip title="TextBox" placement="left">
               <div>
                 <TextFieldsRounded
-                  sx={{ color: "#F8B628" }}
+                  sx={{ color: "secondary.main" }}
                   style={{ cursor: "pointer", fontSize: "1.5rem" }}
                   onClick={() => contextValues.addText(contextValues.canvas)}
                 />
               </div>
             </Tooltip>
 
-            <Divider flexItem color="#F8B628" />
+            <Divider flexItem color="secondary.main" />
 
             <Tooltip title="Draw" placement="left">
               <div>
                 <ModeEditRounded
                   sx={{
-                    color: contextValues.isDrawingMode ? "#F8B628" : "gray",
+                    color: contextValues.isDrawingMode
+                      ? "secondary.main"
+                      : "gray",
                   }}
                   style={{ cursor: "pointer", fontSize: "1.5rem" }}
                   onClick={() => contextValues.toggleDraw(contextValues.canvas)}
@@ -144,7 +146,9 @@ export default function SideBar() {
               <div>
                 <BrushRounded
                   sx={{
-                    color: contextValues.isHighlightMode ? "#F8B628" : "gray",
+                    color: contextValues.isHighlightMode
+                      ? "secondary.main"
+                      : "gray",
                   }}
                   style={{ cursor: "pointer", fontSize: "1.5rem" }}
                   onClick={() =>
@@ -154,12 +158,12 @@ export default function SideBar() {
               </div>
             </Tooltip>
 
-            <Divider flexItem color="#F8B628" />
+            <Divider flexItem color="secondary.main" />
 
             <Tooltip title="Delete Selected" placement="left">
               <div>
                 <DeleteForeverRounded
-                  sx={{ color: "#F8B628" }}
+                  sx={{ color: "secondary.main" }}
                   style={{ cursor: "pointer", fontSize: "1.5rem" }}
                   onClick={() => contextValues.deleteBtn()}
                 />
@@ -169,19 +173,19 @@ export default function SideBar() {
             <Tooltip title="Reset Page" placement="left">
               <div>
                 <RestartAltRounded
-                  sx={{ color: "#F8B628" }}
+                  sx={{ color: "secondary.main" }}
                   style={{ cursor: "pointer", fontSize: "1.5rem" }}
                   onClick={() => contextValues.canvas.clear()}
                 />
               </div>
             </Tooltip>
 
-            <Divider flexItem color="#F8B628" />
+            <Divider flexItem color="secondary.main" />
 
             <Tooltip title="Download Current Page" placement="left">
               <div>
                 <SimCardDownloadOutlined
-                  sx={{ color: "#F8B628" }}
+                  sx={{ color: "secondary.main" }}
                   style={{ cursor: "pointer", fontSize: "1.5rem" }}
                   onClick={() => contextValues.downloadPage()}
                 />
@@ -191,14 +195,14 @@ export default function SideBar() {
             <Tooltip title="Download Whole PDF" placement="left">
               <div>
                 <SaveAsRounded
-                  sx={{ color: "#F8B628" }}
+                  sx={{ color: "secondary.main" }}
                   style={{ cursor: "pointer", fontSize: "1.5rem" }}
                   onClick={() => contextValues.exportPdf()}
                 />
               </div>
             </Tooltip>
 
-            <Divider flexItem color="#F8B628" />
+            <Divider flexItem color="secondary.main" />
 
             <Tooltip title="Border Color" placement="left">
               <div
@@ -241,7 +245,7 @@ export default function SideBar() {
                   height: "1.6rem",
                   borderRadius: "50%",
                   backgroundColor: contextValues.color,
-                  border: `4px dotted #F8B628`,
+                  border: `4px dotted secondary.main`,
                 }}
                 onClick={(e) => setOpenColor(e.currentTarget as any)}
               />
@@ -268,7 +272,7 @@ export default function SideBar() {
             <Tooltip title="Stroke Width" placement="left">
               <div style={{ cursor: "pointer" }}>
                 <BorderAllRounded
-                  sx={{ color: "#F8B628" }}
+                  sx={{ color: "secondary.main" }}
                   onClick={(e) => setOpenStroke(e.currentTarget as any)}
                 />
               </div>
@@ -315,7 +319,7 @@ export default function SideBar() {
             <Tooltip title="Highlight Size" placement="left">
               <div style={{ cursor: "pointer" }}>
                 <StraightenRounded
-                  sx={{ color: "#F8B628" }}
+                  sx={{ color: "secondary.main" }}
                   onClick={(e) => setOpenHighlightSize(e.currentTarget as any)}
                 />
               </div>
@@ -371,7 +375,7 @@ export default function SideBar() {
                 />
               </div>
             </Popover>
-          </div>
+          </Paper>
         </div>
       )}
     </div>

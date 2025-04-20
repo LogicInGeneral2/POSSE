@@ -47,7 +47,7 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
     <Grid
       container
       sx={{
-        border: "1px solid #58041D",
+        border: "1px solid",
         padding: "5px",
         borderRadius: "8px",
         minheight: "80px",
@@ -71,7 +71,7 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
               <Box
                 sx={{
                   width: "10px",
-                  backgroundColor: "#E9DADD",
+                  backgroundColor: "base.main",
                   borderTopLeftRadius: "8px",
                 }}
               />
@@ -93,7 +93,7 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
               <Box
                 sx={{
                   width: "10px",
-                  backgroundColor: "#E9DADD",
+                  backgroundColor: "base.main",
                   borderBottomLeftRadius: "8px",
                 }}
               />
@@ -109,13 +109,13 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
                 sx={{
                   width: "100%",
                   height: "100%",
-                  backgroundColor: "#58041D",
+                  backgroundColor: "primary.main",
                   color: "orange",
                   borderTopRightRadius: "8px",
                   borderBottomRightRadius: "8px",
                   textAlign: "center",
                   display: "flex",
-                  border: "2px solid #F8AB04",
+                  border: "2px solid",
                   boxShadow:
                     "0 4px 8px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.1)",
                 }}
@@ -141,11 +141,11 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
           >
             <Box
               sx={{
-                backgroundColor: "#E9DADD",
+                backgroundColor: "base.main",
                 p: "10px",
                 borderTopLeftRadius: "8px",
                 borderBottomLeftRadius: "8px",
-                border: "1px solid #58041D",
+                border: "1px solid",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -164,9 +164,9 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
             </Box>
             <Box
               sx={{
-                backgroundColor: "#E9DADD",
+                backgroundColor: "base.main",
                 p: "10px",
-                border: "1px solid #58041D",
+                border: "1px solid",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -183,11 +183,11 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
             </Box>
             <Box
               sx={{
-                backgroundColor: "#E9DADD",
+                backgroundColor: "base.main",
                 p: "10px",
                 borderTopRightRadius: "8px",
                 borderBottomRightRadius: "8px",
-                border: "1px solid #58041D",
+                border: "1px solid",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",

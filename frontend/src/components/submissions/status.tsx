@@ -4,194 +4,94 @@ import {
   PendingRounded,
   WarningAmber,
 } from "@mui/icons-material";
+import { SvgIconTypeMap } from "@mui/material";
+import { OverridableComponent } from "@mui/material/OverridableComponent";
+import { StatusIcon, StatusInfo, SubmissionTheme } from "../../services/types";
 
-const status_info = [
+const createStatusIcon = (
+  IconComponent: OverridableComponent<SvgIconTypeMap>,
+  iconColor: string,
+  bgColor: string,
+  isLegend: boolean = false
+): StatusIcon => ({
+  icon: (
+    <IconComponent
+      sx={{
+        color: iconColor,
+        fontSize: isLegend ? "1rem" : "1.5rem",
+        backgroundColor: bgColor,
+        ...(isLegend
+          ? { padding: "0.5rem", borderRadius: "50%" }
+          : {
+              height: "3.25rem",
+              width: "2rem",
+              padding: "0.25rem",
+              borderRight: "1px solid primary.main",
+              borderTopLeftRadius: "8px",
+              borderBottomLeftRadius: "8px",
+            }),
+      }}
+    />
+  ),
+});
+
+const defaultStatusConfig: Array<{
+  value: string;
+  icon: OverridableComponent<SvgIconTypeMap>;
+  fallbackColor: string;
+  fallbackIconColor: string;
+}> = [
   {
     value: "Pending",
-    color: "#ffda07",
-    icon: (
-      <ErrorRounded
-        sx={{
-          color: "#554902",
-          mr: 1,
-          fontSize: "1.5rem",
-          backgroundColor: "#ffda07",
-          height: "3.25rem",
-          width: "2rem",
-          padding: "0.25rem",
-          borderRight: "1px solid #58041D",
-          borderTopLeftRadius: "8px",
-          borderBottomLeftRadius: "8px",
-        }}
-      />
-    ),
-    legend: (
-      <ErrorRounded
-        sx={{
-          color: "#554902",
-          fontSize: "1rem",
-          backgroundColor: "#ffda07",
-          padding: "0.5rem",
-          borderRadius: "50%",
-        }}
-      />
-    ),
+    icon: ErrorRounded,
+    fallbackColor: "#ffda07",
+    fallbackIconColor: "#554902",
   },
   {
     value: "Upcoming",
-    color: "#17a2b8",
-    icon: (
-      <PendingRounded
-        sx={{
-          color: "#020c0e",
-          mr: 1,
-          fontSize: "1.5rem",
-          backgroundColor: "#17a2b8",
-          height: "3.25rem",
-          width: "2rem",
-          padding: "0.25rem",
-          borderRight: "1px solid #58041D",
-          borderTopLeftRadius: "8px",
-          borderBottomLeftRadius: "8px",
-        }}
-      />
-    ),
-    legend: (
-      <PendingRounded
-        sx={{
-          color: "#020c0e",
-          fontSize: "1rem",
-          backgroundColor: "#17a2b8",
-          padding: "0.5rem",
-          borderRadius: "50%",
-        }}
-      />
-    ),
+    icon: PendingRounded,
+    fallbackColor: "#17a2b8",
+    fallbackIconColor: "#020c0e",
   },
   {
     value: "Completed",
-    color: "#28a745",
-    icon: (
-      <CheckCircle
-        sx={{
-          color: "#3cfc68",
-          mr: 1,
-          fontSize: "1.5rem",
-          backgroundColor: "#28a745",
-          height: "3.25rem",
-          width: "2rem",
-          padding: "0.25rem",
-          borderRight: "1px solid #58041D",
-          borderTopLeftRadius: "8px",
-          borderBottomLeftRadius: "8px",
-        }}
-      />
-    ),
-    legend: (
-      <CheckCircle
-        sx={{
-          color: "#3cfc68",
-          fontSize: "1rem",
-          backgroundColor: "#28a745",
-          padding: "0.5rem",
-          borderRadius: "50%",
-        }}
-      />
-    ),
+    icon: CheckCircle,
+    fallbackColor: "#28a745",
+    fallbackIconColor: "#3cfc68",
   },
   {
     value: "Closed",
-    color: "#28a745",
-    icon: (
-      <CheckCircle
-        sx={{
-          color: "#3cfc68",
-          mr: 1,
-          fontSize: "1.5rem",
-          backgroundColor: "#28a745",
-          height: "3.25rem",
-          width: "2rem",
-          padding: "0.25rem",
-          borderRight: "1px solid #58041D",
-          borderTopLeftRadius: "8px",
-          borderBottomLeftRadius: "8px",
-        }}
-      />
-    ),
-    legend: (
-      <CheckCircle
-        sx={{
-          color: "#3cfc68",
-          fontSize: "1rem",
-          backgroundColor: "#28a745",
-          padding: "0.5rem",
-          borderRadius: "50%",
-        }}
-      />
-    ),
+    icon: CheckCircle,
+    fallbackColor: "#28a745",
+    fallbackIconColor: "#3cfc68",
   },
   {
     value: "Feedback",
-    color: "#0d6efd",
-    icon: (
-      <ErrorRounded
-        sx={{
-          color: "#042453",
-          mr: 1,
-          fontSize: "1.5rem",
-          backgroundColor: "#0d6efd",
-          height: "3.25rem",
-          width: "2rem",
-          padding: "0.25rem",
-          borderRight: "1px solid #58041D",
-          borderTopLeftRadius: "8px",
-          borderBottomLeftRadius: "8px",
-        }}
-      />
-    ),
-    legend: (
-      <ErrorRounded
-        sx={{
-          color: "#042453",
-          fontSize: "1rem",
-          backgroundColor: "#0d6efd",
-          padding: "0.5rem",
-          borderRadius: "50%",
-        }}
-      />
-    ),
+    icon: ErrorRounded,
+    fallbackColor: "#0d6efd",
+    fallbackIconColor: "#042453",
   },
   {
     value: "Missed",
-    color: "#dc3545",
-    icon: (
-      <WarningAmber
-        sx={{
-          color: "#320c10",
-          mr: 1,
-          fontSize: "1.5rem",
-          backgroundColor: "#dc3545",
-          height: "3.25rem",
-          width: "2rem",
-          padding: "0.25rem",
-          borderRight: "1px solid #58041D",
-          borderTopLeftRadius: "8px",
-          borderBottomLeftRadius: "8px",
-        }}
-      />
-    ),
-    legend: (
-      <WarningAmber
-        sx={{
-          color: "#320c10",
-          fontSize: "1rem",
-          backgroundColor: "#dc3545",
-          padding: "0.5rem",
-          borderRadius: "50%",
-        }}
-      />
-    ),
+    icon: WarningAmber,
+    fallbackColor: "#dc3545",
+    fallbackIconColor: "#320c10",
   },
 ];
 
-export { status_info };
+export const getStatusInfo = (themes: SubmissionTheme[]): StatusInfo[] => {
+  return defaultStatusConfig.map(
+    ({ value, icon, fallbackColor, fallbackIconColor }) => {
+      const theme = themes.find((t) => t.label === value);
+      const color = theme?.primary ?? fallbackColor;
+      const iconColor = theme?.secondary ?? fallbackIconColor;
+
+      return {
+        value,
+        color,
+        ...createStatusIcon(icon, iconColor, color),
+        legend: createStatusIcon(icon, iconColor, color, true).icon,
+      };
+    }
+  );
+};

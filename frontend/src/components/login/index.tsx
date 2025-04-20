@@ -69,7 +69,7 @@ export const LoginPage = () => {
       >
         <Box
           sx={{
-            border: "1px solid #58041D",
+            border: "1px solid",
             borderRight: 0,
             p: 2,
             minHeight: 400,
@@ -80,7 +80,7 @@ export const LoginPage = () => {
             borderRadius: "16px",
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
-            backgroundColor: "#E9DADD",
+            backgroundColor: "base.main",
           }}
         >
           <img
@@ -97,7 +97,7 @@ export const LoginPage = () => {
         </Box>
         <Box
           sx={{
-            border: "1px solid #58041D",
+            border: "1px solid",
             borderRadius: "16px",
             borderTopLeftRadius: 0,
             borderBottomLeftRadius: 0,

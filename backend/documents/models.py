@@ -74,8 +74,9 @@ class Feedback(models.Model):
     supervisor = models.ForeignKey(
         "users.User", on_delete=models.CASCADE, limit_choices_to={"role": "supervisor"}
     )
+    comment = models.TextField(blank=True)
     submission = models.ForeignKey(StudentSubmission, on_delete=models.CASCADE)
-    file = models.FileField(upload_to=feedback_upload_path)
+    file = models.FileField(upload_to=feedback_upload_path, null=True, blank=True)
     upload_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -13,7 +13,7 @@ export function Info() {
       container
       spacing={2}
       sx={{
-        border: "1px solid #58041D",
+        border: "1px solid",
         borderRadius: "8px",
         alignContent: "center",
       }}

@@ -10,3 +10,12 @@ class themeForm(forms.ModelForm):
             "primary": forms.TextInput(attrs={"type": "color"}),
             "secondary": forms.TextInput(attrs={"type": "color"}),
         }
+
+
+class systemThemeForm(forms.ModelForm):
+    class Meta:
+        model = documentTheme
+        fields = "__all__"
+        widgets = {
+            "main": forms.TextInput(attrs={"type": "color"}),
+        }

@@ -1,10 +1,12 @@
 import { Outlet } from "react-router";
 import NavigationBar from "../components/navigator";
 import { Footer } from "../components/footer";
+import { DynamicStyles } from "../../context/DynamicStyles";
 
 export const RootRoute = () => {
   return (
     <>
+      <DynamicStyles />
       <NavigationBar />
       <div
         style={{

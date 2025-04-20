@@ -187,7 +187,7 @@ export const LogbooksPage = () => {
             flexDirection: "column",
             height: "100%",
             width: "25%",
-            backgroundColor: "#E9DADD",
+            backgroundColor: "base.main",
           }}
         >
           <Calendar

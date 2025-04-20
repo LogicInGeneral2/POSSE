@@ -7,6 +7,8 @@ from settings.views import (
     DocumentModeListView,
     DocumentThemeListView,
     OutlineListView,
+    SubmissionStatusThemeListView,
+    systemThemeListView,
 )
 from documents.views import (
     DeleteFeedbackView,
@@ -41,6 +43,7 @@ from django.conf import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("theme/", systemThemeListView.as_view(), name="system-theme"),
     path("api/token/", TokenObtainPairView.as_view(), name="get_token"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="refresh"),
     path("api/users/me/", CurrentUserView.as_view(), name="current_user"),
@@ -87,6 +90,11 @@ urlpatterns = [
         "documents/scheme/<str:title>/",
         DocumentListView.as_view(),
         name="marking-scheme",
+    ),
+    path(
+        "submissions/themes/",
+        SubmissionStatusThemeListView.as_view(),
+        name="student-submissions",
     ),
     path(
         "submissions/supervisors/choices/",

@@ -170,7 +170,7 @@ export default function FileUpload({ student }: { student: number }) {
               sx={{
                 px: 4,
                 py: 2,
-                backgroundColor: "#58041D",
+                backgroundColor: "primary.main",
                 borderRadius: 1,
                 color: "white",
               }}

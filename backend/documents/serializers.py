@@ -69,7 +69,15 @@ class FeedbackSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Feedback
-        fields = ["id", "upload_date", "src", "file", "supervisor", "submission"]
+        fields = [
+            "id",
+            "upload_date",
+            "src",
+            "file",
+            "supervisor",
+            "submission",
+            "comment",
+        ]
 
     def get_src(self, obj):
         request = self.context.get("request")
@@ -135,7 +143,8 @@ class CombinedSubmissionSerializer(serializers.Serializer):
             "id": feedback.id,
             "title": "Feedback",
             "upload_date": feedback.upload_date,
-            "src": feedback.file.url,
+            "comment": feedback.comment,
+            "src": feedback.file.url if feedback.file else "",
             "type": "feedback",
             "supervisorId": feedback.supervisor.id,
             "submissionId": submission.id,
@@ -180,7 +189,8 @@ class StudentAllSubmissionSerializer(serializers.Serializer):
             "id": feedback.id,
             "title": "Feedback",
             "upload_date": feedback.upload_date,
-            "src": feedback.file.url,
+            "src": feedback.file.url if feedback.file else "",
+            "comment": feedback.comment,
             "type": "feedback",
             "supervisorId": feedback.supervisor.id,
             "submissionId": obj.id,

@@ -129,50 +129,50 @@ export default function NavigationBar() {
   const menuItems = [
     {
       text: "Home",
-      icon: <HomeIcon style={{ color: "#58041D" }} />,
+      icon: <HomeIcon sx={{ color: "primary.main" }} />,
       path: "/home",
       external: false,
     },
     {
       text: "Course Outline",
-      icon: <InfoIcon style={{ color: "#58041D" }} />,
+      icon: <InfoIcon sx={{ color: "primary.main" }} />,
       path: "/course_outline",
     },
     user?.role !== "student" && {
       text: "Submissions & Grading",
-      icon: <GradingRounded style={{ color: "#58041D" }} />,
+      icon: <GradingRounded sx={{ color: "primary.main" }} />,
       path: "/supervisees",
     },
     user?.role === "student" &&
       status === true && {
         text: "Supervisors",
-        icon: <SupervisedUserCircleRounded style={{ color: "#58041D" }} />,
+        icon: <SupervisedUserCircleRounded sx={{ color: "primary.main" }} />,
         path: "/supervisors",
       },
     {
       text: "Documents",
-      icon: <FolderIcon style={{ color: "#58041D" }} />,
+      icon: <FolderIcon sx={{ color: "primary.main" }} />,
       path: "/documents",
     },
     user?.role === "student" && {
       text: "Submissions",
-      icon: <DriveFolderUploadIcon style={{ color: "#58041D" }} />,
+      icon: <DriveFolderUploadIcon sx={{ color: "primary.main" }} />,
       path: "/submissions",
     },
     user?.role === "student" && {
       text: "Log Books",
-      icon: <BookRounded style={{ color: "#58041D" }} />,
+      icon: <BookRounded sx={{ color: "primary.main" }} />,
       path: "/logs",
     },
     user?.role === "course_coordinator" && {
       text: "POSSE Admin",
-      icon: <AdminPanelSettingsIcon style={{ color: "#58041D" }} />,
+      icon: <AdminPanelSettingsIcon sx={{ color: "primary.main" }} />,
       path: "http://127.0.0.1:8000/admin",
       external: true,
     },
     {
       text: "Logout",
-      icon: <ExitToAppRoundedIcon style={{ color: "#58041D" }} />,
+      icon: <ExitToAppRoundedIcon sx={{ color: "primary.main" }} />,
       path: "/logout",
     },
   ].filter(Boolean);
@@ -182,7 +182,7 @@ export default function NavigationBar() {
       <AppBar
         position="fixed"
         open={open}
-        sx={{ backgroundColor: "#E9DADD", color: "#58041D" }}
+        sx={{ backgroundColor: "base.main", color: "primary.main" }}
       >
         <Toolbar>
           <IconButton
@@ -213,14 +213,14 @@ export default function NavigationBar() {
       <Drawer
         variant="permanent"
         open={open}
-        sx={{ backgroundColor: "#E9DADD" }}
+        sx={{ backgroundColor: "secondary.main" }}
       >
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>
             {theme.direction === "rtl" ? (
               <ChevronRightIcon />
             ) : (
-              <ChevronLeftIcon style={{ color: "#58041D" }} />
+              <ChevronLeftIcon sx={{ color: "primary.main" }} />
             )}
           </IconButton>
         </DrawerHeader>
@@ -232,7 +232,7 @@ export default function NavigationBar() {
                 <ListItem
                   key={item.text}
                   disablePadding
-                  sx={{ display: "block", color: "#58041D" }}
+                  sx={{ display: "block", color: "primary.main" }}
                 >
                   <Tooltip
                     title={item.text}
