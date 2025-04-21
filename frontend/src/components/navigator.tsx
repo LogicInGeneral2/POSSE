@@ -26,6 +26,7 @@ import logo from "../assets/icon.png";
 import {
   BookRounded,
   GradingRounded,
+  Person3Rounded,
   SupervisedUserCircleRounded,
 } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
@@ -153,6 +154,11 @@ export default function NavigationBar() {
       text: "Documents",
       icon: <FolderIcon sx={{ color: "primary.main" }} />,
       path: "/documents",
+    },
+    {
+      text: "Profile",
+      icon: <Person3Rounded sx={{ color: "primary.main" }} />,
+      path: "/profile",
     },
     user?.role === "student" && {
       text: "Submissions",

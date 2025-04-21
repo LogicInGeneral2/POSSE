@@ -116,11 +116,17 @@ class StudentAdmin(ImportExportModelAdmin):
     list_display = ("id", "user", "student_id", "course", "supervisor_name")
     list_filter = ("course",)
     search_fields = ("user__name", "student_id", "user__email")
+    actions = ["promote_to_fyp2"]
 
     def supervisor_name(self, obj):
         return obj.supervisor.name if obj.supervisor else "-"
 
     supervisor_name.short_description = "Supervisor"
+
+    @admin.action(description="Promote selected students to FYP2")
+    def promote_to_fyp2(self, request, queryset):
+        updated_count = queryset.filter(course="FYP1").update(course="FYP2")
+        self.message_user(request, f"{updated_count} student(s) promoted to FYP2.")
 
 
 @admin.register(SupervisorsRequest)

@@ -30,6 +30,7 @@ from details.views import (
 )
 from users.views import (
     AvailableSupervisorsView,
+    ChangePasswordView,
     CurrentUserView,
     LogoutView,
     PasswordResetConfirmView,
@@ -62,6 +63,11 @@ urlpatterns = [
         "api/users/students/<str:category>/",
         SuperviseeSubmissionsView.as_view(),
         name="students-submissions",
+    ),
+    path(
+        "api/users/change-password/",
+        ChangePasswordView.as_view(),
+        name="change-password",
     ),
     path("api-auth/", include("rest_framework.urls")),
     path("api/logout/", LogoutView.as_view(), name="logout"),

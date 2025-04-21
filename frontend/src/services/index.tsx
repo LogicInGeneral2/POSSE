@@ -531,3 +531,29 @@ export const exportLogs = async (student: number) => {
     throw new Error("Failed to export PDF. Please try again.");
   }
 };
+
+export const getCurrentUser = async (): Promise<User | Student> => {
+  try {
+    const { data } = await api.get("/api/users/me/");
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching user profile:", error);
+    throw new Error(error);
+  }
+};
+
+export const changePassword = async (
+  oldPassword: string,
+  newPassword: string
+): Promise<{ message: string }> => {
+  try {
+    const { data } = await api.post("/api/users/change-password/", {
+      old_password: oldPassword,
+      new_password: newPassword,
+    });
+    return data;
+  } catch (error: any) {
+    console.error("Error changing password:", error);
+    throw new Error(error.response?.data?.error || "Failed to change password");
+  }
+};

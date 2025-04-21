@@ -27,6 +27,7 @@ import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import { useDynamicTheme } from "./theme.tsx";
 import { ThemeProvider as CustomThemeProvider } from "../context/ThemeContext.tsx";
 import App from "./App.tsx";
+import { Profile } from "./routes/profile.tsx";
 
 const router = createBrowserRouter([
   {
@@ -107,6 +108,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <Logs />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/profile",
+        element: (
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         ),
       },

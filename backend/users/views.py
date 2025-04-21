@@ -341,3 +341,39 @@ class PasswordResetConfirmView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            old_password = request.data.get("old_password")
+            new_password = request.data.get("new_password")
+
+            if not all([old_password, new_password]):
+                return Response(
+                    {"error": "Old password and new password are required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user = request.user
+            if not user.check_password(old_password):
+                return Response(
+                    {"error": "Incorrect old password"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user.set_password(new_password)
+            user.save()
+
+            return Response(
+                {"message": "Password changed successfully"},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

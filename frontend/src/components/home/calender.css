@@ -57,11 +57,11 @@
   }
 
   .rbc-day-bg.rbc-off-range-bg {
-    background-color: #92707b !important;
+    background-color: var(--lighter-primary-color) !important;
   }
 
   .rbc-day-bg {
-    background-color: #b68b9a;
+    background-color: var(--lightest-primary-color);
   }
 
   .rbc-today {

@@ -21,8 +21,14 @@ import { format } from "date-fns";
 import ErrorNotice from "../commons/error";
 
 const iconMap: Record<string, JSX.Element> = {
-  supervisors: <SupervisedUserCircleRounded sx={{ fontSize: "2rem" }} />,
-  submissions: <DriveFolderUpload sx={{ fontSize: "2rem" }} />,
+  supervisors: (
+    <SupervisedUserCircleRounded
+      sx={{ fontSize: "2rem", color: "secondary.main" }}
+    />
+  ),
+  submissions: (
+    <DriveFolderUpload sx={{ fontSize: "2rem", color: "secondary.main" }} />
+  ),
 };
 
 export function Status({ isStudent }: { isStudent: Boolean }) {
@@ -115,16 +121,14 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
                   borderBottomRightRadius: "8px",
                   textAlign: "center",
                   display: "flex",
-                  border: "2px solid",
-                  boxShadow:
-                    "0 4px 8px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.1)",
+                  border: "2px solid secondary.main",
                 }}
                 onClick={() => {
                   navigator(`/${period.directory}`);
                 }}
               >
                 {iconMap[period.directory as keyof typeof iconMap] || (
-                  <ErrorRounded />
+                  <ErrorRounded sx={{ color: "primary.main" }} />
                 )}
               </ButtonBase>
             </Grid>
