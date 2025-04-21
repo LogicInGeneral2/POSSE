@@ -87,6 +87,7 @@ class Logbook(models.Model):
     CATEGORY_CHOICES = [
         ("sent", "Sent"),
         ("approved", "Approved"),
+        ("feedback", "Feedback"),
     ]
     student = models.ForeignKey("users.Student", on_delete=models.CASCADE)
     supervisor = models.ForeignKey(
@@ -97,6 +98,7 @@ class Logbook(models.Model):
     feedbacks = models.TextField()
     plan = models.TextField()
     status = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="sent")
+    comment = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return f"Logbook for {self.student.user.name} on {self.date}"

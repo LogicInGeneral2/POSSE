@@ -24,26 +24,21 @@ export const loginUser = async (
 };
 
 export const refreshAccessToken = async (): Promise<boolean> => {
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN);
-
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN); // Using REFRESH_TOKEN constant
   if (!refreshToken) {
-    console.warn("No refresh token found");
     return false;
   }
 
   try {
-    const res = await api.post("/api/token/refresh/", {
+    const response = await api_public.post("/api/token/refresh/", {
       refresh: refreshToken,
     });
-
-    if (res.status === 200) {
-      localStorage.setItem(ACCESS_TOKEN, res.data.access);
-      return true;
-    } else {
-      return false;
-    }
+    const { access } = response.data;
+    localStorage.setItem(ACCESS_TOKEN, access); // Using ACCESS_TOKEN constant
+    return true;
   } catch (error) {
-    console.error("Refresh token error:", error);
+    localStorage.removeItem(ACCESS_TOKEN); // Clear tokens on failure
+    localStorage.removeItem(REFRESH_TOKEN);
     return false;
   }
 };
@@ -75,19 +70,13 @@ export const resetPasswordConfirm = async (
 export { api, api_public };
 
 export const logoutUser = async () => {
-  const refreshToken = localStorage.getItem("refresh");
-
-  if (!refreshToken) {
-    console.error("No refresh token found");
-    return;
-  }
-
-  try {
-    await api.post("/api/logout/", { refresh: refreshToken });
-    localStorage.removeItem(ACCESS_TOKEN);
-    localStorage.removeItem("refresh");
-  } catch (error) {
-    console.error("Logout failed", error);
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN);
+  if (refreshToken) {
+    try {
+      await api_public.post("/api/logout/", { refresh: refreshToken });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   }
 };
 
@@ -208,7 +197,6 @@ export const getSupervisorChoices = async (studentId: number) => {
     const response = await api.get(
       `/submissions/supervisors/choices/${studentId}/`
     );
-    console.log(response);
     return response;
   } catch (error: any) {
     console.error("Error fetching choices:", error);
@@ -291,7 +279,6 @@ export const getSubmissionStatusThemes = async (): Promise<
 > => {
   try {
     const response = await api.get<SubmissionTheme[]>("submissions/themes/");
-    console.log(response);
     return response.data;
   } catch (error) {
     console.error("Error fetching theme details:", error);
@@ -465,6 +452,7 @@ export const saveLogbook = async ({
   plan,
   studentId,
   supervisorId,
+  status,
 }: {
   id?: number;
   date: string;
@@ -473,12 +461,14 @@ export const saveLogbook = async ({
   plan: string;
   studentId?: number | string;
   supervisorId?: number | string;
+  status?: string;
 }) => {
   const payload = {
     date,
     activities: activities || "",
     feedbacks: feedbacks || "",
     plan: plan || "",
+    status: status || "",
     ...(studentId && { student: studentId }),
     ...(supervisorId && { supervisor: supervisorId }),
   };
@@ -493,9 +483,17 @@ export const saveLogbook = async ({
   }
 };
 
-export const updateLogbookStatus = async (logId: number, status: string) => {
+export const updateLogbookStatus = async (
+  logId: number,
+  status: string,
+  comment?: string
+) => {
   try {
-    const response = await api.patch(`/logbooks/${logId}/status/`, { status });
+    const payload: { status: string; comment?: string } = { status };
+    if (comment !== undefined) {
+      payload.comment = comment;
+    }
+    const response = await api.patch(`/logbooks/${logId}/status/`, payload);
     return response;
   } catch (error: any) {
     throw (

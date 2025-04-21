@@ -73,6 +73,8 @@ export const LogbooksPage = () => {
         activities: updatedLog.activities || "",
         feedbacks: updatedLog.feedbacks || "",
         plan: updatedLog.plan || "",
+        comment: updatedLog.comment || "",
+        status: updatedLog.status || "sent",
         ...(user?.role !== "student" && {
           studentId: updatedLog.student_id ?? studentId,
           supervisorId: updatedLog.supervisor_id || user?.id,
@@ -142,7 +144,8 @@ export const LogbooksPage = () => {
         activities: "",
         feedbacks: "",
         plan: "",
-        status: "",
+        status: "sent", // Default status for new logs
+        comment: "",
       });
     }
   };
@@ -199,6 +202,7 @@ export const LogbooksPage = () => {
             data={logData}
             onRowClick={handleSelectLog}
             studentId={idToFetch ?? 0}
+            role={user.role}
           />
         </Box>
         <Box

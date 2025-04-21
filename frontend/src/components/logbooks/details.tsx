@@ -22,11 +22,6 @@ interface DetailsProps {
   userRole: string | null;
 }
 
-const mockDeleteLog = async (id: number) => {
-  console.log("Deleting log with ID:", id);
-  return new Promise((resolve) => setTimeout(() => resolve(id), 1000));
-};
-
 export default function Details({
   selectedLog,
   onSave,
@@ -87,12 +82,15 @@ export default function Details({
 
   const handleSave = async () => {
     if (logDetails) {
-      onSave(logDetails);
+      const updatedLog =
+        userRole === "student"
+          ? { ...logDetails, status: "sent", comment: "" }
+          : logDetails;
+      onSave(updatedLog);
     }
   };
 
   const handleDelete = async () => {
-    await mockDeleteLog(logDetails.id);
     onDelete(logDetails.id);
   };
 
@@ -107,6 +105,25 @@ export default function Details({
       } catch (error: any) {
         console.error("Failed to approve logbook:", error);
         alert(error.detail || "Failed to approve logbook.");
+      }
+    }
+  };
+
+  const handleSendFeedback = async () => {
+    if (logDetails && logDetails.comment?.trim()) {
+      try {
+        const result = await updateLogbookStatus(
+          logDetails.id,
+          "feedback",
+          logDetails.comment
+        );
+        const updatedLog = { ...logDetails, status: "feedback" };
+        setLogDetails(updatedLog);
+        onSave(updatedLog);
+        alert(result.data.detail || "Feedback sent successfully.");
+      } catch (error: any) {
+        console.error("Failed to send feedback:", error);
+        alert(error.detail || "Failed to send feedback.");
       }
     }
   };
@@ -173,18 +190,59 @@ export default function Details({
         margin="normal"
         disabled={userRole === "supervisor" || logDetails.status === "approved"}
       />
+      <TextField
+        fullWidth
+        multiline
+        label="Feedback"
+        name="comment"
+        value={logDetails.comment || ""}
+        onChange={handleChange}
+        margin="normal"
+        disabled={
+          userRole === "student" ||
+          logDetails.status === "feedback" ||
+          logDetails.status === "approved"
+        }
+      />
 
       {userRole === "supervisor" ? (
-        <Button
-          variant="contained"
-          color="success"
-          fullWidth
-          sx={{ mt: 2 }}
-          onClick={handleApprove}
-          disabled={logDetails.status === "approved" || !logDetails.status}
-        >
-          {logDetails.status === "Approved" ? "Approved" : "Approve"}
-        </Button>
+        <>
+          <Divider sx={{ my: 2 }} />
+
+          {logDetails.status !== "approved" && (
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}
+            >
+              <Button
+                variant="contained"
+                color="info"
+                onClick={handleSendFeedback}
+                disabled={
+                  logDetails.status === "feedback" ||
+                  !logDetails.comment?.trim()
+                }
+                sx={{ flex: 1 }}
+              >
+                {logDetails.status === "feedback"
+                  ? "Feedback Sent"
+                  : "Send Feedback"}
+              </Button>
+              <Button
+                variant="contained"
+                color="success"
+                onClick={handleApprove}
+                disabled={
+                  !logDetails.status ||
+                  logDetails.status === "approved" ||
+                  logDetails.status === "feedback"
+                }
+                sx={{ flex: 1 }}
+              >
+                {logDetails.status === "approved" ? "Approved" : "Approve"}
+              </Button>
+            </Box>
+          )}
+        </>
       ) : null}
 
       {userRole === "student" && logDetails.status !== "approved" && (

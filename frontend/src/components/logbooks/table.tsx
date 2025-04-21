@@ -17,10 +17,12 @@ export default function DataTable({
   data,
   studentId,
   onRowClick,
+  role,
 }: {
   data: LogType[];
   studentId: number;
   onRowClick: (log: LogType) => void;
+  role: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const handleExport = async () => {
@@ -48,16 +50,18 @@ export default function DataTable({
         <Typography sx={{ fontWeight: "bold", textAlign: "Left" }}>
           Current Logs
         </Typography>
-        <Tooltip title="Export All Logs" placement="top">
-          <IconButton
-            aria-label="Export"
-            onClick={handleExport}
-            disabled={isLoading}
-            color="primary"
-          >
-            <GetAppIcon />
-          </IconButton>
-        </Tooltip>
+        {role === "student" && (
+          <Tooltip title="Export All Logs" placement="top">
+            <IconButton
+              aria-label="Export"
+              onClick={handleExport}
+              disabled={isLoading}
+              color="primary"
+            >
+              <GetAppIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
 
       {data.length === 0 && (

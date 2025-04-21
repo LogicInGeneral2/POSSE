@@ -1,9 +1,11 @@
+// ProtectedRoute.tsx
 import { ReactNode, useState, useEffect } from "react";
 import { Navigate } from "react-router";
 import { jwtDecode } from "jwt-decode";
-import { ACCESS_TOKEN } from "../api/constants";
+import { ACCESS_TOKEN } from "../api/constants"; // Correctly imported
 import LoadingSpinner from "../components/commons/loading";
 import { refreshAccessToken } from "../services";
+import { handleLogout } from "../api";
 
 interface JWTPayload {
   exp: number;
@@ -18,37 +20,56 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    auth().catch(() => setIsAuthorized(false));
-  }, []);
-
-  const refreshToken = async () => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-
-    const success = await refreshAccessToken();
-
-    setIsAuthorized(success);
-    setIsRefreshing(false);
-  };
-
-  const auth = async () => {
-    const token = localStorage.getItem(ACCESS_TOKEN);
+  const checkAuth = async () => {
+    const token = localStorage.getItem(ACCESS_TOKEN); // Using ACCESS_TOKEN constant
     if (!token) {
+      handleLogout(); // Clear tokens and redirect
       setIsAuthorized(false);
       return;
     }
 
-    const decoded = jwtDecode<JWTPayload>(token);
-    const tokenExpiration = decoded.exp;
-    const now = Date.now() / 1000;
+    try {
+      const decoded = jwtDecode<JWTPayload>(token);
+      const tokenExpiration = decoded.exp;
+      const now = Date.now() / 1000;
 
-    if (tokenExpiration < now) {
-      await refreshToken();
-    } else {
-      setIsAuthorized(true);
+      if (tokenExpiration < now) {
+        if (!isRefreshing) {
+          setIsRefreshing(true);
+          const success = await refreshAccessToken();
+          if (success) {
+            setIsAuthorized(true);
+          } else {
+            handleLogout(); // Log out if refresh fails
+            setIsAuthorized(false);
+          }
+          setIsRefreshing(false);
+        }
+      } else {
+        setIsAuthorized(true);
+      }
+    } catch (error) {
+      handleLogout(); // Log out if token is invalid
+      setIsAuthorized(false);
     }
   };
+
+  useEffect(() => {
+    checkAuth().catch(() => {
+      handleLogout(); // Log out on unexpected errors
+      setIsAuthorized(false);
+    });
+
+    // Periodically check token validity (every 30 seconds)
+    const interval = setInterval(() => {
+      checkAuth().catch(() => {
+        handleLogout();
+        setIsAuthorized(false);
+      });
+    }, 30 * 1000); // Reduced interval for faster detection
+
+    return () => clearInterval(interval);
+  }, []);
 
   if (isAuthorized === null) {
     return <LoadingSpinner />;

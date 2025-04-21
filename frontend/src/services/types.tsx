@@ -175,6 +175,7 @@ export interface LogType {
   feedbacks: string;
   plan: string;
   status: string;
+  comment: string;
 }
 
 export interface SelectionContextType {

@@ -1,4 +1,8 @@
-import { CheckCircle, PendingRounded } from "@mui/icons-material";
+import {
+  CheckCircle,
+  PendingRounded,
+  UpdateRounded,
+} from "@mui/icons-material";
 
 export interface StatusInfo {
   value: string;
@@ -21,8 +25,13 @@ const status_info: StatusInfo[] = [
   },
   {
     value: "sent",
-    color: "info",
+    color: "primary",
     icon: <PendingRounded />,
+  },
+  {
+    value: "feedback",
+    color: "info",
+    icon: <UpdateRounded />,
   },
 ];
 

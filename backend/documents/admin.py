@@ -107,7 +107,7 @@ class LogbookAdmin(admin.ModelAdmin):
         (
             "Logbook Details",
             {
-                "fields": ("activities", "feedbacks", "plan"),
+                "fields": ("activities", "feedbacks", "plan", "comment"),
             },
         ),
         (

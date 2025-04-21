@@ -13,7 +13,6 @@ export const SupervisorsPage = () => {
   useEffect(() => {
     const fetchSupervisor = async () => {
       const data = await getSupervisor();
-      console.log(data);
       setSupervisor(data.data);
     };
     fetchSupervisor();

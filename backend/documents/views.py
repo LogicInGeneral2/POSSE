@@ -250,7 +250,6 @@ class LogbookCreateUpdateView(APIView):
     def put(self, request, pk):
         log = get_object_or_404(Logbook, id=pk)
 
-        # Permission checks
         if request.user.role == "student":
             if log.student.user != request.user:
                 return Response(
@@ -334,10 +333,26 @@ class LogbookStatusUpdateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        update_fields = ["status"]
         log.status = status_value
-        log.save(update_fields=["status"])
+
+        comment = request.data.get("comment")
+        if comment is not None:
+            if not isinstance(comment, str):
+                return Response(
+                    {"detail": "Comment must be a string."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            log.comment = comment
+            update_fields.append("comment")
+
+        log.save(update_fields=update_fields)
         return Response(
-            {"detail": "Status updated successfully.", "status": log.status},
+            {
+                "detail": "Status updated successfully.",
+                "status": log.status,
+                "comment": log.comment,
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -508,7 +523,6 @@ def export_logs_pdf(request, student_id):
     default_font = "Times-Roman"
     default_font_bold = "Times-Bold"
 
-    # Define styles with improved spacing and typography
     styles = getSampleStyleSheet()
     styles.add(
         ParagraphStyle(
