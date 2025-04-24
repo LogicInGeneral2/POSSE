@@ -4,6 +4,7 @@ import { format, startOfYear } from "date-fns";
 
 interface CalendarProps {
   logDates: string[];
+  logStatus: string[];
   selectedDate: string | null;
   onDateClick: (date: Date) => void;
 }

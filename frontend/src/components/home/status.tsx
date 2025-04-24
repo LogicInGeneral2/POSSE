@@ -9,6 +9,7 @@ import {
   Box,
   ButtonBase,
   Grid2 as Grid,
+  Paper,
   Stack,
   Typography,
 } from "@mui/material";
@@ -50,8 +51,7 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
   }
 
   return (
-    <Grid
-      container
+    <Paper
       sx={{
         border: "1px solid",
         padding: "5px",
@@ -59,155 +59,157 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
         minheight: "80px",
       }}
     >
-      {isLoading ? (
-        <Grid size={12}>
-          <LoadingSpinner />
-        </Grid>
-      ) : (
-        <>
-          <Grid
-            size={isStudent ? 6 : 7}
-            sx={{ display: "flex", flexDirection: "column", p: "10px" }}
-          >
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{ marginBottom: "10px", flexShrink: 0 }}
+      <Grid container>
+        {isLoading ? (
+          <Grid size={12}>
+            <LoadingSpinner />
+          </Grid>
+        ) : (
+          <>
+            <Grid
+              size={isStudent ? 6 : 7}
+              sx={{ display: "flex", flexDirection: "column", p: "10px" }}
+            >
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ marginBottom: "10px", flexShrink: 0 }}
+              >
+                <Box
+                  sx={{
+                    width: "10px",
+                    backgroundColor: "base.main",
+                    borderTopLeftRadius: "8px",
+                  }}
+                />
+
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "25px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <ErrorRounded sx={{ mr: 1 }} />
+                  {period.title}
+                </Typography>
+              </Stack>
+              <Stack direction="row" spacing={1} sx={{ flexGrow: 1 }}>
+                <Box
+                  sx={{
+                    width: "10px",
+                    backgroundColor: "base.main",
+                    borderBottomLeftRadius: "8px",
+                  }}
+                />
+
+                <Typography sx={{ fontSize: "1rem" }}>
+                  {period.description}
+                </Typography>
+              </Stack>
+            </Grid>
+            {isStudent && (
+              <Grid size={1} sx={{ p: "10px" }}>
+                <ButtonBase
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    backgroundColor: "primary.main",
+                    color: "orange",
+                    borderTopRightRadius: "8px",
+                    borderBottomRightRadius: "8px",
+                    textAlign: "center",
+                    display: "flex",
+                    border: "2px solid secondary.main",
+                  }}
+                  onClick={() => {
+                    navigator(`/${period.directory}`);
+                  }}
+                >
+                  {iconMap[period.directory as keyof typeof iconMap] || (
+                    <ErrorRounded sx={{ color: "primary.main" }} />
+                  )}
+                </ButtonBase>
+              </Grid>
+            )}
+
+            <Grid
+              size={5}
+              sx={{
+                p: "10px",
+                display: "flex",
+                flexDirection: "row",
+                gap: "10px",
+              }}
             >
               <Box
                 sx={{
-                  width: "10px",
                   backgroundColor: "base.main",
+                  p: "10px",
                   borderTopLeftRadius: "8px",
-                }}
-              />
-
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "25px",
+                  borderBottomLeftRadius: "8px",
+                  border: "1px solid",
                   display: "flex",
-                  justifyContent: "center",
+                  flexDirection: "column",
                   alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  flex: 1,
                 }}
               >
-                <ErrorRounded sx={{ mr: 1 }} />
-                {period.title}
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={1} sx={{ flexGrow: 1 }}>
+                <Typography sx={{ fontWeight: "bold" }}>START DATE</Typography>
+                <CalendarMonth sx={{ fontSize: "3rem" }} />
+                <Typography sx={{ fontWeight: "bold" }}>
+                  {period.start_date
+                    ? format(new Date(period.start_date), "dd MMM yyyy")
+                    : "N/A"}
+                </Typography>
+              </Box>
               <Box
                 sx={{
-                  width: "10px",
                   backgroundColor: "base.main",
-                  borderBottomLeftRadius: "8px",
+                  p: "10px",
+                  border: "1px solid",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  flex: 1,
                 }}
-              />
-
-              <Typography sx={{ fontSize: "1rem" }}>
-                {period.description}
-              </Typography>
-            </Stack>
-          </Grid>
-          {isStudent && (
-            <Grid size={1} sx={{ p: "10px" }}>
-              <ButtonBase
+              >
+                <Typography sx={{ fontWeight: "bold" }}>END DATE</Typography>
+                <EventBusyRounded sx={{ fontSize: "3rem" }} />
+                <Typography sx={{ fontWeight: "bold" }}>
+                  {format(period.end_date, "d MMMM yyyy")}
+                </Typography>
+              </Box>
+              <Box
                 sx={{
-                  width: "100%",
-                  height: "100%",
-                  backgroundColor: "primary.main",
-                  color: "orange",
+                  backgroundColor: "base.main",
+                  p: "10px",
                   borderTopRightRadius: "8px",
                   borderBottomRightRadius: "8px",
-                  textAlign: "center",
+                  border: "1px solid",
                   display: "flex",
-                  border: "2px solid secondary.main",
-                }}
-                onClick={() => {
-                  navigator(`/${period.directory}`);
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  flex: 0.5,
                 }}
               >
-                {iconMap[period.directory as keyof typeof iconMap] || (
-                  <ErrorRounded sx={{ color: "primary.main" }} />
-                )}
-              </ButtonBase>
+                <Typography sx={{ fontWeight: "bold", fontSize: "2.5rem" }}>
+                  {period.days_left}
+                </Typography>
+                <Typography sx={{ fontWeight: "bold" }}>DAYS LEFT</Typography>
+              </Box>
             </Grid>
-          )}
-
-          <Grid
-            size={5}
-            sx={{
-              p: "10px",
-              display: "flex",
-              flexDirection: "row",
-              gap: "10px",
-            }}
-          >
-            <Box
-              sx={{
-                backgroundColor: "base.main",
-                p: "10px",
-                borderTopLeftRadius: "8px",
-                borderBottomLeftRadius: "8px",
-                border: "1px solid",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-                flex: 1,
-              }}
-            >
-              <Typography sx={{ fontWeight: "bold" }}>START DATE</Typography>
-              <CalendarMonth sx={{ fontSize: "3rem" }} />
-              <Typography sx={{ fontWeight: "bold" }}>
-                {period.start_date
-                  ? format(new Date(period.start_date), "dd MMM yyyy")
-                  : "N/A"}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                backgroundColor: "base.main",
-                p: "10px",
-                border: "1px solid",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-                flex: 1,
-              }}
-            >
-              <Typography sx={{ fontWeight: "bold" }}>END DATE</Typography>
-              <EventBusyRounded sx={{ fontSize: "3rem" }} />
-              <Typography sx={{ fontWeight: "bold" }}>
-                {format(period.end_date, "d MMMM yyyy")}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                backgroundColor: "base.main",
-                p: "10px",
-                borderTopRightRadius: "8px",
-                borderBottomRightRadius: "8px",
-                border: "1px solid",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-                flex: 0.5,
-              }}
-            >
-              <Typography sx={{ fontWeight: "bold", fontSize: "2.5rem" }}>
-                {period.days_left}
-              </Typography>
-              <Typography sx={{ fontWeight: "bold" }}>DAYS LEFT</Typography>
-            </Box>
-          </Grid>
-        </>
-      )}
-    </Grid>
+          </>
+        )}
+      </Grid>
+    </Paper>
   );
 }

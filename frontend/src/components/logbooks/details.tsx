@@ -14,6 +14,8 @@ import { LogType } from "../../services/types";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 import { status_info } from "./status";
 import { updateLogbookStatus } from "../../services";
+import ConfirmationDialog from "../commons/confirmation";
+import Toast from "../commons/snackbar";
 
 interface DetailsProps {
   selectedLog: LogType | null;
@@ -29,6 +31,22 @@ export default function Details({
   userRole,
 }: DetailsProps) {
   const [logDetails, setLogDetails] = useState<LogType | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    isLoading: boolean;
+  }>({
+    open: false,
+    isLoading: false,
+  });
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
   useEffect(() => {
     setLogDetails(selectedLog);
@@ -91,7 +109,12 @@ export default function Details({
   };
 
   const handleDelete = async () => {
+    setConfirmDialog((prev) => ({ ...prev, open: true }));
+  };
+
+  const handleConfirmDelete = async () => {
     onDelete(logDetails.id);
+    setConfirmDialog({ open: false, isLoading: false });
   };
 
   const handleApprove = async () => {
@@ -101,10 +124,18 @@ export default function Details({
         const updatedLog = { ...logDetails, status: "approved" };
         setLogDetails(updatedLog);
         onSave(updatedLog);
-        alert(result.data.detail || "Logbook approved successfully.");
+        setToast({
+          open: true,
+          message: result.data.detail || "Logbook approved successfully.",
+          severity: "success",
+        });
       } catch (error: any) {
         console.error("Failed to approve logbook:", error);
-        alert(error.detail || "Failed to approve logbook.");
+        setToast({
+          open: true,
+          message: error.detail || "Failed to approve logbook.",
+          severity: "error",
+        });
       }
     }
   };
@@ -120,12 +151,28 @@ export default function Details({
         const updatedLog = { ...logDetails, status: "feedback" };
         setLogDetails(updatedLog);
         onSave(updatedLog);
-        alert(result.data.detail || "Feedback sent successfully.");
+        setToast({
+          open: true,
+          message: result.data.detail || "Feedback sent successfully.",
+          severity: "success",
+        });
       } catch (error: any) {
         console.error("Failed to send feedback:", error);
-        alert(error.detail || "Failed to send feedback.");
+        setToast({
+          open: true,
+          message: error.detail || "Failed to send feedback.",
+          severity: "error",
+        });
       }
     }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDialog({ open: false, isLoading: false });
+  };
+
+  const handleCloseToast = () => {
+    setToast((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -231,11 +278,7 @@ export default function Details({
                 variant="contained"
                 color="success"
                 onClick={handleApprove}
-                disabled={
-                  !logDetails.status ||
-                  logDetails.status === "approved" ||
-                  logDetails.status === "feedback"
-                }
+                disabled={!logDetails.status || logDetails.status !== "sent"}
                 sx={{ flex: 1 }}
               >
                 {logDetails.status === "approved" ? "Approved" : "Approve"}
@@ -255,6 +298,20 @@ export default function Details({
           </Button>
         </Box>
       )}
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={handleCloseToast}
+      />
+      <ConfirmationDialog
+        open={confirmDialog.open}
+        title="Delete Log Entry"
+        message="Are you sure you want to delete this log entry? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isLoading={confirmDialog.isLoading}
+      />
     </Box>
   );
 }

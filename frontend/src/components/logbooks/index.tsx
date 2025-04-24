@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import Breadcrumb from "../commons/breadcrumbs";
 import { useLocation, useSearchParams } from "react-router";
 import LoadingSpinner from "../commons/loading";
+import Toast from "../commons/snackbar";
 
 export const LogbooksPage = () => {
   const { user } = useUser();
@@ -24,6 +25,15 @@ export const LogbooksPage = () => {
   const [studentName, setStudentName] = useState<string | null>(null);
   const [studentId, setStudentId] = useState<string | null>(null);
   const category = searchParams.get("category") || location.state?.category;
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
   useEffect(() => {
     if (user !== null && user.role !== "student") {
@@ -101,14 +111,22 @@ export const LogbooksPage = () => {
 
       setSelectedLog(result.data);
       setSelectedDate(result.data.date);
+      setToast({
+        open: true,
+        message: "Log successfully updated",
+        severity: "success",
+      });
     } catch (error: any) {
       console.error("Error saving log:", error);
-      alert(
-        error.detail ||
+      setToast({
+        open: true,
+        message:
+          error.detail ||
           (error.errors
             ? JSON.stringify(error.errors)
-            : "Failed to save logbook.")
-      );
+            : "Failed to save logbook."),
+        severity: "error",
+      });
     }
   };
 
@@ -122,9 +140,18 @@ export const LogbooksPage = () => {
       });
       setSelectedLog(null);
       setSelectedDate(null);
+      setToast({
+        open: true,
+        message: "Log deleted successfully",
+        severity: "success",
+      });
     } catch (error: any) {
       console.error("Error deleting log:", error);
-      alert(error.detail || "Failed to delete logbook.");
+      setToast({
+        open: true,
+        message: error.detail || "Failed to delete log",
+        severity: "error",
+      });
     }
   };
 
@@ -144,10 +171,14 @@ export const LogbooksPage = () => {
         activities: "",
         feedbacks: "",
         plan: "",
-        status: "sent", // Default status for new logs
+        status: "pending",
         comment: "",
       });
     }
+  };
+
+  const handleCloseToast = () => {
+    setToast((prev) => ({ ...prev, open: false }));
   };
 
   if (isLoading) {
@@ -160,7 +191,7 @@ export const LogbooksPage = () => {
 
   return (
     <div style={{ height: "100%" }}>
-      <Typography fontSize="3rem" color="secondary" sx={{ fontWeight: "bold" }}>
+      <Typography fontSize="3rem" color="primary" sx={{ fontWeight: "bold" }}>
         Log Books
       </Typography>
       {user.role !== "student" ? (
@@ -195,6 +226,7 @@ export const LogbooksPage = () => {
         >
           <Calendar
             logDates={logDates}
+            logStatus={logData.map((log) => log.status)}
             selectedDate={selectedDate}
             onDateClick={handleDateClick}
           />
@@ -223,6 +255,13 @@ export const LogbooksPage = () => {
           />
         </Box>
       </Box>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={handleCloseToast}
+      />
     </div>
   );
 };

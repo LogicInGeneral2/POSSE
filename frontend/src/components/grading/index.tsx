@@ -39,7 +39,7 @@ export const GradingPage = () => {
       >
         <Typography
           fontSize={"3rem"}
-          color="secondary"
+          color="primary"
           sx={{ fontWeight: "bold" }}
         >
           Submissions & Grading

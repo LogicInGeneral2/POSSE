@@ -1,5 +1,5 @@
 import { ErrorRounded, SupervisorAccountRounded } from "@mui/icons-material";
-import { Box, Divider, Typography } from "@mui/material";
+import { Box, Divider, Paper, Typography } from "@mui/material";
 import SupervisorsTable from "./table";
 import { useUser } from "../../../context/UserContext";
 import ErrorNotice from "../commons/error";
@@ -31,14 +31,14 @@ export const SupervisorsPage = () => {
       >
         <Typography
           fontSize={"3rem"}
-          color="secondary"
+          color="primary"
           sx={{ fontWeight: "bold" }}
         >
           Supervisor Selection
         </Typography>
 
         <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
-        <Box
+        <Paper
           sx={{
             marginTop: "20px",
             fontSize: "1rem",
@@ -52,7 +52,7 @@ export const SupervisorsPage = () => {
         >
           <SupervisorAccountRounded sx={{ mr: 1, fontSize: "2rem" }} />
           Assigned Supervisor: {supervisor ? supervisor : " Pending..."}
-        </Box>
+        </Paper>
         <Box
           sx={{
             marginTop: "20px",

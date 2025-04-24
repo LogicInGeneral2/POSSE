@@ -1,5 +1,6 @@
 import {
   CheckCircle,
+  HourglassEmptyRounded,
   PendingRounded,
   UpdateRounded,
 } from "@mui/icons-material";
@@ -32,6 +33,11 @@ const status_info: StatusInfo[] = [
     value: "feedback",
     color: "info",
     icon: <UpdateRounded />,
+  },
+  {
+    value: "pending",
+    color: "warning",
+    icon: <HourglassEmptyRounded />,
   },
 ];
 

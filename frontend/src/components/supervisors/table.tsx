@@ -19,9 +19,12 @@ import { useEffect, useState } from "react";
 import { useUser } from "../../../context/UserContext";
 import { Student, SupervisorsSelectionType } from "../../services/types";
 import { getSupervisorChoices, saveSupervisorChoices } from "../../services";
+import Toast from "../commons/snackbar";
+
 interface SupervisorsTableProps {
   supervisor: string;
 }
+
 export default function SupervisorsTable({
   supervisor,
 }: SupervisorsTableProps) {
@@ -31,8 +34,17 @@ export default function SupervisorsTable({
   const [supervisorChoices, setSupervisorChoices] = useState<
     (SupervisorsSelectionType | null)[]
   >([null, null, null]);
-  const [mode, setMode] = useState<string>("development"); // Default to valid option
+  const [mode, setMode] = useState<string>("development");
   const [topic, setTopic] = useState<string>("");
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   const handleToggleEdit = () => {
     setIsEditing((prev) => !prev);
@@ -58,8 +70,9 @@ export default function SupervisorsTable({
         const priority = index + 1;
 
         if (!supervisor?.name) {
-          alert(`Supervisor name is required for choice #${priority}`);
-          throw new Error(`Missing supervisor name for priority ${priority}`);
+          throw new Error(
+            `Supervisor name is required for choice #${priority}`
+          );
         }
 
         const choice = {
@@ -81,9 +94,18 @@ export default function SupervisorsTable({
 
       await saveSupervisorChoices(formData);
       setIsEditing(false);
-    } catch (error) {
+      setToast({
+        open: true,
+        message: "Supervisor choices saved successfully!",
+        severity: "success",
+      });
+    } catch (error: any) {
       console.error("Error saving supervisor choices:", error);
-      alert("Failed to save choices. Please try again.");
+      setToast({
+        open: true,
+        message: error.message || "Failed to save choices. Please try again.",
+        severity: "error",
+      });
     }
   };
 
@@ -91,7 +113,7 @@ export default function SupervisorsTable({
     const fetchSupervisorChoices = async () => {
       try {
         const response = await getSupervisorChoices(student.id);
-        const data = response.data; // Assuming API returns data directly
+        const data = response.data;
 
         const filledChoices: (SupervisorsSelectionType | null)[] = [
           null,
@@ -99,7 +121,6 @@ export default function SupervisorsTable({
           null,
         ];
 
-        // Process choices
         data.forEach((choice: any) => {
           const index = choice.priority - 1;
           filledChoices[index] = {
@@ -108,7 +129,6 @@ export default function SupervisorsTable({
           };
         });
 
-        // Set topic and mode from first choice (since they're shared)
         if (data.length > 0) {
           setTopic(data[0].topic || "");
           setMode(data[0].mode || "development");
@@ -139,10 +159,16 @@ export default function SupervisorsTable({
           mb: "10px",
         }}
       >
+        <Toast
+          open={toast.open}
+          message={toast.message}
+          severity={toast.severity}
+          onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+        />
         <FormControl fullWidth>
           <InputLabel>FYP Mode</InputLabel>
           <Select
-            value={mode || "development"} // Ensure valid value
+            value={mode || "development"}
             label="FYP Mode"
             onChange={handleChange}
             disabled={!isEditing}
@@ -178,7 +204,7 @@ export default function SupervisorsTable({
                 <TableCell component="th" scope="row" align="center">
                   {priority}
                 </TableCell>
-                <TableCell component="th" scope="row">
+                <TableCell component="th" scope="row" sx={{ padding: "10px" }}>
                   <SupervisorsSelection
                     disabled={!isEditing}
                     value={supervisorChoices[index] || null}
@@ -197,7 +223,7 @@ export default function SupervisorsTable({
       </TableContainer>
       <Button
         variant="contained"
-        color="secondary"
+        color="primary"
         onClick={isEditing ? handleSave : handleToggleEdit}
         disabled={!!supervisor}
         sx={{ borderRadius: "8px", marginTop: "20px", width: "100px" }}

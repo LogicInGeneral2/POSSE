@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  Container,
-  Paper,
   Typography,
   TextField,
   Button,
@@ -10,6 +8,7 @@ import {
   Avatar,
   CircularProgress,
   Divider,
+  Paper,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import PersonIcon from "@mui/icons-material/Person";
@@ -73,12 +72,8 @@ const ProfilePage = () => {
   }
 
   return (
-    <Box sx={{ py: 4 }}>
-      <Typography
-        fontSize={"3rem"}
-        color="secondary"
-        sx={{ fontWeight: "bold" }}
-      >
+    <Box>
+      <Typography fontSize={"3rem"} color="primary" sx={{ fontWeight: "bold" }}>
         My Profile
       </Typography>
 
@@ -88,7 +83,7 @@ const ProfilePage = () => {
 
       <Grid container spacing={4}>
         <Grid size={6}>
-          <Box
+          <Paper
             sx={{
               p: 3,
               borderRadius: "8px",
@@ -191,11 +186,11 @@ const ProfilePage = () => {
                 </Box>
               </>
             )}
-          </Box>
+          </Paper>
         </Grid>
 
         <Grid size={6}>
-          <Box
+          <Paper
             sx={{
               p: 3,
               borderRadius: "8px",
@@ -264,7 +259,7 @@ const ProfilePage = () => {
                 {error}
               </Alert>
             )}
-          </Box>
+          </Paper>
         </Grid>
       </Grid>
     </Box>

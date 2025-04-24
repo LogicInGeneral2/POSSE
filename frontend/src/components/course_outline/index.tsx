@@ -34,7 +34,7 @@ export const CourseOulinePage = () => {
           <>
             <Typography
               fontSize={"3rem"}
-              color="secondary"
+              color="primary"
               sx={{ fontWeight: "bold" }}
             >
               Course Outline

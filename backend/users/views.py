@@ -20,6 +20,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
 import smtplib
+import re
 
 
 class CurrentUserView(APIView):
@@ -225,12 +226,19 @@ class PasswordResetRequestView(APIView):
 
     def post(self, request):
         try:
-            # Use DRF's request.data instead of json.loads
             email = request.data.get("email")
 
             if not email:
                 return Response(
                     {"error": "Email is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Validate email format
+            email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+            if not re.match(email_regex, email):
+                return Response(
+                    {"error": "Invalid email format"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -285,8 +293,8 @@ class PasswordResetRequestView(APIView):
 
             except User.DoesNotExist:
                 return Response(
-                    {"message": "Password reset email sent successfully"},
-                    status=status.HTTP_200_OK,
+                    {"error": "No account found with this email address"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         except Exception as e:

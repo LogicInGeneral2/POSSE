@@ -155,11 +155,7 @@ export default function NavigationBar() {
       icon: <FolderIcon sx={{ color: "primary.main" }} />,
       path: "/documents",
     },
-    {
-      text: "Profile",
-      icon: <Person3Rounded sx={{ color: "primary.main" }} />,
-      path: "/profile",
-    },
+
     user?.role === "student" && {
       text: "Submissions",
       icon: <DriveFolderUploadIcon sx={{ color: "primary.main" }} />,
@@ -175,6 +171,11 @@ export default function NavigationBar() {
       icon: <AdminPanelSettingsIcon sx={{ color: "primary.main" }} />,
       path: "http://127.0.0.1:8000/admin",
       external: true,
+    },
+    {
+      text: "Profile",
+      icon: <Person3Rounded sx={{ color: "primary.main" }} />,
+      path: "/profile",
     },
     {
       text: "Logout",

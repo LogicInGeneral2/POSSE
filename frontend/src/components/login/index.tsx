@@ -7,6 +7,7 @@ import {
   InputAdornment,
   IconButton,
   CircularProgress,
+  Alert,
 } from "@mui/material";
 import {
   LockRounded,
@@ -27,7 +28,7 @@ export const LoginPage = () => {
   const [password, setPassword] = useState("");
   const { login } = useUser();
   const [loading, setLoading] = useState(false);
-
+  const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleMouseDownPassword = (
@@ -50,8 +51,7 @@ export const LoginPage = () => {
       login(fetchedUser);
       navigate("/home");
     } catch (error) {
-      console.error("Login failed:", error);
-      alert("Invalid username or password");
+      setError(`Incorrect Password or Username`);
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ export const LoginPage = () => {
             alignItems: "center",
           }}
         >
-          <form className="login-form" action="">
+          <form className="login-form" onSubmit={handleLogin}>
             <Typography
               color="primary"
               sx={{
@@ -164,7 +164,6 @@ export const LoginPage = () => {
                   }}
                 />
               </Box>
-
               <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Typography
                   component="a"
@@ -175,16 +174,19 @@ export const LoginPage = () => {
                   Forgot Password?
                 </Typography>
               </Box>
-
               {loading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
                   <CircularProgress />
                 </Box>
+              ) : error ? (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {error}
+                </Alert>
               ) : (
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={handleLogin}
+                  type="submit"
                   sx={{ borderRadius: "16px" }}
                 >
                   Login

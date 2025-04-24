@@ -19,6 +19,7 @@ import { useUser } from "../../../context/UserContext";
 import LoadingSpinner from "../commons/loading";
 import { GradingContentsType } from "../../services/types";
 import ScoreTable from "./finaltable";
+import Toast from "../commons/snackbar";
 
 const GradingStepper = ({ student }: { student: number }) => {
   const { user } = useUser();
@@ -28,6 +29,15 @@ const GradingStepper = ({ student }: { student: number }) => {
   );
   const [grades, setGrades] = useState<{ [schemeId: number]: number[] }>({});
   const [activeStep, setActiveStep] = useState(0);
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,8 +99,8 @@ const GradingStepper = ({ student }: { student: number }) => {
     }));
   };
 
-  const allGraded = gradingContents.every((scheme) =>
-    grades[scheme.id].every((grade) => grade > 0)
+  const allGraded = gradingContents.every(
+    (scheme) => grades[scheme.id].every((grade) => grade >= 0) // Allow 0 as a valid grade
   );
   const stepScores = gradingContents.map((scheme: GradingContentsType) =>
     grades[scheme.id].reduce((acc, curr) => acc + curr, 0)
@@ -115,16 +125,28 @@ const GradingStepper = ({ student }: { student: number }) => {
         user_id: user.id,
         grades: gradesPayload,
       });
-      alert("Grades saved successfully!");
+      setToast({
+        open: true,
+        message: "Grades saved successfully!",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Error saving grades:", error);
-      alert("Failed to save grades. Please try again.");
+      setToast({
+        open: true,
+        message: "Failed to save grades. Please try again.",
+        severity: "error",
+      });
     }
   };
 
   const activeScheme = gradingContents[activeStep];
   const handleGradeChangeWrapper = (contentIndex: number, value: number) => {
     handleGradeChange(activeScheme.id, contentIndex, value);
+  };
+
+  const handleCloseToast = () => {
+    setToast((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -140,7 +162,6 @@ const GradingStepper = ({ student }: { student: number }) => {
               </Step>
             ))}
           </Stepper>
-
           {activeStep === steps.length ? (
             <Box
               sx={{
@@ -154,6 +175,7 @@ const GradingStepper = ({ student }: { student: number }) => {
                 steps={steps}
                 stepScores={stepScores}
                 totalScore={totalScore}
+                gradingContents={gradingContents} // Pass gradingContents for max scores
               />
             </Box>
           ) : (
@@ -190,20 +212,18 @@ const GradingStepper = ({ student }: { student: number }) => {
                     mb: 1,
                   }}
                 >
-                  {[...Array(gradingContents[activeStep].marks)].map(
-                    (_, idx) => (
-                      <Typography
-                        key={idx}
-                        sx={{
-                          width: "40px",
-                          textAlign: "left",
-                          mr: 0.5,
-                        }}
-                      >
-                        {idx + 1}
-                      </Typography>
-                    )
-                  )}
+                  {[...Array(activeScheme.marks + 1)].map((_, idx) => (
+                    <Typography
+                      key={idx}
+                      sx={{
+                        width: "40px",
+                        textAlign: "left",
+                        mr: 0.5,
+                      }}
+                    >
+                      {idx}
+                    </Typography>
+                  ))}
                 </Box>
 
                 {/* Content Rows */}
@@ -230,10 +250,10 @@ const GradingStepper = ({ student }: { student: number }) => {
                         }
                         sx={{ display: "flex", gap: 2 }}
                       >
-                        {[...Array(activeScheme.marks)].map((_, idx) => (
+                        {[...Array(activeScheme.marks + 1)].map((_, idx) => (
                           <FormControlLabel
                             key={idx}
-                            value={idx + 1}
+                            value={idx}
                             control={<Radio />}
                             label=""
                           />
@@ -266,7 +286,13 @@ const GradingStepper = ({ student }: { student: number }) => {
             ) : (
               <Button onClick={handleNext}>Next</Button>
             )}
-          </Box>
+          </Box>{" "}
+          <Toast
+            open={toast.open}
+            message={toast.message}
+            severity={toast.severity}
+            onClose={handleCloseToast}
+          />
         </Box>
       )}
     </>

@@ -242,6 +242,12 @@ export const CanvasProvider = ({ children }) => {
       format: "a4",
     });
 
+    // Save the current page's canvas state before exporting
+    setEdits((prevEdits) => ({
+      ...prevEdits,
+      [currPage]: canvas.toObject(),
+    }));
+
     let pageIndex = 1;
     const totalPages = numPages;
 
@@ -254,6 +260,12 @@ export const CanvasProvider = ({ children }) => {
 
       setCurrPage(pageIndex);
       await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Fully clear the canvas before loading the new page
+      canvas.clear();
+      canvas.setBackgroundColor("rgba(0,0,0,0)", () => {
+        canvas.renderAll();
+      });
 
       if (edits[pageIndex]) {
         canvas.loadFromJSON(edits[pageIndex], () => {
@@ -283,8 +295,26 @@ export const CanvasProvider = ({ children }) => {
           }, 600);
         });
       } else {
-        pageIndex += 1;
-        exportNextPage();
+        const docElement = document.querySelector("#singlePageExport");
+        if (!docElement) {
+          console.error("Error: Element #singlePageExport not found.");
+          setExporting(false);
+          return;
+        }
+
+        html2canvas(docElement, { scale: 2, useCORS: true }).then((canvas) => {
+          const imgData = canvas.toDataURL("image/png");
+          const imgWidth = 210;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          if (pageIndex > 1) {
+            pdf.addPage();
+          }
+          pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+
+          pageIndex += 1;
+          exportNextPage();
+        });
       }
     };
 

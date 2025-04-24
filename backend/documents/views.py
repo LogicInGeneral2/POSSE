@@ -61,11 +61,11 @@ class StudentSubmissionsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, student_id):
-        student = get_object_or_404(Student, id=student_id)
         url_name = request.resolver_match.url_name
         print("Request path:", request.path)
 
         if url_name == "all-student-submissions":
+            student = get_object_or_404(Student, id=student_id)
             if request.user.role not in [
                 "supervisor",
                 "examiner",
@@ -83,6 +83,7 @@ class StudentSubmissionsView(APIView):
         if request.user.role != "student" and request.user.id != student_id:
             return Response({"detail": "Unauthorized"}, status=403)
 
+        student = get_object_or_404(Student, user_id=student_id)
         submission_phases = Submissions.objects.all().order_by("-date_close")
         serializer = CombinedSubmissionSerializer(
             submission_phases,
@@ -116,11 +117,11 @@ class FeedbackUploadView(APIView):
 
     def post(self, request, student_id):
         submission_id = request.data.get("submission")
-        file = request.FILES.get("file")
-        comment = request.data.get("comment", "")  # get comment from request
+        file = request.FILES.get("file")  # May be None
+        comment = request.data.get("comment", "")
 
-        if not submission_id or not file:
-            return Response({"detail": "Missing file or submission."}, status=400)
+        if not submission_id:
+            return Response({"detail": "Missing submission."}, status=400)
 
         try:
             submission = StudentSubmission.objects.get(
@@ -136,8 +137,9 @@ class FeedbackUploadView(APIView):
         )
 
         if not created:
-            feedback.file = file
-            feedback.comment = comment  # update comment
+            if file:
+                feedback.file = file
+            feedback.comment = comment
             feedback.save()
 
         serializer = FeedbackSerializer(feedback, context={"request": request})

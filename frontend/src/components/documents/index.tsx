@@ -11,7 +11,7 @@ export const DocumentsPage = () => {
       >
         <Typography
           fontSize={"3rem"}
-          color="secondary"
+          color="primary"
           sx={{ fontWeight: "bold" }}
         >
           Documents

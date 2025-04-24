@@ -20,18 +20,18 @@ import { getStudents } from "../../services";
 const StyledBreadcrumb = styled(Chip)(({ theme }) => ({
   backgroundColor: "transparent",
   height: theme.spacing(3),
-  color: theme.palette.secondary.main,
+  color: theme.palette.primary.main,
   fontSize: "1rem",
   fontWeight: theme.typography.fontWeightBold,
   "& .MuiChip-deleteIcon": {
-    color: theme.palette.secondary.main,
+    color: theme.palette.primary.main,
   },
   "&:hover, &:focus": {
-    backgroundColor: emphasize(theme.palette.primary.main, 0.06),
+    backgroundColor: emphasize(theme.palette.secondary.main, 0.06),
   },
   "&:active": {
     boxShadow: theme.shadows[1],
-    backgroundColor: emphasize(theme.palette.primary.main, 0.12),
+    backgroundColor: emphasize(theme.palette.secondary.main, 0.12),
   },
 }));
 
@@ -174,7 +174,7 @@ export default function Breadcrumb({
     >
       <Typography
         fontSize="1rem"
-        color="secondary"
+        color="primary"
         sx={{
           fontWeight: "bold",
           display: "flex",
@@ -189,13 +189,13 @@ export default function Breadcrumb({
     <StyledBreadcrumb
       key="page"
       label={currentPage}
-      deleteIcon={<ExpandMoreIcon color="secondary" />}
+      deleteIcon={<ExpandMoreIcon color="primary" />}
       onDelete={handleChangePages}
     />,
     <StyledBreadcrumb
       key="student"
       label={selectedStudentName}
-      deleteIcon={<ExpandMoreIcon color="secondary" />}
+      deleteIcon={<ExpandMoreIcon color="primary" />}
       onDelete={handleChangeStudents}
     />,
   ];
@@ -203,7 +203,7 @@ export default function Breadcrumb({
   return (
     <>
       <Breadcrumbs
-        separator={<ArrowRightIcon color="secondary" />}
+        separator={<ArrowRightIcon color="primary" />}
         aria-label="breadcrumb"
       >
         {breadcrumbs}

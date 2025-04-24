@@ -22,6 +22,7 @@ import { LogType, periodTypes } from "../../services/types";
 import { getEvents, getLogsLists } from "../../services";
 import { useNavigate } from "react-router";
 import LoadingSpinner from "../commons/loading";
+import { Paper } from "@mui/material";
 
 interface DashboardCalenderProps {
   id: number;
@@ -113,7 +114,7 @@ const DashboardCalender: FC<DashboardCalenderProps> = ({ id, role }) => {
   };
 
   return (
-    <div style={{ height: "calc(100vh - 320px)" }}>
+    <Paper sx={{ height: "calc(100vh - 320px)" }}>
       <Calendar
         defaultView="month"
         events={events}
@@ -173,7 +174,7 @@ const DashboardCalender: FC<DashboardCalenderProps> = ({ id, role }) => {
           </Box>
         </Box>
       </Modal>
-    </div>
+    </Paper>
   );
 };
 

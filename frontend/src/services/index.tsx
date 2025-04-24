@@ -49,8 +49,10 @@ export const resetPasswordRequest = async (email: string) => {
       email,
     });
     return response.data;
-  } catch (error) {
-    console.error("Password reset request failed:", error);
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.error || "Failed to send password reset email"
+    );
   }
 };
 

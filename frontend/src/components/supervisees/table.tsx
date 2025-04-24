@@ -89,9 +89,13 @@ export default function DataTable({ data, category }: DataTableProps) {
       );
       setOpenDialog(true);
     } else if (action.type === "navigate" && action.path) {
-      navigate(action.path, {
-        state: { rowData: row, category },
-      });
+      navigate(
+        action.path +
+          `?student=${row.student.id}&name=${row.student.name}&category=${category}`,
+        {
+          state: { rowData: row, category },
+        }
+      );
     }
   };
 

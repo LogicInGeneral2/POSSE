@@ -4,7 +4,6 @@ import {
   DialogActions,
   DialogContent,
   FormControl,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -12,7 +11,6 @@ import {
   TextField,
 } from "@mui/material";
 import Upload_Button from "./uploadButton";
-
 import { useEffect, useState } from "react";
 import {
   deleteFeedback,
@@ -23,7 +21,8 @@ import ErrorNotice from "../commons/error";
 import { SubmissionType } from "../../services/types";
 import LoadingSpinner from "../commons/loading";
 import Download_Button from "../commons/download_button";
-import { DeleteRounded } from "@mui/icons-material";
+import Toast from "../commons/snackbar";
+import ConfirmationDialog from "../commons/confirmation";
 
 function UploadDialog({
   setOpenDialog,
@@ -38,6 +37,22 @@ function UploadDialog({
   const [uploadedFile, setUploadedFile] = useState<File>();
   const [isLoading, setIsloading] = useState(true);
   const [comment, setComment] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    isLoading: boolean;
+  }>({
+    open: false,
+    isLoading: false,
+  });
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
   const fetchSubmissionList = async () => {
     setIsloading(true);
@@ -50,7 +65,10 @@ function UploadDialog({
         const updated = data.data.find(
           (item: SubmissionType) => item.id === selectedSubmission.id
         );
-        if (updated) setSelectedSubmission(updated);
+        if (updated) {
+          setSelectedSubmission(updated);
+          setComment(updated.feedback?.comment || "");
+        }
       }
     } catch (error) {
       console.error("Failed to fetch submissions:", error);
@@ -67,17 +85,31 @@ function UploadDialog({
     return <ErrorNotice />;
   }
 
-  if (!submissionList) {
-    return <ErrorNotice />;
-  }
+  const handleDelete = () => {
+    setConfirmDialog({ open: true, isLoading: false });
+  };
 
   const handleDeleteFeedback = async (feedbackId: number) => {
+    setConfirmDialog((prev) => ({ ...prev, isLoading: true }));
     try {
       await deleteFeedback(feedbackId);
       console.log("Feedback deleted.");
+      setComment(""); // Reset comment after deletion
       await fetchSubmissionList();
+      setToast({
+        open: true,
+        message: "Feedback deleted successfully.",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Failed to delete feedback:", error);
+      setToast({
+        open: true,
+        message: "Failed to delete feedback.",
+        severity: "error",
+      });
+    } finally {
+      setConfirmDialog({ open: false, isLoading: false });
     }
   };
 
@@ -96,16 +128,21 @@ function UploadDialog({
       setUploadedFile(files);
     }
   };
+
   const handleSubmit = async () => {
-    if (!id || !uploadedFile || !selectedSubmission) {
-      console.log("Missing file or submission phase.");
+    if (!id || !selectedSubmission) {
+      setToast({
+        open: true,
+        message: "Missing file or submission phase.",
+        severity: "error",
+      });
       return;
     }
 
     try {
       const response = await uploadFeedback({
         studentId: id,
-        file: uploadedFile,
+        file: uploadedFile ?? undefined,
         submissionId: selectedSubmission.id,
         comment: comment,
       });
@@ -114,13 +151,36 @@ function UploadDialog({
         console.log("Upload successful!");
         setUploadedFile(undefined);
         await fetchSubmissionList();
+        setToast({
+          open: true,
+          message: "Upload successful!.",
+          severity: "success",
+        });
       } else {
         const errorData = await response;
         console.error("Upload failed:", errorData);
+        setToast({
+          open: true,
+          message: errorData.data || "Upload failed.",
+          severity: "error",
+        });
       }
     } catch (error) {
       console.error("Error during upload:", error);
+      setToast({
+        open: true,
+        message: "Error during upload.",
+        severity: "error",
+      });
     }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDialog({ open: false, isLoading: false });
+  };
+
+  const handleCloseToast = () => {
+    setToast((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -157,24 +217,12 @@ function UploadDialog({
                   </Select>
                 </FormControl>
                 {selectedSubmission && selectedSubmission?.feedback?.id && (
-                  <>
-                    <Download_Button
-                      icon={true}
-                      disabled={!selectedSubmission.feedback.src}
-                      variants="contained"
-                      fileUrl={selectedSubmission.feedback?.src}
-                    />
-                    <IconButton
-                      color="primary"
-                      onClick={() =>
-                        selectedSubmission?.feedback?.id !== undefined
-                          ? handleDeleteFeedback(selectedSubmission.feedback.id)
-                          : console.error("Feedback ID is undefined")
-                      }
-                    >
-                      <DeleteRounded />
-                    </IconButton>
-                  </>
+                  <Download_Button
+                    icon={true}
+                    disabled={!selectedSubmission.feedback.src}
+                    variants="contained"
+                    fileUrl={selectedSubmission.feedback?.src}
+                  />
                 )}
               </Box>
               <TextField
@@ -188,18 +236,53 @@ function UploadDialog({
                 onChange={(event) => setComment(event.target.value)}
                 sx={{ mb: 2 }}
               />
-              <Upload_Button
-                size="small"
-                icon={false}
-                variants="contained"
-                disabled={!selectedSubmission}
-                onFilesUploaded={handleFileUpload}
-                text={
-                  selectedSubmission?.feedback?.id
-                    ? "Replace File"
-                    : "Upload File"
-                }
-              />
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignContent: "top",
+                  alignItems: "flex-start",
+                }}
+              >
+                <Upload_Button
+                  size="small"
+                  icon={false}
+                  variants="contained"
+                  disabled={!selectedSubmission}
+                  onFilesUploaded={handleFileUpload}
+                  text={
+                    selectedSubmission?.feedback?.id
+                      ? "Replace File"
+                      : "Upload File"
+                  }
+                />
+                {selectedSubmission?.feedback?.id && (
+                  <>
+                    <Button
+                      onClick={() =>
+                        selectedSubmission?.feedback?.id !== undefined
+                          ? handleDelete()
+                          : console.error("Feedback ID is undefined")
+                      }
+                      variant="contained"
+                      color="error"
+                    >
+                      DELETE FEEDBACK
+                    </Button>
+                    <ConfirmationDialog
+                      open={confirmDialog.open}
+                      title="Delete Feedback"
+                      message="Are you sure you want to delete this feedback? This action cannot be undone."
+                      onConfirm={() =>
+                        selectedSubmission.feedback &&
+                        handleDeleteFeedback(selectedSubmission.feedback.id)
+                      }
+                      onCancel={handleCancelDelete}
+                      isLoading={confirmDialog.isLoading}
+                    />
+                  </>
+                )}
+              </Box>
             </>
           )}
         </Box>
@@ -213,6 +296,12 @@ function UploadDialog({
           Confirm
         </Button>
       </DialogActions>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={handleCloseToast}
+      />
     </>
   );
 }

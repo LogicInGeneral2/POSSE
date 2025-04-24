@@ -1,4 +1,10 @@
-import { Stack, Typography, Divider, Grid2 as Grid } from "@mui/material";
+import {
+  Stack,
+  Typography,
+  Divider,
+  Grid2 as Grid,
+  Paper,
+} from "@mui/material";
 import { Announcement } from "@mui/icons-material";
 import Announcements from "./carousel";
 import DashboardCalender from "./calender";
@@ -23,7 +29,7 @@ export const HomePage = () => {
       >
         <Typography
           fontSize={"3rem"}
-          color="secondary"
+          color="primary"
           sx={{ fontWeight: "bold" }}
         >
           Welcome back, {user.name.split(" ").slice(0, 2).join(" ")}
@@ -35,9 +41,7 @@ export const HomePage = () => {
           <Grid size={4} sx={{ height: "100%" }}>
             <Stack direction="column" sx={{ height: "100%" }}>
               <Info />
-              <Stack
-                direction="column"
-                spacing={2}
+              <Paper
                 sx={{
                   mt: "20px",
                   border: "1px solid",
@@ -45,6 +49,9 @@ export const HomePage = () => {
                   borderRadius: "8px",
                   padding: "12px",
                   height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
                 }}
               >
                 <Typography
@@ -64,7 +71,7 @@ export const HomePage = () => {
                 />
 
                 <Announcements />
-              </Stack>
+              </Paper>
             </Stack>
           </Grid>
 
