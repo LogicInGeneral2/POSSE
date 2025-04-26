@@ -12,6 +12,9 @@ export interface Student extends User {
   supervisor?: string;
   evaluators?: string[];
   course?: string;
+  supervisor_email?: string;
+  mode?: string;
+  topic?: string;
 }
 
 export interface Supervisor extends User {
@@ -20,6 +23,18 @@ export interface Supervisor extends User {
   supervisees_FYP2?: number;
   evaluatees_FYP1?: number;
   evaluatees_FYP2?: number;
+}
+
+export interface BreadcrumbInfo {
+  student_id: number;
+  course: string;
+  topic: string;
+  mode: string;
+}
+
+export interface BreadcrumbData {
+  id: string;
+  name: string;
 }
 
 export interface UserContextType {
@@ -133,7 +148,7 @@ export interface SuperviseeSubmission {
   has_logbook?: boolean;
 }
 
-export interface BreadCrumbData {
+export interface BreadcrumbUser {
   id: number;
   name: string;
   submissionsLength: number;

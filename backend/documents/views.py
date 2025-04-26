@@ -40,6 +40,7 @@ from datetime import datetime
 import os
 from django.conf import settings
 import html.parser
+from django.core.mail import send_mail
 
 
 class DocumentListView(APIView):
@@ -80,6 +81,25 @@ class StudentSubmissionsView(APIView):
             )
             return Response(serializer.data)
 
+        if url_name == "all-student-submissions-ids":
+            student = get_object_or_404(Student, id=student_id)
+            if request.user.role not in [
+                "supervisor",
+                "examiner",
+                "course_coordinator",
+            ]:
+                return Response({"detail": "Unauthorized"}, status=403)
+
+            submissions = StudentSubmission.objects.filter(student=student)
+            data = [
+                {
+                    "id": submission.id,
+                    "name": submission.submission_phase.title,
+                }
+                for submission in submissions
+            ]
+            return Response(data)
+
         if request.user.role != "student" and request.user.id != student_id:
             return Response({"detail": "Unauthorized"}, status=403)
 
@@ -110,6 +130,25 @@ class LatestStudentSubmissionView(APIView):
             )
             return Response(serializer.data)
         return Response({}, status=404)
+
+
+class SpecificStudentSubmissionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, student_id, studentsubmission_id):
+        if request.user.role == "student":
+            return Response({"detail": "Unauthorized"}, status=403)
+
+        student = get_object_or_404(Student, id=student_id)
+
+        submission = get_object_or_404(
+            StudentSubmission, id=studentsubmission_id, student=student
+        )
+
+        serializer = StudentSubmissionSerializer(
+            submission, context={"request": request}
+        )
+        return Response(serializer.data)
 
 
 class FeedbackUploadView(APIView):
@@ -143,6 +182,28 @@ class FeedbackUploadView(APIView):
             feedback.save()
 
         serializer = FeedbackSerializer(feedback, context={"request": request})
+
+        try:
+            email = submission.student.user.email
+            if email:
+                subject = "Submission Feedback"
+                message = (
+                    f"Hi {submission.student.user.name},\n\n"
+                    f"You have received a feedback for your submission {submission.submission_phase.title}.\n\n"
+                    f"Best regards,\n"
+                    f"POSSE"
+                )
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+            else:
+                print("No email found for student")
+        except Exception as email_error:
+            print("Error sending email:", email_error)
         return Response(serializer.data, status=201 if created else 200)
 
 
@@ -349,6 +410,30 @@ class LogbookStatusUpdateView(APIView):
             update_fields.append("comment")
 
         log.save(update_fields=update_fields)
+
+        if log.status == "approved":
+            try:
+                email = log.student.user.email
+                if email:
+                    subject = "Submission Feedback"
+                    message = (
+                        f"Hi {log.student.user.name},\n\n"
+                        f"Your logbook for {log.date} has been approved.\n\n"
+                        f"Best regards,\n"
+                        f"POSSE"
+                    )
+                    send_mail(
+                        subject=subject,
+                        message=message,
+                        from_email=settings.EMAIL_HOST_USER,
+                        recipient_list=[email],
+                        fail_silently=False,
+                    )
+                else:
+                    print("No email found for student")
+            except Exception as email_error:
+                print("Error sending email:", email_error)
+
         return Response(
             {
                 "detail": "Status updated successfully.",

@@ -1,4 +1,5 @@
 import json
+from django.shortcuts import get_object_or_404
 from django.template import TemplateDoesNotExist
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,6 +8,7 @@ from backend import settings
 from documents.models import Logbook, StudentSubmission
 from .models import Student, SupervisorsRequest, User
 from .serializers import (
+    BreadcrumbSerializer,
     SupervisorChoiceSerializer,
     SupervisorsListSerializer,
     UserSerializer,
@@ -26,11 +28,19 @@ import re
 class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        if request.path.endswith("supervisor/"):
+    def get(self, request, student_id=None):
+        url_name = request.resolver_match.url_name
+
+        if url_name == "current_supervisor":
             if hasattr(request.user, "student") and request.user.student.supervisor:
                 return Response(request.user.student.supervisor.name)
             return Response(None)
+
+        if url_name == "current_student":
+            student = get_object_or_404(Student, id=student_id)
+            serializer = BreadcrumbSerializer(student, context={"request": request})
+            return Response(serializer.data)
+
         return Response(UserSerializer(request.user).data)
 
 
@@ -147,14 +157,12 @@ class LogoutView(APIView):
 class SuperviseeSubmissionsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, category=None):  # Add 'category=None' here
+    def get(self, request, category=None):
         if request.user.role != "supervisor":
             return Response({"detail": "Unauthorized"}, status=403)
 
         if category:  # Check if category is provided
-            if (
-                category == "supervisor"
-            ):  # You can now compare the category to determine the logic
+            if category == "supervisor":
                 target = Student.objects.filter(supervisor=request.user)
             else:
                 target = Student.objects.filter(evaluators=request.user)

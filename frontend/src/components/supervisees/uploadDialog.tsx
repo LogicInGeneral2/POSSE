@@ -94,7 +94,7 @@ function UploadDialog({
     try {
       await deleteFeedback(feedbackId);
       console.log("Feedback deleted.");
-      setComment(""); // Reset comment after deletion
+      setComment(""); 
       await fetchSubmissionList();
       setToast({
         open: true,

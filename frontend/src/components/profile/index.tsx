@@ -9,14 +9,27 @@ import {
   CircularProgress,
   Divider,
   Paper,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  List,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import PersonIcon from "@mui/icons-material/Person";
+import EmailIcon from "@mui/icons-material/Email";
+import BadgeIcon from "@mui/icons-material/Badge";
+import SchoolIcon from "@mui/icons-material/School";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import TopicIcon from "@mui/icons-material/Topic";
+import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
+import AlternateEmailIcon from "@mui/icons-material/AlternateEmail";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import { changePassword, getCurrentUser } from "../../services";
-import { Student, User } from "../../services/types";
+import { Student, Supervisor, User } from "../../services/types";
 import { Grid2 as Grid } from "@mui/material";
+import { GradingRounded, SupervisorAccountRounded } from "@mui/icons-material";
 
-type UserProfile = User | Student;
+type UserProfile = User | Student | Supervisor;
 
 const ProfilePage = () => {
   const theme = useTheme();
@@ -86,8 +99,10 @@ const ProfilePage = () => {
           <Paper
             sx={{
               p: 3,
-              borderRadius: "8px",
+              borderRadius: "12px",
               border: "1px solid",
+              borderColor: "divider",
+              boxShadow: 2,
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
@@ -101,91 +116,148 @@ const ProfilePage = () => {
               >
                 <PersonIcon fontSize="large" />
               </Avatar>
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: "medium", color: theme.palette.text.primary }}
-              >
+              <Typography variant="h5" sx={{ fontWeight: "medium" }}>
                 {user?.name}
               </Typography>
             </Box>
-            <Box sx={{ mb: 2 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: "medium",
-                  color: theme.palette.text.secondary,
-                }}
-              >
-                Email
-              </Typography>
-              <Typography>{user?.email}</Typography>
-            </Box>
-            <Box sx={{ mb: 2 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: "medium",
-                  color: theme.palette.text.secondary,
-                }}
-              >
-                Role
-              </Typography>
-              <Typography>{user?.role}</Typography>
-            </Box>
-            {user?.role === "student" && "student_id" in user && (
-              <>
-                <Box sx={{ mb: 2 }}>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: "medium",
-                      color: theme.palette.text.secondary,
-                    }}
-                  >
-                    Student ID
-                  </Typography>
-                  <Typography>{user.student_id}</Typography>
-                </Box>
-                <Box sx={{ mb: 2 }}>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: "medium",
-                      color: theme.palette.text.secondary,
-                    }}
-                  >
-                    Course
-                  </Typography>
-                  <Typography>{user.course}</Typography>
-                </Box>
-                <Box sx={{ mb: 2 }}>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: "medium",
-                      color: theme.palette.text.secondary,
-                    }}
-                  >
-                    Supervisor
-                  </Typography>
-                  <Typography>{user.supervisor || "Not assigned"}</Typography>
-                </Box>
-                <Box sx={{ mb: 2 }}>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: "medium",
-                      color: theme.palette.text.secondary,
-                    }}
-                  >
-                    Evaluators
-                  </Typography>
-                  <Typography>
-                    {user.evaluators?.join(", ") || "Not assigned"}
-                  </Typography>
-                </Box>
-              </>
-            )}
+
+            <List dense>
+              <ListItem>
+                <ListItemIcon>
+                  <EmailIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText primary="Email" secondary={user?.email} />
+              </ListItem>
+
+              <ListItem>
+                <ListItemIcon>
+                  <BadgeIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText primary="Role" secondary={user?.role} />
+              </ListItem>
+
+              {user?.role === "supervisor" && "supervisor_id" in user && (
+                <>
+                  <ListItem>
+                    <ListItemIcon>
+                      <SupervisorAccountRounded color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="FYP 1 Supervisees"
+                      secondary={user.supervisees_FYP1 + " Students" || "None"}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemIcon>
+                      <SupervisorAccountRounded color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="FYP 2 Supervisees"
+                      secondary={user.supervisees_FYP2 + " Students" || "None"}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemIcon>
+                      <GradingRounded color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="FYP 1 Evaluees"
+                      secondary={user.evaluatees_FYP1 + " Students" || "None"}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemIcon>
+                      <GradingRounded color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="FYP 2 Evaluees"
+                      secondary={user.evaluatees_FYP2 + " Students" || "None"}
+                    />
+                  </ListItem>
+                </>
+              )}
+
+              {user?.role === "student" && "student_id" in user && (
+                <>
+                  <ListItem>
+                    <ListItemIcon>
+                      <SchoolIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Student ID"
+                      secondary={user.student_id}
+                    />
+                  </ListItem>
+
+                  <Divider sx={{ my: 1 }} />
+
+                  <ListItem>
+                    <ListItemIcon>
+                      <MenuBookIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText primary="Course" secondary={user.course} />
+                  </ListItem>
+
+                  <ListItem>
+                    <ListItemIcon>
+                      <BadgeIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Mode"
+                      secondary={user.mode || "Not assigned "}
+                    />
+                  </ListItem>
+
+                  <ListItem>
+                    <ListItemIcon>
+                      <TopicIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Topic"
+                      secondary={user.topic || "Not assigned / Unknown"}
+                    />
+                  </ListItem>
+
+                  <Divider sx={{ my: 1 }} />
+
+                  <ListItem>
+                    <ListItemIcon>
+                      <SupervisorAccountIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Supervisor"
+                      secondary={user.supervisor || "Not assigned"}
+                    />
+                  </ListItem>
+
+                  <ListItem>
+                    <ListItemIcon>
+                      <AlternateEmailIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Supervisor Email"
+                      secondary={user.supervisor_email || "Not assigned"}
+                    />
+                  </ListItem>
+
+                  <Divider sx={{ my: 1 }} />
+
+                  <ListItem>
+                    <ListItemIcon>
+                      <AssessmentIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Evaluators"
+                      secondary={
+                        user.evaluators?.length
+                          ? user.evaluators.join(", ")
+                          : "Not assigned"
+                      }
+                    />
+                  </ListItem>
+                </>
+              )}
+            </List>
           </Paper>
         </Grid>
 

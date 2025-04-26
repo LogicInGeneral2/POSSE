@@ -14,7 +14,12 @@ class UserSerializer(serializers.ModelSerializer):
             student = instance.student
             data["student_id"] = student.student_id
             data["course"] = student.course
+            data["topic"] = student.topic
+            data["mode"] = student.mode
             data["supervisor"] = student.supervisor.name if student.supervisor else None
+            data["supervisor_email"] = (
+                student.supervisor.email if student.supervisor else None
+            )
             data["evaluators"] = [e.name for e in student.evaluators.all()]
 
         elif instance.role == "supervisor":
@@ -29,6 +34,12 @@ class UserSerializer(serializers.ModelSerializer):
             data["evaluatees_FYP2"] = instance.evaluatees.filter(course="FYP2").count()
 
         return data
+
+
+class BreadcrumbSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ["student_id", "course", "topic", "mode"]
 
 
 class StudentSerializer(serializers.ModelSerializer):

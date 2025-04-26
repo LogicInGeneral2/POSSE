@@ -7,24 +7,60 @@ import { useButtons } from "./canvas";
 import SideBar from "./sidebar";
 import { Box, Button, Typography } from "@mui/material";
 import Loader from "./loader";
-import { getLatestUserSubmission } from "../../services";
+import { getLatestUserSubmission, getUserSubmission } from "../../services";
 
-export default function FileUpload({ student }: { student: number }) {
+interface FileUploadProps {
+  student: string; // Changed to string to match ViewingPage
+  submission?: number;
+}
+
+export default function FileUpload({ student, submission }: FileUploadProps) {
   const contextValues = useButtons();
-  const [Source, setSource] = useState<{ file: string } | null>(null);
+  const [source, setSource] = useState<{ file: string } | null>(null);
   const [docIsLoading, setDocIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSource = async () => {
+      setDocIsLoading(true);
+      setError(null);
+      setSource(null); // Reset source
+      contextValues.setEdits({}); // Reset edits
+      contextValues.setCanvas(null); // Reset canvas
+      contextValues.setCurrPage(1); // Reset page
+      contextValues.setNumPages(0); // Reset page count
+
       try {
-        const data = await getLatestUserSubmission(student);
+        const studentId = Number(student);
+        if (isNaN(studentId)) {
+          throw new Error("Invalid student ID");
+        }
+
+        let data;
+        if (submission) {
+          console.log(
+            `Fetching submission ${submission} for student ${studentId}`
+          );
+          data = await getUserSubmission(studentId, submission);
+        } else {
+          console.log(`Fetching latest submission for student ${studentId}`);
+          data = await getLatestUserSubmission(studentId);
+        }
+
+        if (!data?.data?.file) {
+          throw new Error("No valid file data returned");
+        }
+
         setSource(data.data);
       } catch (error) {
         console.error("Error fetching submission:", error);
+        setError("Failed to load submission. Please try again.");
+      } finally {
+        setDocIsLoading(false);
       }
     };
     fetchSource();
-  }, [student]);
+  }, [student, submission]);
 
   useEffect(() => {
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -32,40 +68,49 @@ export default function FileUpload({ student }: { student: number }) {
       import.meta.url
     ).toString();
 
-    if (Source?.file) {
-      contextValues.setFile(Source.file);
+    if (source?.file) {
+      console.log("Setting file in context:", source.file);
+      contextValues.setFile(source.file);
       setDocIsLoading(true);
     }
-  }, [Source]);
+  }, [source, contextValues]);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    console.log("Document loaded with", numPages, "pages");
     contextValues.setEdits({});
     contextValues.setNumPages(numPages);
     contextValues.setCurrPage(1);
 
     // Get the first page size
-    pdfjs.getDocument(Source!.file).promise.then((pdf) => {
+    pdfjs.getDocument(source!.file).promise.then((pdf) => {
       pdf.getPage(1).then((page) => {
         const viewport = page.getViewport({ scale: 1 });
         const pageWidth = viewport.width;
         const pageHeight = viewport.height;
 
+        console.log(
+          "Initializing canvas with dimensions:",
+          pageWidth,
+          pageHeight
+        );
         contextValues.setCanvas(initCanvas(pageWidth, pageHeight));
-        setTimeout(() => setDocIsLoading(false), 2000);
+        setTimeout(() => setDocIsLoading(false), 1000); // Reduced timeout for faster feedback
       });
     });
   }
 
   function changePage(offset: number) {
     const page = contextValues.currPage;
-    contextValues.edits[page] = contextValues.canvas.toObject();
-    contextValues.setEdits(contextValues.edits);
-    contextValues.setCurrPage(page + offset);
-    contextValues.canvas.clear();
-    if (contextValues.edits[page + offset]) {
-      contextValues.canvas.loadFromJSON(contextValues.edits[page + offset]);
+    if (contextValues.canvas) {
+      contextValues.edits[page] = contextValues.canvas.toObject();
+      contextValues.setEdits(contextValues.edits);
+      contextValues.setCurrPage(page + offset);
+      contextValues.canvas.clear();
+      if (contextValues.edits[page + offset]) {
+        contextValues.canvas.loadFromJSON(contextValues.edits[page + offset]);
+      }
+      contextValues.canvas.renderAll();
     }
-    contextValues.canvas.renderAll();
   }
 
   const initCanvas = (width: number, height: number): fabric.Canvas => {
@@ -77,10 +122,10 @@ export default function FileUpload({ student }: { student: number }) {
     });
   };
 
-  if (!Source) {
+  if (error) {
     return (
-      <div
-        style={{
+      <Box
+        sx={{
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",
@@ -88,18 +133,41 @@ export default function FileUpload({ student }: { student: number }) {
         }}
       >
         <Typography
-          sx={{ textAlign: "center", fontWeight: "bold", color: "error" }}
+          sx={{ textAlign: "center", fontWeight: "bold", color: "error.main" }}
+        >
+          {error}
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!source) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography
+          sx={{
+            textAlign: "center",
+            fontWeight: "bold",
+            color: "text.secondary",
+          }}
         >
           No data available.
         </Typography>
-      </div>
+      </Box>
     );
   }
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
-      {Source.file && <SideBar />}
-      {Source.file ? (
+      {source.file && <SideBar />}
+      {source.file ? (
         <Box
           sx={{
             width: "100%",
@@ -119,7 +187,7 @@ export default function FileUpload({ student }: { student: number }) {
             }}
           >
             {docIsLoading && <Loader />}
-            <Document file={Source.file} onLoadSuccess={onDocumentLoadSuccess}>
+            <Document file={source.file} onLoadSuccess={onDocumentLoadSuccess}>
               <div
                 id="canvasWrapper"
                 style={{

@@ -235,6 +235,7 @@ JAZZMIN_SETTINGS = {
         "settings.Outline": "fas fa-border-none",
         "settings.documentModes": "fas fa-toggle-on",
         "settings.submissionStatusTheme": "fas fa-palette",
+        "settings.SystemTheme": "fas fa-palette",
         "users.User": "fas fa-user",
         "users.Student": "fas fa-graduation-cap",
         "users.SupervisorsRequest": "fas fa-user-group",

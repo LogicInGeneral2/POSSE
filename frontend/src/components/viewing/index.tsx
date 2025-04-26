@@ -12,6 +12,7 @@ export const ViewingPage = () => {
   const studentName =
     searchParams.get("name") || location.state.rowData?.student?.name;
   const category = searchParams.get("category") || location.state?.category;
+  const submissionId = searchParams.get("submission");
 
   return (
     <>
@@ -35,7 +36,10 @@ export const ViewingPage = () => {
         <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
         <Box sx={{ marginTop: "20px" }}>
           <CanvasProvider>
-            <FileUpload student={studentId} />
+            <FileUpload
+              student={studentId}
+              submission={Number(submissionId) || undefined}
+            />
           </CanvasProvider>
         </Box>
       </div>

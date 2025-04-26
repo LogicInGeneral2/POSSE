@@ -3,11 +3,15 @@ from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
+import urllib
 from .models import SupervisorsRequest, User, Student
 from django.utils.html import format_html
 from django.contrib import messages
 from import_export.admin import ImportExportModelAdmin
 from .resources import UserResource, StudentResource
+from django.core.mail import send_mail
+from backend import settings
+from django.db import transaction
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -181,6 +185,13 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
 
     def process_approve(self, request, request_id):
         """Process approval of a single supervisor request and update student profile."""
+        if not request_id:
+            self.message_user(request, "Invalid request ID.", messages.ERROR)
+            return HttpResponseRedirect(
+                reverse("admin:users_supervisorsrequest_changelist")
+            )
+
+        # Get supervisor request
         supervisor_request = self.get_object(request, request_id)
         if not supervisor_request:
             self.message_user(request, "Supervisor request not found.", messages.ERROR)
@@ -188,6 +199,7 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 reverse("admin:users_supervisorsrequest_changelist")
             )
 
+        # Validate supervisor
         try:
             supervisor = User.objects.get(
                 id=supervisor_request.supervisor_id, role="supervisor"
@@ -198,12 +210,21 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 f"Supervisor '{supervisor_request.supervisor_name}' not found. Please create the user first.",
                 messages.WARNING,
             )
-            url = (
+            return HttpResponseRedirect(
                 reverse("admin:users_user_add")
-                + f"?name={supervisor_request.supervisor_name}&role=supervisor"
+                + f"?name={urllib.parse.quote(supervisor_request.supervisor_name)}&role=supervisor"
             )
-            return HttpResponseRedirect(url)
+        except User.MultipleObjectsReturned:
+            self.message_user(
+                request,
+                "Multiple supervisors found with the same ID. Please contact support.",
+                messages.ERROR,
+            )
+            return HttpResponseRedirect(
+                reverse("admin:users_supervisorsrequest_changelist")
+            )
 
+        # Validate student profile
         try:
             student_profile = Student.objects.get(user_id=supervisor_request.student.id)
         except Student.DoesNotExist:
@@ -211,30 +232,80 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
             return HttpResponseRedirect(
                 reverse("admin:users_supervisorsrequest_changelist")
             )
-
-        try:
-            # Update student profile with supervisor, mode, and topic
-            student_profile.supervisor = supervisor
-            student_profile.topic = supervisor_request.topic or ""
-            student_profile.save()
-
-            # Delete other supervisor requests for the student
-            SupervisorsRequest.objects.filter(
-                student=supervisor_request.student
-            ).delete()
-
+        except Student.MultipleObjectsReturned:
             self.message_user(
                 request,
-                f"Supervisor '{supervisor_request.supervisor_name}' assigned, "
-                f"mode set to '{student_profile.mode}', topic set to '{student_profile.topic}', "
-                f"and other requests deleted.",
-                messages.SUCCESS,
+                "Multiple student profiles found. Please contact support.",
+                messages.ERROR,
             )
+            return HttpResponseRedirect(
+                reverse("admin:users_supervisorsrequest_changelist")
+            )
+
+        try:
+            with transaction.atomic():
+                # Update student profile
+                student_profile.supervisor = supervisor
+                student_profile.topic = supervisor_request.topic or ""
+                student_profile.mode = supervisor_request.mode or student_profile.mode
+                student_profile.save()
+
+                # Delete other supervisor requests
+                SupervisorsRequest.objects.filter(
+                    student=supervisor_request.student
+                ).exclude(id=supervisor_request.id).delete()
+
+                # Prepare success message
+                success_message = (
+                    f"Supervisor '{supervisor_request.supervisor_name}' assigned, "
+                    f"mode set to '{student_profile.mode}', "
+                    f"topic set to '{student_profile.topic}'"
+                )
+                self.message_user(request, success_message, messages.SUCCESS)
+
+                # Send email notification
+                try:
+                    email = student_profile.user.email
+                    if email:  # Check if email exists
+                        subject = "Supervisor Request Approved"
+                        message = (
+                            f"Hi {student_profile.user.name},\n\n"
+                            f"Your supervisor request has been approved.\n"
+                            f"Assigned Supervisor: {supervisor.name}\n"
+                            f"Requested Topic: {student_profile.topic or ''}\n"
+                            f"Mode: {student_profile.mode}\n"
+                            f"Please check your student profile for more details or contact your supervisor.\n\n"
+                            f"Best regards,\n"
+                            f"POSSE"
+                        )
+                        send_mail(
+                            subject=subject,
+                            message=message,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=[email],
+                            fail_silently=True,  # Changed to True to prevent email failures from rolling back transaction
+                        )
+                    else:
+                        self.message_user(
+                            request,
+                            "Student email not found. Approval processed but no notification sent.",
+                            messages.WARNING,
+                        )
+                except Exception as email_error:
+                    self.message_user(
+                        request,
+                        f"Approval processed but email notification failed: {str(email_error)}",
+                        messages.WARNING,
+                    )
+
         except Exception as e:
             self.message_user(
                 request,
                 f"Failed to process approval: {str(e)}",
                 messages.ERROR,
+            )
+            return HttpResponseRedirect(
+                reverse("admin:users_supervisorsrequest_changelist")
             )
 
         return HttpResponseRedirect(

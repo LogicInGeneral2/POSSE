@@ -288,9 +288,33 @@ export const getSubmissionStatusThemes = async (): Promise<
   }
 };
 
+export const getUserSubmissionList = async (student: number) => {
+  try {
+    const data = await api.get(`submissions/all/lists/${student}/`);
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
 export const getUserSubmissions = async (student: number) => {
   try {
     const data = await api.get(`submissions/all/${student}/`);
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const getUserSubmission = async (
+  student: number,
+  submission: number
+) => {
+  try {
+    const data = await api.get(`submissions/${student}/${submission}/`);
+    console.log(data);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -537,6 +561,16 @@ export const exportLogs = async (student: number) => {
 export const getCurrentUser = async (): Promise<User | Student> => {
   try {
     const { data } = await api.get("/api/users/me/");
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching user profile:", error);
+    throw new Error(error);
+  }
+};
+
+export const getCurrentStudent = async (student: number) => {
+  try {
+    const { data } = await api.get(`/api/users/${student}/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching user profile:", error);

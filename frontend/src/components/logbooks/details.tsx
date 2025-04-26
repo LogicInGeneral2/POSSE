@@ -3,6 +3,7 @@ import {
   Button,
   Chip,
   Divider,
+  Paper,
   Stack,
   TextField,
   Typography,
@@ -54,8 +55,7 @@ export default function Details({
 
   if (!logDetails) {
     return (
-      <Box
-        p={2}
+      <Paper
         sx={{
           overflow: "auto",
           height: "100%",
@@ -65,6 +65,7 @@ export default function Details({
           justifyContent: "center",
           alignItems: "center",
           textAlign: "center",
+          padding: 2,
         }}
       >
         <PriorityHighIcon sx={{ mr: 2, fontSize: "4rem" }} />
@@ -72,7 +73,7 @@ export default function Details({
           Select a log entry to view details. Alternatively, select a date from
           the calendar to create a new entry.
         </Typography>
-      </Box>
+      </Paper>
     );
   }
 
@@ -176,7 +177,7 @@ export default function Details({
   };
 
   return (
-    <Box p={2} sx={{ overflow: "auto", height: "100%", borderRadius: "8px" }}>
+    <Paper sx={{ overflow: "auto", height: "100%", borderRadius: "8px", p: 2 }}>
       <Stack
         direction="row"
         spacing={2}
@@ -312,6 +313,6 @@ export default function Details({
         onCancel={handleCancelDelete}
         isLoading={confirmDialog.isLoading}
       />
-    </Box>
+    </Paper>
   );
 }

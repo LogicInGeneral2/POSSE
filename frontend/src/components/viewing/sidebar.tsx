@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useButtons } from "./canvas";
-import { Divider, Paper, Popover, Slider, Tooltip } from "@mui/material";
+import { Box, Divider, Paper, Popover, Slider, Tooltip } from "@mui/material";
 import { SketchPicker } from "react-color";
 import {
   AddPhotoAlternateRounded,
@@ -48,7 +48,7 @@ export default function SideBar() {
           style={{
             position: "fixed",
             zIndex: 50,
-            top: "45%",
+            top: "50%",
             right: 10,
             height: "15vh",
             width: "auto",
@@ -76,131 +76,182 @@ export default function SideBar() {
               boxShadow: "0px 0px 8px rgba(0,0,0,0.1)",
             }}
           >
-            <Tooltip title="Square" placement="left">
-              <div>
-                <SquareRounded
-                  sx={{ color: "secondary.main" }}
-                  style={{ cursor: "pointer", fontSize: "1.3rem" }}
-                  onClick={() => contextValues.addRect(contextValues.canvas)}
-                />
-              </div>
-            </Tooltip>
-
-            <Tooltip title="Circle" placement="left">
-              <div>
-                <CircleRounded
-                  sx={{ color: "secondary.main" }}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => contextValues.addCircle(contextValues.canvas)}
-                />
-              </div>
-            </Tooltip>
-
-            <Tooltip title="Add Image" placement="left">
-              <div>
-                <label htmlFor="img-input">
-                  <AddPhotoAlternateRounded
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <Tooltip title="Square" placement="left">
+                <div>
+                  <SquareRounded
+                    sx={{ color: "secondary.main" }}
+                    style={{ cursor: "pointer", fontSize: "1.3rem" }}
+                    onClick={() => contextValues.addRect(contextValues.canvas)}
+                  />
+                </div>
+              </Tooltip>
+              <Tooltip title="Circle" placement="left">
+                <div>
+                  <CircleRounded
+                    sx={{ color: "secondary.main" }}
+                    style={{ cursor: "pointer" }}
+                    onClick={() =>
+                      contextValues.addCircle(contextValues.canvas)
+                    }
+                  />
+                </div>
+              </Tooltip>
+            </Box>
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <Tooltip title="Add Image" placement="left">
+                <div>
+                  <label htmlFor="img-input">
+                    <AddPhotoAlternateRounded
+                      sx={{ color: "secondary.main" }}
+                      style={{ cursor: "pointer", fontSize: "1.5rem" }}
+                    />
+                  </label>
+                  <input
+                    type="file"
+                    id="img-input"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) =>
+                      contextValues.addImage(e, contextValues.canvas)
+                    }
+                  />
+                </div>
+              </Tooltip>
+              <Tooltip title="TextBox" placement="left">
+                <div>
+                  <TextFieldsRounded
                     sx={{ color: "secondary.main" }}
                     style={{ cursor: "pointer", fontSize: "1.5rem" }}
+                    onClick={() => contextValues.addText(contextValues.canvas)}
                   />
-                </label>
-                <input
-                  type="file"
-                  id="img-input"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) =>
-                    contextValues.addImage(e, contextValues.canvas)
-                  }
-                />
-              </div>
-            </Tooltip>
-
-            <Tooltip title="TextBox" placement="left">
-              <div>
-                <TextFieldsRounded
-                  sx={{ color: "secondary.main" }}
-                  style={{ cursor: "pointer", fontSize: "1.5rem" }}
-                  onClick={() => contextValues.addText(contextValues.canvas)}
-                />
-              </div>
-            </Tooltip>
+                </div>
+              </Tooltip>
+            </Box>
 
             <Divider flexItem color="secondary.main" />
 
-            <Tooltip title="Draw" placement="left">
-              <div>
-                <ModeEditRounded
-                  sx={{
-                    color: contextValues.isDrawingMode
-                      ? "secondary.main"
-                      : "gray",
-                  }}
-                  style={{ cursor: "pointer", fontSize: "1.5rem" }}
-                  onClick={() => contextValues.toggleDraw(contextValues.canvas)}
-                />
-              </div>
-            </Tooltip>
-
-            <Tooltip title="Highlight Mode" placement="left">
-              <div>
-                <BrushRounded
-                  sx={{
-                    color: contextValues.isHighlightMode
-                      ? "secondary.main"
-                      : "gray",
-                  }}
-                  style={{ cursor: "pointer", fontSize: "1.5rem" }}
-                  onClick={() =>
-                    contextValues.setIsHighlightMode((prev: any) => !prev)
-                  }
-                />
-              </div>
-            </Tooltip>
-
-            <Divider flexItem color="secondary.main" />
-
-            <Tooltip title="Delete Selected" placement="left">
-              <div>
-                <DeleteForeverRounded
-                  sx={{ color: "secondary.main" }}
-                  style={{ cursor: "pointer", fontSize: "1.5rem" }}
-                  onClick={() => contextValues.deleteBtn()}
-                />
-              </div>
-            </Tooltip>
-
-            <Tooltip title="Reset Page" placement="left">
-              <div>
-                <RestartAltRounded
-                  sx={{ color: "secondary.main" }}
-                  style={{ cursor: "pointer", fontSize: "1.5rem" }}
-                  onClick={() => contextValues.canvas.clear()}
-                />
-              </div>
-            </Tooltip>
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              {" "}
+              <Tooltip title="Draw" placement="left">
+                <div>
+                  <ModeEditRounded
+                    sx={{
+                      color: contextValues.isDrawingMode
+                        ? "secondary.main"
+                        : "gray",
+                    }}
+                    style={{ cursor: "pointer", fontSize: "1.5rem" }}
+                    onClick={() =>
+                      contextValues.toggleDraw(contextValues.canvas)
+                    }
+                  />
+                </div>
+              </Tooltip>
+              <Tooltip title="Highlight Mode" placement="left">
+                <div>
+                  <BrushRounded
+                    sx={{
+                      color: contextValues.isHighlightMode
+                        ? "secondary.main"
+                        : "gray",
+                    }}
+                    style={{ cursor: "pointer", fontSize: "1.5rem" }}
+                    onClick={() =>
+                      contextValues.setIsHighlightMode((prev: any) => !prev)
+                    }
+                  />
+                </div>
+              </Tooltip>
+            </Box>
 
             <Divider flexItem color="secondary.main" />
 
-            <Tooltip title="Download Current Page" placement="left">
-              <div>
-                <SimCardDownloadOutlined
-                  sx={{ color: "secondary.main" }}
-                  style={{ cursor: "pointer", fontSize: "1.5rem" }}
-                  onClick={() => contextValues.downloadPage()}
-                />
-              </div>
-            </Tooltip>
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              {" "}
+              <Tooltip title="Delete Selected" placement="left">
+                <div>
+                  <DeleteForeverRounded
+                    sx={{ color: "secondary.main" }}
+                    style={{ cursor: "pointer", fontSize: "1.5rem" }}
+                    onClick={() => contextValues.deleteBtn()}
+                  />
+                </div>
+              </Tooltip>
+              <Tooltip title="Reset Page" placement="left">
+                <div>
+                  <RestartAltRounded
+                    sx={{ color: "secondary.main" }}
+                    style={{ cursor: "pointer", fontSize: "1.5rem" }}
+                    onClick={() => contextValues.canvas.clear()}
+                  />
+                </div>
+              </Tooltip>
+            </Box>
 
-            <Tooltip title="Download Whole PDF" placement="left">
-              <div>
-                <SaveAsRounded
-                  sx={{ color: "secondary.main" }}
-                  style={{ cursor: "pointer", fontSize: "1.5rem" }}
-                  onClick={() => contextValues.exportPdf()}
-                />
-              </div>
-            </Tooltip>
+            <Divider flexItem color="secondary.main" />
+
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              {" "}
+              <Tooltip title="Download Current Page" placement="left">
+                <div>
+                  <SimCardDownloadOutlined
+                    sx={{ color: "secondary.main" }}
+                    style={{ cursor: "pointer", fontSize: "1.5rem" }}
+                    onClick={() => contextValues.downloadPage()}
+                  />
+                </div>
+              </Tooltip>
+              <Tooltip title="Download Whole PDF" placement="left">
+                <div>
+                  <SaveAsRounded
+                    sx={{ color: "secondary.main" }}
+                    style={{ cursor: "pointer", fontSize: "1.5rem" }}
+                    onClick={() => contextValues.exportPdf()}
+                  />
+                </div>
+              </Tooltip>
+            </Box>
 
             <Divider flexItem color="secondary.main" />
 

@@ -1,4 +1,4 @@
-import { Box, Divider, Typography } from "@mui/material";
+import { Box, Divider, Paper, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { LogType } from "../../services/types";
 import { deleteLogbook, getLogbookList, saveLogbook } from "../../services";
@@ -213,7 +213,7 @@ export const LogbooksPage = () => {
           gap: "20px",
         }}
       >
-        <Box
+        <Paper
           sx={{
             border: "1px solid",
             borderRadius: "8px",
@@ -236,7 +236,7 @@ export const LogbooksPage = () => {
             studentId={idToFetch ?? 0}
             role={user.role}
           />
-        </Box>
+        </Paper>
         <Box
           sx={{
             border: "1px solid",

@@ -19,6 +19,7 @@ from documents.views import (
     LogbookCreateUpdateView,
     LogbookListView,
     LogbookStatusUpdateView,
+    SpecificStudentSubmissionView,
     StudentSubmissionsView,
     UploadStudentSubmissionView,
     export_logs_pdf,
@@ -48,6 +49,9 @@ urlpatterns = [
     path("api/token/", TokenObtainPairView.as_view(), name="get_token"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="refresh"),
     path("api/users/me/", CurrentUserView.as_view(), name="current_user"),
+    path(
+        "api/users/<int:student_id>/", CurrentUserView.as_view(), name="current_student"
+    ),
     path("api/users/supervisor/", CurrentUserView.as_view(), name="current_supervisor"),
     path(
         "api/users/supervisees/",
@@ -118,6 +122,11 @@ urlpatterns = [
         name="all-student-submissions",
     ),
     path(
+        "submissions/all/lists/<int:student_id>/",
+        StudentSubmissionsView.as_view(),
+        name="all-student-submissions-ids",
+    ),
+    path(
         "submissions/<int:student_id>/",
         StudentSubmissionsView.as_view(),
         name="student-submissions",
@@ -126,6 +135,11 @@ urlpatterns = [
         "submissions/<int:student_id>/latest/",
         LatestStudentSubmissionView.as_view(),
         name="latest-submission",
+    ),
+    path(
+        "submissions/<int:student_id>/<int:studentsubmission_id>/",
+        SpecificStudentSubmissionView.as_view(),
+        name="specific-submission",
     ),
     path(
         "submissions/upload/<int:student_id>/",
