@@ -43,35 +43,43 @@ export const SuperviseesPage = () => {
   const [supervisees, setSupervisees] = useState<SuperviseeSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  if (!evaluatees || !supervisees) {
-    return <ErrorNotice />;
-  }
-
   const tabQuery = searchParams.get("tab");
 
+  const fetchSupervisees = async () => {
+    try {
+      const data = await getSupervisees();
+      setSupervisees(data.data);
+    } catch (error) {
+      console.error("Error fetching supervisees:", error);
+    }
+  };
+
+  const fetchEvaluatees = async () => {
+    try {
+      const data = await getEvaluatees();
+      setEvaluatees(data.data);
+    } catch (error) {
+      console.error("Error fetching evaluatees:", error);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsLoading(true);
+    if (value === 0) {
+      await fetchSupervisees();
+    } else {
+      await fetchEvaluatees();
+    }
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    const fetchSupervisees = async () => {
-      try {
-        const data = await getSupervisees();
-        setSupervisees(data.data);
-      } catch (error) {
-        console.error("Error fetching supervisees:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    const initialFetch = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchSupervisees(), fetchEvaluatees()]);
+      setIsLoading(false);
     };
-    const fetchEvaluatees = async () => {
-      try {
-        const data = await getEvaluatees();
-        setEvaluatees(data.data);
-      } catch (error) {
-        console.error("Error fetching supervisees:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchSupervisees();
-    fetchEvaluatees();
+    initialFetch();
   }, []);
 
   useEffect(() => {
@@ -83,42 +91,44 @@ export const SuperviseesPage = () => {
     setSearchParams({ tab: newValue === 1 ? "evaluatees" : "supervisees" });
   };
 
+  if (!evaluatees || !supervisees) {
+    return <ErrorNotice />;
+  }
+
   return (
-    <>
-      <div
-        style={{
-          height: "100%",
-        }}
-      >
-        <Typography
-          fontSize={"3rem"}
-          color="primary"
-          sx={{ fontWeight: "bold" }}
-        >
-          Submissions & Grading
-        </Typography>
-        <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />{" "}
-        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Tabs value={value} onChange={handleChange}>
-            <Tab label="Supervisees" {...a11yProps(0)} />
-            <Tab label="Evaluatees" {...a11yProps(1)} />
-          </Tabs>
-        </Box>
-        <CustomTabPanel value={value} index={0}>
-          {isLoading ? (
-            <LoadingSpinner />
-          ) : (
-            <DataTable data={supervisees} category="supervisor" />
-          )}
-        </CustomTabPanel>
-        <CustomTabPanel value={value} index={1}>
-          {isLoading ? (
-            <LoadingSpinner />
-          ) : (
-            <DataTable data={evaluatees} category="examiner" />
-          )}
-        </CustomTabPanel>
-      </div>
-    </>
+    <div style={{ height: "100%" }}>
+      <Typography fontSize={"3rem"} color="primary" sx={{ fontWeight: "bold" }}>
+        Submissions & Grading
+      </Typography>
+      <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Tabs value={value} onChange={handleChange}>
+          <Tab label="Supervisees" {...a11yProps(0)} />
+          <Tab label="Evaluatees" {...a11yProps(1)} />
+        </Tabs>
+      </Box>
+      <CustomTabPanel value={value} index={0}>
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : (
+          <DataTable
+            data={supervisees}
+            category="supervisor"
+            onRefresh={handleRefresh}
+          />
+        )}
+      </CustomTabPanel>
+      <CustomTabPanel value={value} index={1}>
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : (
+          <DataTable
+            data={evaluatees}
+            category="examiner"
+            onRefresh={handleRefresh}
+          />
+        )}
+      </CustomTabPanel>
+    </div>
   );
 };

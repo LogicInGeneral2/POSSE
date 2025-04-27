@@ -162,7 +162,7 @@ class StudentAllSubmissionSerializer(serializers.Serializer):
     feedback = serializers.SerializerMethodField()
 
     def get_title(self, obj):
-        return obj.file.name.split("/")[-1] if obj.file else ""
+        return obj.submission_phase.title
 
     def get_src(self, obj):
         request = self.context.get("request")

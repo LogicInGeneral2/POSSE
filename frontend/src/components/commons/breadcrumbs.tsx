@@ -444,7 +444,7 @@ export default function Breadcrumb({
                 size="small"
                 sx={{
                   border: "1px solid",
-                  borderRadius: "50%",
+                  padding: "0.15rem",
                 }}
               >
                 <DownloadIcon />
@@ -461,7 +461,7 @@ export default function Breadcrumb({
                 size="small"
                 sx={{
                   border: "1px solid",
-                  borderRadius: "50%",
+                  padding: "0.15rem",
                 }}
               >
                 <FileUploadIcon />
@@ -479,7 +479,7 @@ export default function Breadcrumb({
             </Typography>
           ) : breadcrumbInfo && selectedStudent ? (
             <>
-              <Tooltip title="Student ID" placement="top">
+              <Tooltip title="Matric No." placement="top">
                 <Chip
                   icon={<SchoolIcon />}
                   label={`ID: ${breadcrumbInfo.student_id}`}

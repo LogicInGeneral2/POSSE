@@ -50,6 +50,10 @@ function DownloadDialog({
     setSelectedFile(file.src);
   };
 
+  const handleClose = () => {
+    setOpenDialog(false);
+  };
+
   return (
     <>
       <DialogContent>
@@ -71,7 +75,7 @@ function DownloadDialog({
         </Box>
       </DialogContent>
       <DialogActions sx={{ justifyContent: "space-between" }}>
-        <Button onClick={() => setOpenDialog(false)}>Close</Button>
+        <Button onClick={handleClose}>Close</Button>
         <Download_Button
           fileUrl={selectedFile}
           text="Download"

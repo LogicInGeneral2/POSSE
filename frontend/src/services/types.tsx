@@ -117,6 +117,7 @@ export interface SubmissionType extends FileType {
   submission: string;
   studentId: number;
   assignmentId: number;
+  assignment_title?: string;
   feedback?: FeedbackType;
 }
 
@@ -158,6 +159,7 @@ export interface BreadcrumbUser {
 export interface DataTableProps {
   data: SuperviseeSubmission[];
   category: string;
+  onRefresh: () => void;
 }
 
 export interface GradingContentsType {
@@ -205,11 +207,13 @@ export interface Option {
 
 export const statusOptions: Option[] = [
   { label: "Reviewed" },
-  { label: "Pending" },
   { label: "Submitted" },
-  { label: "Behind" },
-  { label: "Completed" },
-  { label: "Evaluated" },
+  { label: "No Submission" },
+];
+
+export const modeOptions: Option[] = [
+  { label: "Development" },
+  { label: "research" },
 ];
 
 export const courseOptions: Option[] = [{ label: "FYP1" }, { label: "FYP2" }];

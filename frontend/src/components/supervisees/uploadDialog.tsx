@@ -26,10 +26,12 @@ import ConfirmationDialog from "../commons/confirmation";
 
 function UploadDialog({
   setOpenDialog,
+  onRefresh,
   id,
 }: {
   setOpenDialog: (open: boolean) => void;
   id: number;
+  onRefresh?: () => void;
 }) {
   const [selectedSubmission, setSelectedSubmission] =
     useState<SubmissionType | null>(null);
@@ -37,6 +39,7 @@ function UploadDialog({
   const [uploadedFile, setUploadedFile] = useState<File>();
   const [isLoading, setIsloading] = useState(true);
   const [comment, setComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     isLoading: boolean;
@@ -94,7 +97,7 @@ function UploadDialog({
     try {
       await deleteFeedback(feedbackId);
       console.log("Feedback deleted.");
-      setComment(""); 
+      setComment("");
       await fetchSubmissionList();
       setToast({
         open: true,
@@ -139,6 +142,8 @@ function UploadDialog({
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       const response = await uploadFeedback({
         studentId: id,
@@ -172,6 +177,8 @@ function UploadDialog({
         message: "Error during upload.",
         severity: "error",
       });
+    } finally {
+      setIsSubmitting(false); // stop loading
     }
   };
 
@@ -183,9 +190,20 @@ function UploadDialog({
     setToast((prev) => ({ ...prev, open: false }));
   };
 
+  const handleClose = () => {
+    setOpenDialog(false);
+    if (!onRefresh) return;
+    onRefresh();
+  };
+
   return (
     <>
-      <DialogContent>
+      <DialogContent
+        sx={{
+          pointerEvents: isSubmitting ? "none" : "auto",
+          opacity: isSubmitting ? 0.5 : 1,
+        }}
+      >
         <Box sx={{ display: "block", p: "5px" }}>
           {isLoading ? (
             <LoadingSpinner />
@@ -288,14 +306,17 @@ function UploadDialog({
         </Box>
       </DialogContent>
       <DialogActions sx={{ justifyContent: "space-between" }}>
-        <Button onClick={() => setOpenDialog(false)}>Close</Button>
+        <Button onClick={handleClose} disabled={isSubmitting}>
+          Close
+        </Button>
         <Button
           onClick={handleSubmit}
-          disabled={!selectedSubmission || !comment}
+          disabled={!selectedSubmission || !comment || isSubmitting}
         >
-          Confirm
+          {isSubmitting ? <LoadingSpinner /> : "Confirm"}
         </Button>
       </DialogActions>
+
       <Toast
         open={toast.open}
         message={toast.message}

@@ -66,6 +66,7 @@ export default function Details({
           alignItems: "center",
           textAlign: "center",
           padding: 2,
+          backgroundColor: "base.main",
         }}
       >
         <PriorityHighIcon sx={{ mr: 2, fontSize: "4rem" }} />
@@ -177,7 +178,15 @@ export default function Details({
   };
 
   return (
-    <Paper sx={{ overflow: "auto", height: "100%", borderRadius: "8px", p: 2 }}>
+    <Paper
+      sx={{
+        overflow: "auto",
+        height: "100%",
+        borderRadius: "8px",
+        p: 2,
+        backgroundColor: "base.main",
+      }}
+    >
       <Stack
         direction="row"
         spacing={2}

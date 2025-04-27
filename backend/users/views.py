@@ -203,6 +203,7 @@ class SuperviseeSubmissionsView(APIView):
                         "name": student.user.name,
                         "email": student.user.email,
                         "course": student.course,
+                        "mode": student.mode,
                         "student_id": student.student_id,
                         "supervisor": request.user.name,
                     },
@@ -220,6 +221,7 @@ class SuperviseeSubmissionsView(APIView):
                             "type": "submission",
                             "studentId": student.id,
                             "assignmentId": latest_submission.submission_phase.id,
+                            "assignment_title": latest_submission.submission_phase.title,
                         }
                     ],
                     "has_logbook": has_logbook,

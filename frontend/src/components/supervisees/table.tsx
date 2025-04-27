@@ -20,6 +20,7 @@ import {
   Dialog,
   DialogTitle,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import { JSX, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -28,16 +29,24 @@ import UploadDialog from "./uploadDialog";
 import {
   courseOptions,
   DataTableProps,
+  modeOptions,
   statusOptions,
   SuperviseeSubmission,
 } from "../../services/types";
 import { Action, action_options } from "./actions";
+import { QuestionMarkRounded } from "@mui/icons-material";
 
-export default function DataTable({ data, category }: DataTableProps) {
+export default function DataTable({
+  data,
+  category,
+  onRefresh,
+}: DataTableProps) {
   const [course_options, setCourseOptions] = useState<string[]>([]);
   const [status_options, setStatusOptions] = useState<string[]>([]);
+  const [mode_options, setModeOptions] = useState<string[]>([]);
   const [courses, setCourses] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
+  const [modes, setModes] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -49,6 +58,7 @@ export default function DataTable({ data, category }: DataTableProps) {
   useEffect(() => {
     setCourseOptions(courseOptions.map((option) => option.label));
     setStatusOptions(statusOptions.map((option) => option.label));
+    setModeOptions(modeOptions.map((option) => option.label));
   }, []);
 
   const handleCoursesChange = (event: SelectChangeEvent<string[]>) => {
@@ -61,6 +71,14 @@ export default function DataTable({ data, category }: DataTableProps) {
 
   const handleStatusesChange = (event: SelectChangeEvent<string[]>) => {
     setStatuses(
+      typeof event.target.value === "string"
+        ? event.target.value.split(",")
+        : event.target.value
+    );
+  };
+
+  const handleModesChange = (event: SelectChangeEvent<string[]>) => {
+    setModes(
       typeof event.target.value === "string"
         ? event.target.value.split(",")
         : event.target.value
@@ -84,7 +102,11 @@ export default function DataTable({ data, category }: DataTableProps) {
         action.label === "Download Submission" ? (
           <DownloadDialog setOpenDialog={setOpenDialog} id={row.student.id} />
         ) : (
-          <UploadDialog setOpenDialog={setOpenDialog} id={row.student.id} />
+          <UploadDialog
+            setOpenDialog={setOpenDialog}
+            onRefresh={onRefresh}
+            id={row.student.id}
+          />
         )
       );
       setOpenDialog(true);
@@ -99,15 +121,36 @@ export default function DataTable({ data, category }: DataTableProps) {
     }
   };
 
+  const handleClose = () => {
+    setOpenDialog(false);
+    onRefresh();
+  };
+
   const filteredData = data.filter(({ student, submissions }) => {
     return (
       (!courses.length || courses.includes(student.course ?? "")) &&
       (!statuses.length ||
-        submissions.some((sub) => statuses.includes(sub.status))) &&
+        (statuses.includes("No Submission")
+          ? submissions.length === 0 || submissions.every((sub) => !sub.status)
+          : submissions.some((sub) => statuses.includes(sub.status)))) &&
       (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.id.toString().includes(searchTerm))
+        student.id.toString().includes(searchTerm)) &&
+      (!modes.length || modes.includes(student.mode ?? ""))
     );
   });
+
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case "Submitted":
+        return "success";
+      case "Reviewed":
+        return "info";
+      case "No Submission":
+        return "error";
+      default:
+        return "error";
+    }
+  };
 
   return (
     <>
@@ -164,6 +207,29 @@ export default function DataTable({ data, category }: DataTableProps) {
             ))}
           </Select>
         </FormControl>
+
+        <FormControl sx={{ width: "20%" }} size="small">
+          <InputLabel>Mode</InputLabel>
+          <Select
+            multiple
+            size="small"
+            value={modes}
+            onChange={handleModesChange}
+            input={<OutlinedInput label="Tag" />}
+            renderValue={(selected) => selected.join(", ")}
+          >
+            {mode_options.map((status) => (
+              <MenuItem
+                key={status}
+                value={status}
+                sx={{ textTransform: "capitalize" }}
+              >
+                <Checkbox checked={modes.includes(status)} />
+                <ListItemText primary={status} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
 
       <TableContainer>
@@ -172,13 +238,44 @@ export default function DataTable({ data, category }: DataTableProps) {
             <TableRow>
               <TableCell align="center">Matric No.</TableCell>
               <TableCell align="center">Name</TableCell>
-              <TableCell align="center">Course</TableCell>
+              <TableCell align="center">Course</TableCell>{" "}
+              <TableCell align="center">Mode</TableCell>
               {category === "supervisor" ? (
-                <TableCell align="center">Progress</TableCell>
+                <TableCell align="center">
+                  Progress{" "}
+                  <Tooltip
+                    title="The latest phase that has a submission."
+                    placement="top"
+                  >
+                    <QuestionMarkRounded
+                      sx={{
+                        border: "1px solid",
+                        borderRadius: "50%",
+                        padding: "2px",
+                        fontSize: "0.6rem",
+                      }}
+                    />
+                  </Tooltip>
+                </TableCell>
               ) : (
                 <TableCell>Supervisor</TableCell>
               )}
-              <TableCell align="center">Status</TableCell>
+              <TableCell align="center">
+                Status{" "}
+                <Tooltip
+                  title="The status of the latest submission."
+                  placement="top"
+                >
+                  <QuestionMarkRounded
+                    sx={{
+                      border: "1px solid",
+                      borderRadius: "50%",
+                      padding: "2px",
+                      fontSize: "0.6rem",
+                    }}
+                  />
+                </Tooltip>
+              </TableCell>
               <TableCell align="center">Action</TableCell>
             </TableRow>
           </TableHead>
@@ -193,16 +290,27 @@ export default function DataTable({ data, category }: DataTableProps) {
                     <TableCell align="center">{student.student_id}</TableCell>
                     <TableCell>{student.name}</TableCell>
                     <TableCell align="center">{student.course}</TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{ textTransform: "capitalize" }}
+                    >
+                      {student.mode}
+                    </TableCell>
                     {category === "supervisor" ? (
                       <TableCell align="center">
-                        {latestSubmission.progress || "No Submission"}
+                        {latestSubmission.assignment_title || "No Submission"}
                       </TableCell>
                     ) : (
                       <TableCell>{student.supervisor || "N/A"}</TableCell>
                     )}
-
                     <TableCell align="center">
-                      {latestSubmission.status || "No Submission"}
+                      <Chip
+                        variant="outlined"
+                        label={latestSubmission.status || "No Submission"}
+                        color={getStatusColor(latestSubmission.status)}
+                        size="small"
+                        sx={{ textTransform: "capitalize" }}
+                      />
                     </TableCell>
                     <TableCell align="center">
                       {action_options.map((action) => (
@@ -217,6 +325,13 @@ export default function DataTable({ data, category }: DataTableProps) {
                                   })
                                 }
                                 disabled={!has_logbook}
+                                color="primary"
+                                size="small"
+                                sx={{
+                                  border: "1px solid",
+                                  padding: "0.15rem",
+                                  mx: "5px",
+                                }}
                               >
                                 {action.icon}
                               </IconButton>
@@ -228,6 +343,13 @@ export default function DataTable({ data, category }: DataTableProps) {
                                     submissions,
                                   })
                                 }
+                                color="primary"
+                                size="small"
+                                sx={{
+                                  border: "1px solid",
+                                  padding: "0.15rem",
+                                  mx: "5px",
+                                }}
                               >
                                 {action.icon}
                               </IconButton>
@@ -240,6 +362,13 @@ export default function DataTable({ data, category }: DataTableProps) {
                                   })
                                 }
                                 disabled={!latestSubmission.src}
+                                color="primary"
+                                size="small"
+                                sx={{
+                                  border: "1px solid",
+                                  padding: "0.15rem",
+                                  mx: "5px",
+                                }}
                               >
                                 {action.icon}
                               </IconButton>
@@ -263,7 +392,7 @@ export default function DataTable({ data, category }: DataTableProps) {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+      <Dialog open={openDialog} onClose={handleClose}>
         <DialogTitle>{dialogTitle}</DialogTitle>
         {dialogContent}
       </Dialog>

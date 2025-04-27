@@ -13,6 +13,7 @@ import { status_info, StatusInfo } from "./status";
 import GetAppIcon from "@mui/icons-material/GetApp";
 import { useState } from "react";
 import { exportLogs } from "../../services";
+import { format } from "date-fns";
 export default function DataTable({
   data,
   studentId,
@@ -108,7 +109,7 @@ export default function DataTable({
                 </Grid>
                 <Grid size={5}>
                   <Typography variant="body1" color="primary">
-                    {row.date}
+                    {format(row.date, "dd-MM-yyyy")}
                   </Typography>
                 </Grid>
                 <Grid size={5}>
