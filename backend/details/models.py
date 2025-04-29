@@ -3,9 +3,16 @@ from django.utils import timezone
 
 
 class Announcement(models.Model):
+    COURSE_CHOICES = [
+        ("FYP1", "FYP1"),
+        ("FYP2", "FYP2"),
+        ("Both", "Both"),
+    ]
+
     title = models.CharField(max_length=255)
     message = models.TextField()
     src = models.FileField(upload_to="announcements/", null=True, blank=True)
+    course = models.CharField(max_length=5, choices=COURSE_CHOICES, default="Both")
 
     def __str__(self):
         return self.title
@@ -20,6 +27,11 @@ class Period(models.Model):
         ("home", "Home"),
         ("documents", "Documents"),
     ]
+    COURSE_CHOICES = [
+        ("FYP1", "FYP1"),
+        ("FYP2", "FYP2"),
+        ("Both", "Both"),
+    ]
 
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -27,6 +39,7 @@ class Period(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     is_selection_period = models.BooleanField(default=False)
+    course = models.CharField(max_length=5, choices=COURSE_CHOICES, default="Both")
 
     def __str__(self):
         return self.title
@@ -43,10 +56,17 @@ class Period(models.Model):
 
 
 class Submissions(models.Model):
+    COURSE_CHOICES = [
+        ("FYP1", "FYP1"),
+        ("FYP2", "FYP2"),
+        ("Both", "Both"),
+    ]
+
     title = models.CharField(max_length=255)
     date_open = models.DateField()
     date_close = models.DateField()
     description = models.TextField()
+    course = models.CharField(max_length=5, choices=COURSE_CHOICES, default="Both")
 
     def __str__(self):
         return self.title

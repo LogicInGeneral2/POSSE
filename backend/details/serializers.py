@@ -7,7 +7,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Announcement
-        fields = ["id", "title", "message", "src"]
+        fields = ["id", "title", "message", "src", "course"]
 
     def get_src(self, obj):
         request = self.context.get("request")
@@ -28,6 +28,7 @@ class PeriodSerializer(serializers.ModelSerializer):
             "start_date",
             "end_date",
             "days_left",
+            "course",
         ]
 
     def get_days_left(self, obj):

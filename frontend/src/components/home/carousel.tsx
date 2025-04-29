@@ -25,7 +25,7 @@ function Announcements() {
   }
 
   return (
-    <Carousel>
+    <Carousel sx={{ textAlign: "justify" }}>
       {isLoading ? (
         <Box>
           <LoadingSpinner />

@@ -1,6 +1,8 @@
+# grades/forms.py
 from django import forms
-from users.models import User
+from users.models import User, Student
 from .models import Grade
+from users.utils import get_coordinator_course_filter
 
 
 class BulkGradeUpdateForm(forms.Form):
@@ -24,6 +26,14 @@ class GradeAdminForm(forms.ModelForm):
         help_text="Enter grades as a comma-separated list (e.g., 80,90,85)",
         required=False,
     )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+        if self.request:
+            course_filter, is_coordinator = get_coordinator_course_filter(self.request)
+            if is_coordinator and course_filter:
+                self.fields["student"].queryset = Student.objects.filter(course_filter)
 
     class Meta:
         model = Grade

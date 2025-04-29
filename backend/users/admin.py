@@ -1,10 +1,11 @@
+# users/admin.py
 from django.contrib import admin
-from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 import urllib
-from .models import SupervisorsRequest, User, Student
+from .forms import CustomUserChangeForm
+from .models import SupervisorsRequest, User, Student, CourseCoordinator
 from django.utils.html import format_html
 from django.contrib import messages
 from import_export.admin import ImportExportModelAdmin
@@ -12,22 +13,7 @@ from .resources import UserResource, StudentResource
 from django.core.mail import send_mail
 from backend import settings
 from django.db import transaction
-
-
-class CustomUserChangeForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = "__all__"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Disable is_examiner and is_available for students
-        if self.instance and self.instance.role == "student":
-            self.fields["is_examiner"].disabled = True
-            self.fields["is_available"].disabled = True
-
-    def clean_password(self):
-        return self.initial.get("password")
+from .utils import get_coordinator_course_filter
 
 
 @admin.register(User)
@@ -41,7 +27,7 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
     readonly_fields = ("username",)
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Personal info", {"fields": ("name", "role")}),
+        ("Personal info", {"fields": ("name", "role", "course")}),
         (
             "Permissions",
             {
@@ -63,10 +49,15 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "name", "role", "password1", "password2"),
+                "fields": ("email", "name", "role", "course", "password1", "password2"),
             },
         ),
     )
+
+    def get_form(self, request, obj=None, **kwargs):
+        kwargs["form"] = CustomUserChangeForm
+        kwargs["form"].request = request  # Pass request to form
+        return super().get_form(request, obj, **kwargs)
 
     def save_model(self, request, obj, form, change):
         if form.cleaned_data.get("password") and not change:
@@ -76,6 +67,16 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
             if existing.password != obj.password:
                 obj.set_password(obj.password)
         obj.save()
+
+        # Automatically create/update CourseCoordinator profile for course_coordinator
+        if obj.role == "course_coordinator":
+            course = form.cleaned_data.get("course")
+            try:
+                coordinator = CourseCoordinator.objects.get(user=obj)
+                coordinator.course = course
+                coordinator.save()
+            except CourseCoordinator.DoesNotExist:
+                CourseCoordinator.objects.create(user=obj, course=course)
 
     def delete_model(self, request, obj):
         if obj.is_superuser:
@@ -114,6 +115,72 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         super().delete_queryset(request, queryset)
 
 
+@admin.register(CourseCoordinator)
+class CourseCoordinatorAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "course")
+    list_filter = ("course",)
+    search_fields = ("user__name", "user__email")
+    fields = ("user", "course")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related("user")
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            return qs.filter(course_filter)
+        return qs
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = super().get_readonly_fields(request, obj)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter and obj:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if obj.course != coordinator_course and obj.course != "Both":
+                return self.fields
+        return readonly_fields
+
+    def save_model(self, request, obj, form, change):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if obj.course != coordinator_course and obj.course != "Both":
+                self.message_user(
+                    request,
+                    f"You can only create/edit coordinators for {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if obj.course != coordinator_course and obj.course != "Both":
+                self.message_user(
+                    request,
+                    f"You can only delete coordinators for {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            restricted = queryset.exclude(course=coordinator_course).exclude(
+                course="Both"
+            )
+            if restricted.exists():
+                self.message_user(
+                    request,
+                    f"You can only delete coordinators for {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().delete_queryset(request, queryset)
+
+
 @admin.register(Student)
 class StudentAdmin(ImportExportModelAdmin):
     resource_class = StudentResource
@@ -122,13 +189,70 @@ class StudentAdmin(ImportExportModelAdmin):
     search_fields = ("user__name", "student_id", "user__email")
     actions = ["promote_to_fyp2"]
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            return qs.filter(course_filter)
+        return qs
+
+    def save_model(self, request, obj, form, change):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if obj.course != coordinator_course and obj.course != "Both":
+                self.message_user(
+                    request,
+                    f"You can only create/edit students for {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if obj.course != coordinator_course and obj.course != "Both":
+                self.message_user(
+                    request,
+                    f"You can only delete students for {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            restricted = queryset.exclude(course=coordinator_course).exclude(
+                course="Both"
+            )
+            if restricted.exists():
+                self.message_user(
+                    request,
+                    f"You can only delete students for {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().delete_queryset(request, queryset)
+
     def supervisor_name(self, obj):
         return obj.supervisor.name if obj.supervisor else "-"
 
-    supervisor_name.short_description = "Supervisor"
-
     @admin.action(description="Promote selected students to FYP2")
     def promote_to_fyp2(self, request, queryset):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if coordinator_course == "FYP2":
+                self.message_user(
+                    request,
+                    "FYP2 coordinators cannot promote students to FYP2.",
+                    messages.ERROR,
+                )
+                return
         updated_count = queryset.filter(course="FYP1").update(course="FYP2")
         self.message_user(request, f"{updated_count} student(s) promoted to FYP2.")
 
@@ -184,14 +308,12 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
         return custom_urls + urls
 
     def process_approve(self, request, request_id):
-        """Process approval of a single supervisor request and update student profile."""
         if not request_id:
             self.message_user(request, "Invalid request ID.", messages.ERROR)
             return HttpResponseRedirect(
                 reverse("admin:users_supervisorsrequest_changelist")
             )
 
-        # Get supervisor request
         supervisor_request = self.get_object(request, request_id)
         if not supervisor_request:
             self.message_user(request, "Supervisor request not found.", messages.ERROR)
@@ -199,7 +321,6 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 reverse("admin:users_supervisorsrequest_changelist")
             )
 
-        # Validate supervisor
         try:
             supervisor = User.objects.get(
                 id=supervisor_request.supervisor_id, role="supervisor"
@@ -224,7 +345,6 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 reverse("admin:users_supervisorsrequest_changelist")
             )
 
-        # Validate student profile
         try:
             student_profile = Student.objects.get(user_id=supervisor_request.student.id)
         except Student.DoesNotExist:
@@ -244,18 +364,15 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
 
         try:
             with transaction.atomic():
-                # Update student profile
                 student_profile.supervisor = supervisor
                 student_profile.topic = supervisor_request.topic or ""
                 student_profile.mode = supervisor_request.mode or student_profile.mode
                 student_profile.save()
 
-                # Delete other supervisor requests
                 SupervisorsRequest.objects.filter(
                     student=supervisor_request.student
                 ).exclude(id=supervisor_request.id).delete()
 
-                # Prepare success message
                 success_message = (
                     f"Supervisor '{supervisor_request.supervisor_name}' assigned, "
                     f"mode set to '{student_profile.mode}', "
@@ -263,10 +380,9 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 )
                 self.message_user(request, success_message, messages.SUCCESS)
 
-                # Send email notification
                 try:
                     email = student_profile.user.email
-                    if email:  # Check if email exists
+                    if email:
                         subject = "Supervisor Request Approved"
                         message = (
                             f"Hi {student_profile.user.name},\n\n"
@@ -283,7 +399,7 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                             message=message,
                             from_email=settings.DEFAULT_FROM_EMAIL,
                             recipient_list=[email],
-                            fail_silently=True,  # Changed to True to prevent email failures from rolling back transaction
+                            fail_silently=True,
                         )
                     else:
                         self.message_user(
@@ -313,19 +429,20 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
         )
 
     def bulk_approve(self, request, queryset):
-        """Bulk approve selected supervisor requests and update student profiles."""
         success, failed = 0, 0
         for obj in queryset.select_related("student"):
-            supervisor = User.objects.get(id=obj.supervisor_id, role="supervisor")
-            student_profile = Student.objects.get(user_id=obj.student.id)
+            try:
+                supervisor = User.objects.get(id=obj.supervisor_id, role="supervisor")
+                student_profile = Student.objects.get(user_id=obj.student.id)
 
-            # Update student profile with supervisor, mode, and topic
-            student_profile.supervisor = supervisor
-            student_profile.topic = obj.topic or ""
-            student_profile.save()
+                student_profile.supervisor = supervisor
+                student_profile.topic = obj.topic or ""
+                student_profile.save()
 
-            # Delete other supervisor requests for the student
-            SupervisorsRequest.objects.filter(student=obj.student).delete()
+                SupervisorsRequest.objects.filter(student=obj.student).delete()
+                success += 1
+            except (User.DoesNotExist, Student.DoesNotExist):
+                failed += 1
 
         self.message_user(
             request,

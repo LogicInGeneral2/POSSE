@@ -13,7 +13,9 @@ export function Item({ item }: { item: AnnouncementTypes }) {
         overflow: "auto",
       }}
     >
-      <Typography sx={{ fontWeight: "bold" }}>{item.title}</Typography>
+      <Typography sx={{ fontWeight: "bold", fontSize: "1.25rem" }}>
+        {item.title}
+      </Typography>
       <Typography>{item.message}</Typography>{" "}
       <Download_Button
         fileUrl={item.src}

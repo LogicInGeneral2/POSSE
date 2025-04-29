@@ -88,18 +88,26 @@ export const SubmissionsPage = () => {
               gap: 1,
               overflow: "auto",
               scrollbarWidth: "none",
+              alignItems: meta.length === 0 ? "center" : "initial",
+              justifyContent: meta.length === 0 ? "center" : "initial",
             }}
           >
-            {meta.map((submissionMeta: SubmissionsMetaType) => (
-              <SubmissionCards
-                key={submissionMeta.id}
-                submission={submissionMeta.submission || []}
-                feedback={submissionMeta.feedback || []}
-                meta={submissionMeta}
-                refreshSubmissions={fetchSubmissions}
-                statusInfo={statusInfo}
-              />
-            ))}
+            {meta.length === 0 ? (
+              <Typography variant="h6" color="primary">
+                No submissions available yet.
+              </Typography>
+            ) : (
+              meta.map((submissionMeta: SubmissionsMetaType) => (
+                <SubmissionCards
+                  key={submissionMeta.id}
+                  submission={submissionMeta.submission || []}
+                  feedback={submissionMeta.feedback || []}
+                  meta={submissionMeta}
+                  refreshSubmissions={fetchSubmissions}
+                  statusInfo={statusInfo}
+                />
+              ))
+            )}
           </Box>
         )}
 

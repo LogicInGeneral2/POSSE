@@ -1,6 +1,6 @@
 from import_export import resources, fields
 from import_export.widgets import ForeignKeyWidget
-from .models import User, Student
+from .models import User, Student, CourseCoordinator
 from django.contrib.auth.hashers import make_password
 
 
@@ -24,14 +24,25 @@ class UserResource(resources.ModelResource):
         export_order = fields
 
     def before_import_row(self, row, **kwargs):
-        # Hash mandatory plain-text password
         if not row.get("password"):
             raise ValueError("Password is required for User import.")
         row["password"] = make_password(row["password"])
-        # Enforce student restrictions
         if row.get("role") == "student":
             row["is_examiner"] = False
             row["is_available"] = False
+        if row.get("role") == "course_coordinator":
+            row["is_staff"] = True
+
+
+class CourseCoordinatorResource(resources.ModelResource):
+    user = fields.Field(
+        column_name="user", attribute="user", widget=ForeignKeyWidget(User, "id")
+    )
+
+    class Meta:
+        model = CourseCoordinator
+        fields = ("id", "user", "course")
+        export_order = fields
 
 
 class StudentResource(resources.ModelResource):
@@ -64,10 +75,8 @@ class StudentResource(resources.ModelResource):
         export_order = fields
 
     def before_import_row(self, row, **kwargs):
-        # Validate mandatory password
         if not row.get("password"):
             raise ValueError("Password is required for Student import.")
-        # Create new User if no user ID is provided
         if not row.get("user") and row.get("email"):
             user_data = {
                 "email": row["email"],
@@ -82,16 +91,13 @@ class StudentResource(resources.ModelResource):
             try:
                 user = User.objects.create_user(**user_data)
                 row["user"] = user.id
-                # Check if a Student profile was created by the signal
                 if Student.objects.filter(user=user).exists():
-                    # Update existing Student profile instead of creating a new one
                     student = Student.objects.get(user=user)
                     student.student_id = row.get("student_id", student.student_id)
                     student.course = row.get("course", student.course)
                     if row.get("supervisor"):
                         student.supervisor_id = row["supervisor"]
                     student.save()
-                    # Indicate that this row should not create a new Student instance
                     row["_skip_instance_creation"] = True
             except ValueError as e:
                 raise ValueError(f"Failed to create User: {str(e)}")

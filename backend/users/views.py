@@ -86,7 +86,6 @@ class SupervisorListsView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Validate choices
             for choice in choices:
                 if not choice.get("supervisorName") or not choice.get("priority"):
                     return Response(
@@ -94,7 +93,6 @@ class SupervisorListsView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-            # Delete existing choices for student
             SupervisorsRequest.objects.filter(student_id=student_id).delete()
 
             instances = []
@@ -135,7 +133,6 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Get the refresh token from the request data
         refresh_token = request.data.get("refresh")
 
         if not refresh_token:
@@ -146,7 +143,7 @@ class LogoutView(APIView):
 
         try:
             token = RefreshToken(refresh_token)
-            token.blacklist()  # This blacklists the refresh token, effectively logging the user out
+            token.blacklist()
             return Response({"detail": "Logout successful."}, status=status.HTTP_200_OK)
         except TokenError:
             return Response(
@@ -161,7 +158,7 @@ class SuperviseeSubmissionsView(APIView):
         if request.user.role != "supervisor":
             return Response({"detail": "Unauthorized"}, status=403)
 
-        if category:  # Check if category is provided
+        if category:
             if category == "supervisor":
                 target = Student.objects.filter(supervisor=request.user)
             else:
@@ -244,7 +241,6 @@ class PasswordResetRequestView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Validate email format
             email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
             if not re.match(email_regex, email):
                 return Response(
@@ -319,7 +315,6 @@ class PasswordResetConfirmView(APIView):
 
     def post(self, request):
         try:
-            # Use DRF's request.data instead of json.loads
             uidb64 = request.data.get("uid")
             token = request.data.get("token")
             password = request.data.get("password")

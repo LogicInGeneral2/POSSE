@@ -3,9 +3,20 @@ from .models import SupervisorsRequest, User, Student
 
 
 class UserSerializer(serializers.ModelSerializer):
+    course = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ["id", "name", "email", "role"]
+        fields = ["id", "name", "email", "role", "course"]
+
+    def get_course(self, instance):
+        if instance.role == "student" and hasattr(instance, "student"):
+            return instance.student.course
+        elif instance.role == "course_coordinator" and hasattr(
+            instance, "course_coordinator_profile"
+        ):
+            return instance.course_coordinator_profile.course
+        return None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -13,7 +24,6 @@ class UserSerializer(serializers.ModelSerializer):
         if instance.role == "student" and hasattr(instance, "student"):
             student = instance.student
             data["student_id"] = student.student_id
-            data["course"] = student.course
             data["topic"] = student.topic
             data["mode"] = student.mode
             data["supervisor"] = student.supervisor.name if student.supervisor else None

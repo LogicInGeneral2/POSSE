@@ -1,4 +1,5 @@
 import {
+  BookRounded,
   CalendarMonth,
   DriveFolderUpload,
   ErrorRounded,
@@ -11,6 +12,7 @@ import {
   Grid2 as Grid,
   Paper,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { JSX, useEffect, useState } from "react";
@@ -20,6 +22,9 @@ import { periodTypes } from "../../services/types";
 import { useNavigate } from "react-router";
 import { format } from "date-fns";
 import ErrorNotice from "../commons/error";
+import InfoIcon from "@mui/icons-material/Info";
+import FolderIcon from "@mui/icons-material/Folder";
+import HomeIcon from "@mui/icons-material/Home";
 
 const iconMap: Record<string, JSX.Element> = {
   supervisors: (
@@ -29,6 +34,12 @@ const iconMap: Record<string, JSX.Element> = {
   ),
   submissions: (
     <DriveFolderUpload sx={{ fontSize: "2rem", color: "secondary.main" }} />
+  ),
+  logs: <BookRounded sx={{ fontSize: "2rem", color: "secondary.main" }} />,
+  home: <HomeIcon sx={{ fontSize: "2rem", color: "secondary.main" }} />,
+  documents: <FolderIcon sx={{ fontSize: "2rem", color: "secondary.main" }} />,
+  course_outline: (
+    <InfoIcon sx={{ fontSize: "2rem", color: "secondary.main" }} />
   ),
 };
 
@@ -112,26 +123,30 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
             </Grid>
             {isStudent && (
               <Grid size={1} sx={{ p: "10px" }}>
-                <ButtonBase
-                  sx={{
-                    width: "100%",
-                    height: "100%",
-                    backgroundColor: "primary.main",
-                    color: "orange",
-                    borderTopRightRadius: "8px",
-                    borderBottomRightRadius: "8px",
-                    textAlign: "center",
-                    display: "flex",
-                    border: "2px solid secondary.main",
-                  }}
-                  onClick={() => {
-                    navigator(`/${period.directory}`);
-                  }}
-                >
-                  {iconMap[period.directory as keyof typeof iconMap] || (
-                    <ErrorRounded sx={{ color: "primary.main" }} />
-                  )}
-                </ButtonBase>
+                {period.directory && (
+                  <Tooltip title="Take Me There!" placement="top">
+                    <ButtonBase
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        backgroundColor: "primary.main",
+                        color: "orange",
+                        borderTopRightRadius: "8px",
+                        borderBottomRightRadius: "8px",
+                        textAlign: "center",
+                        display: "flex",
+                        border: "2px solid secondary.main",
+                      }}
+                      onClick={() => {
+                        navigator(`/${period.directory}`);
+                      }}
+                    >
+                      {iconMap[period.directory as keyof typeof iconMap] || (
+                        <ErrorRounded sx={{ color: "primary.main" }} />
+                      )}
+                    </ButtonBase>
+                  </Tooltip>
+                )}
               </Grid>
             )}
 
@@ -183,7 +198,9 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
                 <Typography sx={{ fontWeight: "bold" }}>END DATE</Typography>
                 <EventBusyRounded sx={{ fontSize: "3rem" }} />
                 <Typography sx={{ fontWeight: "bold" }}>
-                  {format(period.end_date, "d MMMM yyyy")}
+                  {period.start_date
+                    ? format(new Date(period.start_date), "dd MMM yyyy")
+                    : "N/A"}{" "}
                 </Typography>
               </Box>
               <Box

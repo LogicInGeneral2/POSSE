@@ -104,7 +104,17 @@ class StudentSubmissionsView(APIView):
             return Response({"detail": "Unauthorized"}, status=403)
 
         student = get_object_or_404(Student, user_id=student_id)
-        submission_phases = Submissions.objects.all().order_by("-date_close")
+
+        submission_phases = Submissions.objects.all().order_by(
+            "date_open",
+            "date_close",
+        )
+
+        student_course = request.user.student.course
+        submission_phases = submission_phases.filter(
+            course__in=[student_course, "Both"]
+        )
+
         serializer = CombinedSubmissionSerializer(
             submission_phases,
             many=True,

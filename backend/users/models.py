@@ -5,6 +5,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.db.models import Q
 
 
 def upload_to_supervisor_requests(instance, filename):
@@ -61,6 +62,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.role not in ["supervisor", "examiner"]:
             self.is_examiner = False
             self.is_available = False
+        # Enforce is_staff for course_coordinator
+        if self.role == "course_coordinator":
+            self.is_staff = True
         # Auto-generate username
         if not self.username and self.email:
             base_username = self.email.split("@")[0]
@@ -74,6 +78,31 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.name} ({self.get_role_display()})"
+
+
+class CourseCoordinator(models.Model):
+    COURSE_CHOICES = [
+        ("FYP1", "FYP1"),
+        ("FYP2", "FYP2"),
+        ("Both", "Both"),
+    ]
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        limit_choices_to=~Q(role="student"),
+        related_name="course_coordinator_profile",
+    )
+    course = models.CharField(max_length=10, choices=COURSE_CHOICES, default="FYP1")
+
+    def __str__(self):
+        return f"{self.user.name} ({self.course})"
+
+    def save(self, *args, **kwargs):
+        # Ensure the associated user is a course coordinator
+        if self.user.role not in ["course_coordinator", "supervisor"]:
+            raise ValueError("User must have role 'course_coordinator'.")
+        super().save(*args, **kwargs)
 
 
 class Student(models.Model):

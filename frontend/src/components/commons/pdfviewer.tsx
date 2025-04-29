@@ -22,11 +22,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const { ref, width: containerWidth } = useContainerWidth();
   const Height = customHeight;
 
+  const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(src);
+
   const onLoadSuccess: DocumentProps["onLoadSuccess"] = ({ numPages }) => {
     setNumPages(numPages || 0);
   };
 
   const pageWidth = containerWidth ? containerWidth * zoom : 600;
+  const imageWidth = containerWidth ? containerWidth * zoom : 600;
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.1, 0.5));
@@ -61,26 +64,39 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           justifyContent: "center",
           borderRadius: "8px",
           display: "flex",
+          alignItems: "center",
         }}
       >
-        <Document
-          file={src}
-          onLoadSuccess={onLoadSuccess}
-          loading={<div style={{ padding: "10px" }}>Loading PDF...</div>}
-          error={
-            <div style={{ padding: "10px", color: "red" }}>
-              Failed to load PDF.
-            </div>
-          }
-        >
-          {Array.from({ length: numPages }, (_, index) => (
-            <Page
-              key={`page_${index + 1}`}
-              pageNumber={index + 1}
-              width={pageWidth}
-            />
-          ))}
-        </Document>
+        {isImage ? (
+          <img
+            src={src}
+            alt="Uploaded file"
+            style={{
+              width: `${imageWidth}px`,
+              height: "auto",
+              objectFit: "contain",
+            }}
+          />
+        ) : (
+          <Document
+            file={src}
+            onLoadSuccess={onLoadSuccess}
+            loading={<div style={{ padding: "10px" }}>Loading PDF...</div>}
+            error={
+              <div style={{ padding: "10px", color: "red" }}>
+                Failed to load PDF.
+              </div>
+            }
+          >
+            {Array.from({ length: numPages }, (_, index) => (
+              <Page
+                key={`page_${index + 1}`}
+                pageNumber={index + 1}
+                width={pageWidth}
+              />
+            ))}
+          </Document>
+        )}
       </Box>
     </div>
   );

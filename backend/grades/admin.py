@@ -1,5 +1,8 @@
+# grades/admin.py
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
+from users.models import CourseCoordinator
+from users.utils import get_coordinator_course_filter
 from .resources import MarkingSchemeResource
 from .models import MarkingScheme, Grade
 from .forms import BulkGradeUpdateForm, GradeAdminForm
@@ -88,16 +91,74 @@ class GradeAdmin(admin.ModelAdmin):
     raw_id_fields = ["student", "grader", "scheme"]
     autocomplete_fields = ["student", "grader", "scheme"]
     actions = ["export_grades_to_csv", "bulk_update_grades"]
-    date_hierarchy = "created_at"
+
+    def get_form(self, request, obj=None, **kwargs):
+        kwargs["form"] = GradeAdminForm
+        kwargs["form"].request = request
+        return super().get_form(request, obj, **kwargs)
 
     def get_queryset(self, request):
-        return (
+        qs = (
             super()
             .get_queryset(request)
             .select_related("student__user", "grader", "scheme")
         )
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator = CourseCoordinator.objects.get(user=request.user)
+            if coordinator.course != "Both":
+                qs = qs.filter(student__course__in=[coordinator.course, "Both"])
+            # If course is "Both", no filtering needed
+        return qs
 
-    # Custom display methods
+    def save_model(self, request, obj, form, change):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if (
+                obj.student.course != coordinator_course
+                and obj.student.course != "Both"
+            ):
+                self.message_user(
+                    request,
+                    f"You can only create/edit grades for students in {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if (
+                obj.student.course != coordinator_course
+                and obj.student.course != "Both"
+            ):
+                self.message_user(
+                    request,
+                    f"You can only delete grades for students in {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            restricted = queryset.exclude(student__course=coordinator_course).exclude(
+                student__course="Both"
+            )
+            if restricted.exists():
+                self.message_user(
+                    request,
+                    f"You can only delete grades for students in {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().delete_queryset(request, queryset)
+
     def student_name(self, obj):
         return obj.student.user.name if obj.student.user else "N/A"
 
@@ -130,7 +191,6 @@ class GradeAdmin(admin.ModelAdmin):
 
     grade_summary.short_description = "Grade Total"
 
-    # Custom action: Export grades to CSV
     def export_grades_to_csv(self, request, queryset):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="grades_export.csv"'
@@ -146,7 +206,6 @@ class GradeAdmin(admin.ModelAdmin):
             ]
         )
 
-        # Group grades by student, ensuring no duplicates
         student_ids = queryset.values("student").distinct()
         for student_id in student_ids:
             student_grades = queryset.filter(
@@ -155,12 +214,10 @@ class GradeAdmin(admin.ModelAdmin):
             if not student_grades.exists():
                 continue
 
-            # Get student details from the first grade entry
             first_grade = student_grades.first()
             student_name = first_grade.student.user.name or "N/A"
             student_course = first_grade.student.course or "N/A"
 
-            # Combine grades and marking schemes
             grades_by_scheme = {
                 grade.scheme.label: grade.grades for grade in student_grades
             }
@@ -173,7 +230,6 @@ class GradeAdmin(admin.ModelAdmin):
                 or "N/A"
             )
 
-            # Get earliest created_at and latest updated_at
             created_at = (
                 student_grades.order_by("created_at").first().created_at
                 if student_grades.exists()
@@ -199,7 +255,6 @@ class GradeAdmin(admin.ModelAdmin):
 
     export_grades_to_csv.short_description = "Export selected grades to CSV"
 
-    # Add custom URLs for bulk update
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -233,7 +288,3 @@ class GradeAdmin(admin.ModelAdmin):
             "admin/bulk_grade_update.html",
             {"form": form, "title": "Bulk Update Grades"},
         )
-
-    # Enable autocomplete for foreign key fields
-    search_fields = ["student__user__name", "grader__name", "scheme__label"]
-    autocomplete_fields = ["student", "grader", "scheme"]

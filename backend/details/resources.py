@@ -10,6 +10,7 @@ class AnnouncementResource(resources.ModelResource):
             "title",
             "message",
             "src",
+            "course",
         )
         export_order = fields
 
@@ -25,6 +26,7 @@ class PeriodResource(resources.ModelResource):
             "start_date",
             "end_date",
             "is_selection_period",
+            "course",
         )
         export_order = fields
 
@@ -38,5 +40,6 @@ class SubmissionsResource(resources.ModelResource):
             "date_open",
             "date_close",
             "description",
+            "course",
         )
         export_order = fields

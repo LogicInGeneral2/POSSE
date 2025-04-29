@@ -237,6 +237,7 @@ JAZZMIN_SETTINGS = {
         "settings.submissionStatusTheme": "fas fa-palette",
         "settings.SystemTheme": "fas fa-palette",
         "users.User": "fas fa-user",
+        "users.CourseCoordinator": "fas fa-chalkboard-user",
         "users.Student": "fas fa-graduation-cap",
         "users.SupervisorsRequest": "fas fa-user-group",
         "grades.Grade": "fas fa-clipboard-list",
