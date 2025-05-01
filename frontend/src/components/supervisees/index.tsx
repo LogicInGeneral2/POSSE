@@ -110,6 +110,13 @@ export const SuperviseesPage = () => {
       <CustomTabPanel value={value} index={0}>
         {isLoading ? (
           <LoadingSpinner />
+        ) : supervisees.length === 0 ? (
+          <Typography
+            color="primary"
+            sx={{ fontWeight: "bold", textAlign: "center" }}
+          >
+            No students assigned as supervisees
+          </Typography>
         ) : (
           <DataTable
             data={supervisees}
@@ -121,6 +128,13 @@ export const SuperviseesPage = () => {
       <CustomTabPanel value={value} index={1}>
         {isLoading ? (
           <LoadingSpinner />
+        ) : evaluatees.length === 0 ? (
+          <Typography
+            color="primary "
+            sx={{ fontWeight: "bold", textAlign: "center" }}
+          >
+            No students assigned as evaluatees{" "}
+          </Typography>
         ) : (
           <DataTable
             data={evaluatees}

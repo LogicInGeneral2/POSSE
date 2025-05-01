@@ -1,5 +1,4 @@
 from django.db import models
-
 from users.models import Student, User
 
 
@@ -9,6 +8,14 @@ class MarkingScheme(models.Model):
     weightage = models.FloatField()
     pic = models.CharField(max_length=50)
     contents = models.JSONField()
+    course = models.CharField(
+        max_length=5,
+        choices=[
+            ("FYP1", "FYP1"),
+            ("FYP2", "FYP2"),
+        ],
+        default="FYP1",
+    )
 
     def __str__(self):
         return self.label

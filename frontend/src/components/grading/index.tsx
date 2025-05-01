@@ -22,6 +22,7 @@ export const GradingPage = () => {
     const fetchDoc = async () => {
       try {
         const src = await getMarkingSchemeDoc("PSM1");
+        console.log(src);
         setPdfUrl(src.data.src);
         setIsLoading(false);
       } catch (error) {

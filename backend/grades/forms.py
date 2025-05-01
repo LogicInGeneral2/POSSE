@@ -1,4 +1,3 @@
-# grades/forms.py
 from django import forms
 from users.models import User, Student
 from .models import Grade

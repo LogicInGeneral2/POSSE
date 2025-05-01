@@ -318,7 +318,8 @@ export default function Breadcrumb({
       key="student"
       options={names}
       getOptionLabel={(option) => option.name}
-      value={selectedSubmission ?? undefined}
+      // @ts-ignore
+      value={selectedStudent}
       onChange={(_, value) => handleSelectStudent(value)}
       disableClearable
       size="small"

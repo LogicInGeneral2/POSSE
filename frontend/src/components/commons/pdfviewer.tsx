@@ -64,7 +64,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           justifyContent: "center",
           borderRadius: "8px",
           display: "flex",
-          alignItems: "center",
         }}
       >
         {isImage ? (

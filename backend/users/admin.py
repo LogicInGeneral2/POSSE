@@ -1,10 +1,9 @@
-# users/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 import urllib
-from .forms import CustomUserChangeForm
+from .forms import CustomUserChangeForm, ExaminerSelectionForm
 from .models import SupervisorsRequest, User, Student, CourseCoordinator
 from django.utils.html import format_html
 from django.contrib import messages
@@ -14,6 +13,57 @@ from django.core.mail import send_mail
 from backend import settings
 from django.db import transaction
 from .utils import get_coordinator_course_filter
+from django.shortcuts import render
+
+
+# Inline for Supervisees (students supervised by a supervisor)
+class SuperviseeInline(admin.TabularInline):
+    model = Student
+    fk_name = "supervisor"
+    fields = ("student_id", "user", "course", "topic", "mode")
+    readonly_fields = ("student_id", "user", "course", "topic", "mode")
+    extra = 0
+    verbose_name = "Supervised Student"
+    verbose_name_plural = "Supervised Students"
+
+    def has_add_permission(self, request, obj=None):
+        return False  # Prevent adding new students directly from the User admin
+
+    def has_change_permission(self, request, obj=None):
+        return False  # Make the inline read-only
+
+    def has_delete_permission(self, request, obj=None):
+        return False  # Prevent deleting students from the inline
+
+
+# Inline for Evaluatees (students evaluated by an examiner)
+class EvaluateeInline(admin.TabularInline):
+    model = (
+        Student.evaluators.through
+    )  # Access the through model for the ManyToManyField
+    fields = ("student", "course", "topic", "mode")
+    readonly_fields = ("student", "course", "topic", "mode")
+    extra = 0
+    verbose_name = "Evaluated Student"
+    verbose_name_plural = "Evaluated Students"
+
+    def course(self, obj):
+        return obj.student.course
+
+    def topic(self, obj):
+        return obj.student.topic or "-"
+
+    def mode(self, obj):
+        return obj.student.mode
+
+    def has_add_permission(self, request, obj=None):
+        return False  # Prevent adding new evaluatees directly
+
+    def has_change_permission(self, request, obj=None):
+        return False  # Make the inline read-only
+
+    def has_delete_permission(self, request, obj=None):
+        return False  # Prevent deleting evaluatees from the inline
 
 
 @admin.register(User)
@@ -49,10 +99,13 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "name", "role", "course", "password1", "password2"),
+                "fields": ("email", "name", "role", "course", "password"),
             },
         ),
     )
+
+    # Add inlines for supervisees and evaluatees
+    inlines = [SuperviseeInline, EvaluateeInline]
 
     def get_form(self, request, obj=None, **kwargs):
         kwargs["form"] = CustomUserChangeForm
@@ -111,8 +164,14 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
                 f"Cannot delete the following users: {', '.join(restricted_users)}.",
                 messages.ERROR,
             )
-            return
+        return
         super().delete_queryset(request, queryset)
+
+    def get_inlines(self, request, obj):
+        # Only show inlines for users with supervisor or examiner roles
+        if obj and obj.role in ["supervisor", "examiner"]:
+            return [SuperviseeInline, EvaluateeInline]
+        return []
 
 
 @admin.register(CourseCoordinator)
@@ -184,10 +243,145 @@ class CourseCoordinatorAdmin(admin.ModelAdmin):
 @admin.register(Student)
 class StudentAdmin(ImportExportModelAdmin):
     resource_class = StudentResource
-    list_display = ("id", "user", "student_id", "course", "supervisor_name")
+    list_display = (
+        "id",
+        "user",
+        "student_id",
+        "course",
+        "supervisor_name",
+    )
     list_filter = ("course",)
     search_fields = ("user__name", "student_id", "user__email")
-    actions = ["promote_to_fyp2"]
+    actions = ["promote_to_fyp2", "bulk_assign_examiner"]
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "select-examiner-bulk/<str:student_ids>/",
+                self.admin_site.admin_view(self.select_examiner_for_bulk),
+                name="select_examiner_for_bulk",
+            ),
+        ]
+        return custom_urls + urls
+
+    def select_examiner_for_bulk(self, request, student_ids):
+        student_ids_list = student_ids.split(",")
+        students = self.get_queryset(request).filter(id__in=student_ids_list)
+        if not students.exists():
+            self.message_user(request, "No valid students found.", messages.ERROR)
+            return HttpResponseRedirect(reverse("admin:users_student_changelist"))
+
+        if request.method == "POST":
+            form = ExaminerSelectionForm(request.POST)
+            if form.is_valid():
+                selected_examiners = form.cleaned_data["examiners"]
+                course_filter, is_coordinator = get_coordinator_course_filter(request)
+                success_count = 0
+                failed_count = 0
+
+                for student in students:
+                    if is_coordinator and course_filter:
+                        coordinator_course = CourseCoordinator.objects.get(
+                            user=request.user
+                        ).course
+                        if (
+                            student.course != coordinator_course
+                            and student.course != "Both"
+                        ):
+                            failed_count += 1
+                            continue
+                    if not student.supervisor:
+                        failed_count += 1
+                        continue
+                    try:
+                        with transaction.atomic():
+                            for examiner in selected_examiners:
+                                student.evaluators.add(examiner)
+                                try:
+                                    student_email = student.user.email
+                                    examiner_email = examiner.email
+                                    if student_email and examiner_email:
+                                        subject = "Examiner Assigned to Your Project"
+                                        message = (
+                                            f"Hi {student.user.name},\n\n"
+                                            f"An examiner has been assigned to your project.\n"
+                                            f"Assigned Examiner: {examiner.name}\n"
+                                            f"Please contact your examiner for further details.\n\n"
+                                            f"Best regards,\n"
+                                            f"POSSE"
+                                        )
+                                        send_mail(
+                                            subject=subject,
+                                            message=message,
+                                            from_email=settings.DEFAULT_FROM_EMAIL,
+                                            recipient_list=[
+                                                student_email,
+                                                examiner_email,
+                                            ],
+                                            fail_silently=True,
+                                        )
+                                except Exception as email_error:
+                                    self.message_user(
+                                        request,
+                                        f"Email notification failed for {student.user.name} - {examiner.name}: {str(email_error)}",
+                                        messages.WARNING,
+                                    )
+                            student.save()
+                            success_count += 1
+                    except Exception as e:
+                        failed_count += 1
+                        self.message_user(
+                            request,
+                            f"Failed to assign examiners to {student.user.name}: {str(e)}",
+                            messages.WARNING,
+                        )
+                        continue
+
+                self.message_user(
+                    request,
+                    f"{success_count} student(s) updated. {failed_count} failed due to permission or supervisor issues.",
+                    messages.SUCCESS if success_count > 0 else messages.ERROR,
+                )
+                return HttpResponseRedirect(reverse("admin:users_student_changelist"))
+        else:
+            form = ExaminerSelectionForm()
+
+        return render(
+            request,
+            "select_examiner_form.html",
+            {
+                "form": form,
+                "student_ids": student_ids,
+                "students": students,
+                "title": "Select Examiner for Selected Students",
+            },
+        )
+
+    @admin.action(description="Assign examiner to selected students")
+    def bulk_assign_examiner(self, request, queryset):
+        student_ids = ",".join(map(str, queryset.values_list("id", flat=True)))
+        return HttpResponseRedirect(
+            reverse("admin:select_examiner_for_bulk", args=[student_ids])
+        )
+
+    def supervisor_name(self, obj):
+        return obj.supervisor.name if obj.supervisor else "-"
+
+    @admin.action(description="Promote selected students to FYP2")
+    def promote_to_fyp2(self, request, queryset):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if coordinator_course == "FYP2":
+                self.message_user(
+                    request,
+                    "FYP2 coordinators cannot promote students to FYP2.",
+                    messages.ERROR,
+                )
+                return
+        updated_count = queryset.filter(course="FYP1").update(course="FYP2")
+        self.message_user(request, f"{updated_count} student(s) promoted to FYP2.")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -237,24 +431,6 @@ class StudentAdmin(ImportExportModelAdmin):
                 )
                 return
         super().delete_queryset(request, queryset)
-
-    def supervisor_name(self, obj):
-        return obj.supervisor.name if obj.supervisor else "-"
-
-    @admin.action(description="Promote selected students to FYP2")
-    def promote_to_fyp2(self, request, queryset):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            if coordinator_course == "FYP2":
-                self.message_user(
-                    request,
-                    "FYP2 coordinators cannot promote students to FYP2.",
-                    messages.ERROR,
-                )
-                return
-        updated_count = queryset.filter(course="FYP1").update(course="FYP2")
-        self.message_user(request, f"{updated_count} student(s) promoted to FYP2.")
 
 
 @admin.register(SupervisorsRequest)

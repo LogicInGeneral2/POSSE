@@ -1,14 +1,11 @@
-# grades/admin.py
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 from users.models import CourseCoordinator
 from users.utils import get_coordinator_course_filter
-from .resources import MarkingSchemeResource
+from .resources import GradeResource, MarkingSchemeResource
 from .models import MarkingScheme, Grade
 from .forms import BulkGradeUpdateForm, GradeAdminForm
 from django.http import HttpResponseRedirect
-import csv
-from django.http import HttpResponse
 from django.urls import path
 from django.urls import reverse
 from django.contrib import messages
@@ -19,8 +16,8 @@ from django.contrib.admin import SimpleListFilter
 @admin.register(MarkingScheme)
 class MarkingSchemeAdmin(ImportExportModelAdmin):
     resource_class = MarkingSchemeResource
-    list_display = ["label", "marks", "weightage", "pic"]
-    list_filter = ["pic"]
+    list_display = ["label", "marks", "weightage", "pic", "course"]
+    list_filter = ["pic", "course"]
     search_fields = ["label", "contents"]
 
 
@@ -59,7 +56,8 @@ class MarkingSchemeFilter(SimpleListFilter):
 
 
 @admin.register(Grade)
-class GradeAdmin(admin.ModelAdmin):
+class GradeAdmin(ImportExportModelAdmin):  # change this line
+    resource_class = GradeResource
     form = GradeAdminForm
     list_display = [
         "student_name",
@@ -190,70 +188,6 @@ class GradeAdmin(admin.ModelAdmin):
         return "N/A"
 
     grade_summary.short_description = "Grade Total"
-
-    def export_grades_to_csv(self, request, queryset):
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="grades_export.csv"'
-        writer = csv.writer(response)
-        writer.writerow(
-            [
-                "Student",
-                "Course",
-                "Grades by Marking Scheme",
-                "Total Grade",
-                "Created At (Earliest)",
-                "Updated At (Latest)",
-            ]
-        )
-
-        student_ids = queryset.values("student").distinct()
-        for student_id in student_ids:
-            student_grades = queryset.filter(
-                student=student_id["student"]
-            ).select_related("student__user", "scheme")
-            if not student_grades.exists():
-                continue
-
-            first_grade = student_grades.first()
-            student_name = first_grade.student.user.name or "N/A"
-            student_course = first_grade.student.course or "N/A"
-
-            grades_by_scheme = {
-                grade.scheme.label: grade.grades for grade in student_grades
-            }
-            total_grade = (
-                sum(
-                    sum(grade.grades)
-                    for grade in student_grades
-                    if isinstance(grade.grades, list) and grade.grades
-                )
-                or "N/A"
-            )
-
-            created_at = (
-                student_grades.order_by("created_at").first().created_at
-                if student_grades.exists()
-                else "N/A"
-            )
-            updated_at = (
-                student_grades.order_by("-updated_at").first().updated_at
-                if student_grades.exists()
-                else "N/A"
-            )
-
-            writer.writerow(
-                [
-                    student_name,
-                    student_course,
-                    str(grades_by_scheme),
-                    total_grade,
-                    created_at,
-                    updated_at,
-                ]
-            )
-        return response
-
-    export_grades_to_csv.short_description = "Export selected grades to CSV"
 
     def get_urls(self):
         urls = super().get_urls()

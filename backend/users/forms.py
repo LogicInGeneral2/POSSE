@@ -52,3 +52,12 @@ class CustomUserChangeForm(forms.ModelForm):
 
     def clean_password(self):
         return self.initial.get("password")
+
+
+class ExaminerSelectionForm(forms.Form):
+    examiners = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(is_examiner=True),
+        label="Select Examiner(s)",
+        required=True,
+        widget=forms.CheckboxSelectMultiple,
+    )

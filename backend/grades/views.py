@@ -2,7 +2,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from django.db.models import Q
 from .models import MarkingScheme, Grade, Student, User
 from .serializers import (
     MarkingSchemeSerializer,
@@ -19,11 +18,15 @@ class GetMarkingSchemeView(APIView):
         student = Student.objects.get(id=student_id)
 
         if user.role == "course_coordinator":
-            schemes = MarkingScheme.objects.all()
+            schemes = MarkingScheme.objects.filter(course=student.course)
         elif user.is_examiner and user in student.evaluators.all():
-            schemes = MarkingScheme.objects.filter(Q(pic="examiner"))
+            schemes = MarkingScheme.objects.filter(
+                pic="examiner", course=student.course
+            )
         else:
-            schemes = MarkingScheme.objects.filter(pic="supervisor")
+            schemes = MarkingScheme.objects.filter(
+                pic="supervisor", course=student.course
+            )
 
         serializer = MarkingSchemeSerializer(schemes, many=True)
         return Response(serializer.data)
