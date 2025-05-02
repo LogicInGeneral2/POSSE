@@ -97,7 +97,7 @@ urlpatterns = [
     path("periods/", AllPeriodsView.as_view(), name="all-periods"),
     path("documents/", DocumentListView.as_view(), name="documents"),
     path(
-        "documents/scheme/<str:title>/",
+        "documents/scheme/<str:student_id>/",
         DocumentListView.as_view(),
         name="marking-scheme",
     ),

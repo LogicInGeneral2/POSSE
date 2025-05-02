@@ -149,23 +149,43 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
             return
         super().delete_model(request, obj)
 
-    def delete_queryset(self, request, queryset):
-        restricted_users = []
-        for obj in queryset:
-            if obj.is_superuser:
-                restricted_users.append(f"{obj.email} (superadmin)")
-            if obj == request.user:
-                restricted_users.append(f"{obj.email} (current user)")
-            if obj.role in ["course_coordinator"]:
-                restricted_users.append(f"{obj.email} (course coordinator)")
-        if restricted_users:
-            self.message_user(
-                request,
-                f"Cannot delete the following users: {', '.join(restricted_users)}.",
-                messages.ERROR,
-            )
-        return
-        super().delete_queryset(request, queryset)
+
+def delete_queryset(self, request, queryset):
+    restricted_users = []
+    allowed_users = []
+
+    # Check each user for restrictions
+    for obj in queryset:
+        if obj.is_superuser:
+            restricted_users.append(f"{obj.email} (superadmin)")
+        elif obj == request.user:
+            restricted_users.append(f"{obj.email} (current user)")
+        elif obj.role in ["course_coordinator"]:
+            restricted_users.append(f"{obj.email} (course coordinator)")
+        else:
+            allowed_users.append(obj)
+
+    # If there are restricted users, show an error message
+    if restricted_users:
+        self.message_user(
+            request,
+            f"Cannot delete the following users: {', '.join(restricted_users)}.",
+            messages.ERROR,
+        )
+
+    # If there are allowed users, delete them
+    if allowed_users:
+        super().delete_queryset(
+            request, User.objects.filter(id__in=[obj.id for obj in allowed_users])
+        )
+
+    # If no users were allowed, inform the user
+    if not allowed_users and restricted_users:
+        self.message_user(
+            request,
+            "No users were deleted because all selected users are restricted.",
+            messages.WARNING,
+        )
 
     def get_inlines(self, request, obj):
         # Only show inlines for users with supervisor or examiner roles
