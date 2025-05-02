@@ -31,7 +31,6 @@ function DownloadDialog({
   useEffect(() => {
     const fetchSubmissionList = async () => {
       const data = await getUserSubmissions(id);
-      console.log(data.data);
       setSubmissionList(data.data);
       setIsloading(false);
     };

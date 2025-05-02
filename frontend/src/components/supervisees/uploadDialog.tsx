@@ -61,7 +61,6 @@ function UploadDialog({
     setIsloading(true);
     try {
       const data = await getUserSubmissions(id);
-      console.log(data.data);
       setSubmissionList(data.data);
 
       if (selectedSubmission) {

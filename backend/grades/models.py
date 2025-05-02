@@ -6,7 +6,14 @@ class MarkingScheme(models.Model):
     label = models.CharField(max_length=255)
     marks = models.FloatField()
     weightage = models.FloatField()
-    pic = models.CharField(max_length=50)
+    pic = models.CharField(
+        max_length=50,
+        choices=[
+            ("supervisor", "Supervisor"),
+            ("examiner", "Examiner"),
+            ("coordinator", "Coordinator"),
+        ],
+    )
     contents = models.JSONField()
     course = models.CharField(
         max_length=5,

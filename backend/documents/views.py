@@ -44,10 +44,11 @@ from django.core.mail import send_mail
 
 
 class DocumentListView(APIView):
-    def get(self, request, title=None):
-        if title:
+    def get(self, request, student_id=None):
+        if student_id:
+            course = get_object_or_404(Student, id=student_id).course
             document = get_object_or_404(
-                Document, category__label="Marking Scheme", title=title
+                Document, category__label="Marking Scheme", title=course
             )
             serializer = MarkingSchemeSerializer(document, context={"request": request})
         else:

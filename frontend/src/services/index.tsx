@@ -314,7 +314,6 @@ export const getUserSubmission = async (
 ) => {
   try {
     const data = await api.get(`submissions/${student}/${submission}/`);
-    console.log(data);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -364,9 +363,9 @@ export const deleteFeedback = async (feedbackId: number) => {
   }
 };
 
-export const getMarkingSchemeDoc = async (title: string) => {
+export const getMarkingSchemeDoc = async (student: number) => {
   try {
-    const data = await api.get(`documents/scheme/${title}/`);
+    const data = await api.get(`documents/scheme/${student}/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);

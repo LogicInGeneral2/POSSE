@@ -20,6 +20,83 @@ class MarkingSchemeAdmin(ImportExportModelAdmin):
     list_filter = ["pic", "course"]
     search_fields = ["label", "contents"]
 
+    def get_queryset(self, request):
+        """
+        Filter the queryset to show only MarkingSchemes for the coordinator's course
+        or those with course='Both', unless the user is a superuser.
+        """
+        qs = super().get_queryset(request)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            qs = qs.filter(course_filter)
+        return qs
+
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Modify the form to restrict course choices based on the coordinator's course.
+        """
+        form = super().get_form(request, obj, **kwargs)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator = CourseCoordinator.objects.get(user=request.user)
+            if coordinator.course != "Both":
+                # Restrict course choices to coordinator's course and 'Both'
+                form.base_fields["course"].queryset = form.base_fields[
+                    "course"
+                ].queryset.filter(course__in=[coordinator.course, "Both"])
+        return form
+
+    def save_model(self, request, obj, form, change):
+        """
+        Prevent saving MarkingSchemes for courses outside the coordinator's permission.
+        """
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if obj.course != coordinator_course and obj.course != "Both":
+                self.message_user(
+                    request,
+                    f"You can only create/edit marking schemes for {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        """
+        Prevent deletion of MarkingSchemes for courses outside the coordinator's permission.
+        """
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if obj.course != coordinator_course and obj.course != "Both":
+                self.message_user(
+                    request,
+                    f"You can only delete marking schemes for {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        """
+        Prevent deletion of MarkingSchemes for courses outside the coordinator's permission.
+        """
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            restricted = queryset.exclude(course=coordinator_course).exclude(
+                course="Both"
+            )
+            if restricted.exists():
+                self.message_user(
+                    request,
+                    f"You can only delete marking schemes for {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().delete_queryset(request, queryset)
+
 
 class StudentNameFilter(SimpleListFilter):
     title = "Student Name"

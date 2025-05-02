@@ -21,8 +21,7 @@ export const GradingPage = () => {
   useEffect(() => {
     const fetchDoc = async () => {
       try {
-        const src = await getMarkingSchemeDoc("PSM1");
-        console.log(src);
+        const src = await getMarkingSchemeDoc(studentId);
         setPdfUrl(src.data.src);
         setIsLoading(false);
       } catch (error) {
