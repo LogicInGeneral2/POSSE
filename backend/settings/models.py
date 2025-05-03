@@ -35,7 +35,7 @@ class documentModes(models.Model):
 class documentTheme(models.Model):
     primary = models.CharField(max_length=7, validators=[HEX_COLOR_VALIDATOR])
     secondary = models.CharField(max_length=7, validators=[HEX_COLOR_VALIDATOR])
-    value = models.ForeignKey(documentCategories, on_delete=models.CASCADE)
+    value = models.CharField(max_length=255)
 
     def __str__(self):
         return str(self.value)

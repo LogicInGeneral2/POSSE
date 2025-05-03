@@ -3,7 +3,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import { JSX } from "react";
-import { BookRounded } from "@mui/icons-material";
+import { BookRounded, EditRounded } from "@mui/icons-material";
 
 export interface Action {
   label: string;
@@ -40,5 +40,10 @@ export const action_options = [
     icon: <EditNoteIcon />,
     type: "navigate",
     path: "/grading",
+  },
+  {
+    label: "Edit Topic",
+    icon: <EditRounded />,
+    type: "dialog",
   },
 ];

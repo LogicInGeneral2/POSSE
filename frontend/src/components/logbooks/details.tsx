@@ -220,7 +220,7 @@ export default function Details({
       <TextField
         fullWidth
         multiline
-        label="Activities"
+        label="Student (Meeting Minute/Achievements/Activities)"
         name="activities"
         value={logDetails.activities}
         onChange={handleChange}
@@ -230,7 +230,7 @@ export default function Details({
       <TextField
         fullWidth
         multiline
-        label="Feedbacks"
+        label="Supervisor's Suggestion & Comments"
         name="feedbacks"
         value={logDetails.feedbacks}
         onChange={handleChange}
@@ -240,7 +240,7 @@ export default function Details({
       <TextField
         fullWidth
         multiline
-        label="Plan"
+        label="Next Meeting Plan"
         name="plan"
         value={logDetails.plan}
         onChange={handleChange}
@@ -303,9 +303,11 @@ export default function Details({
           <Button variant="contained" color="primary" onClick={handleSave}>
             Save
           </Button>
-          <Button variant="contained" color="error" onClick={handleDelete}>
-            Delete
-          </Button>
+          {logDetails.status === "sent" && (
+            <Button variant="contained" color="error" onClick={handleDelete}>
+              Delete
+            </Button>
+          )}
         </Box>
       )}
       <Toast

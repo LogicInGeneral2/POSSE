@@ -206,9 +206,9 @@ export const getSupervisorChoices = async (studentId: number) => {
   }
 };
 
-export const getDocuments = async () => {
+export const getDocuments = async (category: string) => {
   try {
-    const data = await api.get(`/documents/`);
+    const data = await api.get(`/documents/${category}/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -218,7 +218,8 @@ export const getDocuments = async () => {
 
 export const getDocumentOptions = async () => {
   try {
-    const data = await api.get(`/documents/categories/`);
+    const data = await api.get(`/documents/categories`);
+    console.log(data);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);
@@ -591,4 +592,25 @@ export const changePassword = async (
     console.error("Error changing password:", error);
     throw new Error(error.response?.data?.error || "Failed to change password");
   }
+};
+
+export const getPeriodOptions = async () => {
+  try {
+    const data = await api.get(`/periods/list/`);
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching period:", error);
+    throw new Error(error);
+  }
+};
+
+export const updateStudentTopic = async (
+  studentId: number,
+  topic: string
+): Promise<void> => {
+  await api.patch(
+    `/api/users/topic/${studentId}/`,
+    { topic },
+    { withCredentials: true }
+  );
 };

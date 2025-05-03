@@ -38,6 +38,7 @@ from users.views import (
     PasswordResetRequestView,
     SuperviseeSubmissionsView,
     SupervisorListsView,
+    UpdateStudentTopicView,
 )
 from django.conf.urls.static import static
 from django.conf import settings
@@ -51,6 +52,11 @@ urlpatterns = [
     path("api/users/me/", CurrentUserView.as_view(), name="current_user"),
     path(
         "api/users/<int:student_id>/", CurrentUserView.as_view(), name="current_student"
+    ),
+    path(
+        "api/users/topic/<int:student_id>/",
+        UpdateStudentTopicView.as_view(),
+        name="update_student_topic",
     ),
     path("api/users/supervisor/", CurrentUserView.as_view(), name="current_supervisor"),
     path(
@@ -94,12 +100,27 @@ urlpatterns = [
     path("outline/", OutlineListView.as_view(), name="outline-list"),
     path("period/", CurrentPeriodView.as_view(), name="current-period"),
     path("period/selection/", CurrentPeriodView.as_view(), name="current-period"),
+    path("periods/list/", AllPeriodsView.as_view(), name="all-periods-list"),
     path("periods/", AllPeriodsView.as_view(), name="all-periods"),
-    path("documents/", DocumentListView.as_view(), name="documents"),
     path(
         "documents/scheme/<str:student_id>/",
         DocumentListView.as_view(),
         name="marking-scheme",
+    ),
+    path(
+        "documents/modes/",
+        DocumentModeListView.as_view(),
+        name="document-categories",
+    ),
+    path(
+        "documents/<str:category>/",
+        DocumentListView.as_view(),
+        name="documents",
+    ),
+    path(
+        "documents/",
+        DocumentListView.as_view(),
+        name="documents",
     ),
     path(
         "submissions/themes/",
@@ -165,11 +186,6 @@ urlpatterns = [
     path(
         "documents/categories/",
         DocumentCategoryListView.as_view(),
-        name="document-categories",
-    ),
-    path(
-        "documents/modes/",
-        DocumentModeListView.as_view(),
         name="document-categories",
     ),
     path("logbooks/", LogbookCreateUpdateView.as_view()),

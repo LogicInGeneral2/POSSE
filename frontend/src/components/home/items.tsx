@@ -16,7 +16,18 @@ export function Item({ item }: { item: AnnouncementTypes }) {
       <Typography sx={{ fontWeight: "bold", fontSize: "1.25rem" }}>
         {item.title}
       </Typography>
-      <Typography>{item.message}</Typography>{" "}
+      <Typography
+        sx={{
+          display: "-webkit-box",
+          WebkitLineClamp: 3,
+          WebkitBoxOrient: "vertical",
+          overflow: "auto", // allows scrolling
+          textOverflow: "ellipsis",
+          maxHeight: "4.5em", // roughly 3 lines
+        }}
+      >
+        {item.message}
+      </Typography>
       <Download_Button
         fileUrl={item.src}
         text="Download Attachment"

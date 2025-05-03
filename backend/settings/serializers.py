@@ -24,8 +24,6 @@ class OutlineSerializer(serializers.ModelSerializer):
 
 
 class documentThemeSerializer(serializers.ModelSerializer):
-    value = serializers.CharField(source="value.label", read_only=True)
-
     class Meta:
         model = documentTheme
         fields = "__all__"

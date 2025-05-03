@@ -25,11 +25,13 @@ import { useNavigate } from "react-router";
 import logo from "../assets/icon.png";
 import {
   BookRounded,
+  ExpandLess,
+  ExpandMore,
   GradingRounded,
   Person3Rounded,
   SupervisedUserCircleRounded,
 } from "@mui/icons-material";
-import { Tooltip } from "@mui/material";
+import { Collapse, Menu, MenuItem, Tooltip } from "@mui/material";
 import { useUser } from "../../context/UserContext";
 import { useEffect } from "react";
 import { getSelectionStatus } from "../services";
@@ -110,6 +112,10 @@ export default function NavigationBar() {
   const navigate = useNavigate();
   const { user } = useUser();
   const [status, setStatus] = React.useState<boolean | null>(null);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const docsMenuOpen = Boolean(anchorEl);
+  const documentCategories = ["forms", "templates", "samples", "lecture_notes"];
+  const [docsListOpen, setDocsListOpen] = React.useState(false);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -126,6 +132,17 @@ export default function NavigationBar() {
     };
     fetchStatus();
   }, []);
+
+  const handleDocsClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => setAnchorEl(null);
+
+  const handleNavigateToCategory = (category: string) => {
+    navigate(`/documents?category=${category}`);
+    handleMenuClose();
+  };
 
   const menuItems = [
     {
@@ -154,8 +171,8 @@ export default function NavigationBar() {
       text: "Documents",
       icon: <FolderIcon sx={{ color: "primary.main" }} />,
       path: "/documents",
+      isDocuments: true,
     },
-
     user?.role === "student" && {
       text: "Submissions",
       icon: <DriveFolderUploadIcon sx={{ color: "primary.main" }} />,
@@ -183,6 +200,97 @@ export default function NavigationBar() {
       path: "/logout",
     },
   ].filter(Boolean);
+
+  const renderDocumentsNav = () => {
+    if (open) {
+      return (
+        <>
+          <ListItemButton
+            onClick={() => setDocsListOpen(!docsListOpen)}
+            sx={{
+              minHeight: 48,
+              justifyContent: open ? "initial" : "center",
+              px: 2.5,
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: open ? 3 : "auto",
+                justifyContent: "center",
+                my: 0.5,
+              }}
+            >
+              <FolderIcon sx={{ color: "primary.main" }} />
+            </ListItemIcon>
+            <ListItemText primary="Documents" />
+            {docsListOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+          <Collapse in={docsListOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {documentCategories.map((category) => (
+                <ListItemButton
+                  key={category}
+                  sx={{ pl: 4 }}
+                  onClick={() => navigate(`/documents?category=${category}`)}
+                >
+                  <ListItemText
+                    primary={
+                      category.charAt(0).toUpperCase() +
+                      category.slice(1).replace("_", " ")
+                    }
+                  />
+                </ListItemButton>
+              ))}
+            </List>
+          </Collapse>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <ListItem disablePadding sx={{ display: "block" }}>
+            <Tooltip title="Documents" placement="right" arrow>
+              <ListItemButton
+                onClick={handleDocsClick}
+                sx={{
+                  minHeight: 48,
+                  justifyContent: "center",
+                  px: 2.5,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    justifyContent: "center",
+                  }}
+                >
+                  <FolderIcon sx={{ color: "primary.main" }} />
+                </ListItemIcon>
+              </ListItemButton>
+            </Tooltip>
+          </ListItem>
+          <Menu
+            anchorEl={anchorEl}
+            open={docsMenuOpen}
+            onClose={handleMenuClose}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+          >
+            {documentCategories.map((category) => (
+              <MenuItem
+                key={category}
+                onClick={() => handleNavigateToCategory(category)}
+              >
+                {category.charAt(0).toUpperCase() +
+                  category.slice(1).replace("_", " ")}
+              </MenuItem>
+            ))}
+          </Menu>
+        </>
+      );
+    }
+  };
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -241,53 +349,57 @@ export default function NavigationBar() {
                   disablePadding
                   sx={{ display: "block", color: "primary.main" }}
                 >
-                  <Tooltip
-                    title={item.text}
-                    placement="right"
-                    arrow
-                    slotProps={{
-                      popper: {
-                        modifiers: [
-                          {
-                            name: "offset",
-                            options: {
-                              offset: [0, -8],
+                  {item.isDocuments ? (
+                    renderDocumentsNav()
+                  ) : (
+                    <Tooltip
+                      title={item.text}
+                      placement="right"
+                      arrow
+                      slotProps={{
+                        popper: {
+                          modifiers: [
+                            {
+                              name: "offset",
+                              options: {
+                                offset: [0, -8],
+                              },
                             },
-                          },
-                        ],
-                      },
-                    }}
-                  >
-                    <ListItemButton
-                      sx={{
-                        minHeight: 48,
-                        justifyContent: open ? "initial" : "center",
-                        px: 2.5,
-                      }}
-                      onClick={() => {
-                        if (item.external) {
-                          window.open(item.path, "_blank");
-                        } else {
-                          navigate(item.path);
-                        }
+                          ],
+                        },
                       }}
                     >
-                      <ListItemIcon
+                      <ListItemButton
                         sx={{
-                          minWidth: 0,
-                          mr: open ? 3 : "auto",
-                          justifyContent: "center",
-                          my: 0.5,
+                          minHeight: 48,
+                          justifyContent: open ? "initial" : "center",
+                          px: 2.5,
+                        }}
+                        onClick={() => {
+                          if (item.external) {
+                            window.open(item.path, "_blank");
+                          } else {
+                            navigate(item.path);
+                          }
                         }}
                       >
-                        {item.icon}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={item.text}
-                        sx={{ opacity: open ? 1 : 0 }}
-                      />
-                    </ListItemButton>
-                  </Tooltip>
+                        <ListItemIcon
+                          sx={{
+                            minWidth: 0,
+                            mr: open ? 3 : "auto",
+                            justifyContent: "center",
+                            my: 0.5,
+                          }}
+                        >
+                          {item.icon}
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={item.text}
+                          sx={{ opacity: open ? 1 : 0 }}
+                        />
+                      </ListItemButton>
+                    </Tooltip>
+                  )}
                 </ListItem>
               )
           )}

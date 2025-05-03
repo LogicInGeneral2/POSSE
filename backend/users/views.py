@@ -184,14 +184,24 @@ class SuperviseeSubmissionsView(APIView):
             target = Student.objects.filter(supervisor=request.user)
 
         result = []
-        for student in target:
-            latest_submission = (
-                StudentSubmission.objects.filter(student=student)
-                .order_by("-upload_date")
-                .first()
-            )
 
+        for student in target:
+            all_submissions = StudentSubmission.objects.filter(
+                student=student
+            ).order_by("-upload_date")
             has_logbook = Logbook.objects.filter(student=student).exists()
+
+            submissions_list = [
+                {
+                    "id": submission.id,
+                    "status": "Reviewed"
+                    if submission.feedback_set.exists()
+                    else "Submitted",
+                    "type": "submission",
+                    "assignment_title": submission.submission_phase.title,
+                }
+                for submission in all_submissions
+            ]
 
             result.append(
                 {
@@ -203,24 +213,9 @@ class SuperviseeSubmissionsView(APIView):
                         "mode": student.mode,
                         "student_id": student.student_id,
                         "supervisor": request.user.name,
+                        "topic": student.topic,
                     },
-                    "submissions": []
-                    if not latest_submission
-                    else [
-                        {
-                            "id": latest_submission.id,
-                            "title": latest_submission.file.name.split("/")[-1],
-                            "upload_date": latest_submission.upload_date,
-                            "src": latest_submission.file.url,
-                            "status": "Reviewed"
-                            if latest_submission.feedback_set.exists()
-                            else "Submitted",
-                            "type": "submission",
-                            "studentId": student.id,
-                            "assignmentId": latest_submission.submission_phase.id,
-                            "assignment_title": latest_submission.submission_phase.title,
-                        }
-                    ],
+                    "submissions": submissions_list,
                     "has_logbook": has_logbook,
                 }
             )
@@ -382,6 +377,57 @@ class ChangePasswordView(APIView):
 
             return Response(
                 {"message": "Password changed successfully"},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class UpdateStudentTopicView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, student_id):
+        try:
+            if request.user.role == "student":
+                student = get_object_or_404(Student, user__id=student_id)
+            else:
+                student = get_object_or_404(Student, id=student_id)
+            if (
+                request.user.role != "course_coordinator"
+                and request.user != student.user
+                and (
+                    request.user.role != "supervisor"
+                    or student.supervisor != request.user
+                )
+            ):
+                return Response(
+                    {"error": "You are not authorized to update this student's topic"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            topic = request.data.get("topic")
+            if topic is None:
+                return Response(
+                    {"error": "Topic is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Validate topic length
+            if len(topic) > 255:
+                return Response(
+                    {"error": "Topic cannot exceed 255 characters"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            student.topic = topic
+            student.save()
+
+            return Response(
+                {"message": "Topic updated successfully", "topic": student.topic},
                 status=status.HTTP_200_OK,
             )
 

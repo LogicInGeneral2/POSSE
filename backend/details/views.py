@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Announcement, Period
-from .serializers import AnnouncementSerializer, PeriodSerializer
+from .models import Announcement, Period, Submissions
+from .serializers import AnnouncementSerializer, PeriodListSerializer, PeriodSerializer
 from django.utils import timezone
 
 
@@ -65,6 +65,11 @@ class CurrentPeriodView(APIView):
 class AllPeriodsView(APIView):
     def get(self, request):
         user = request.user
+
+        if request.resolver_match.url_name == "all-periods-list":
+            submissions_queryset = Submissions.objects.all()
+            serializer = PeriodListSerializer(submissions_queryset, many=True)
+            return Response(serializer.data)
 
         periods_queryset = Period.objects.all()
 

@@ -245,7 +245,8 @@ function UploadDialog({
               <TextField
                 label="Comments"
                 multiline
-                maxRows={4}
+                minRows={4}
+                maxRows={8}
                 fullWidth
                 size="small"
                 required

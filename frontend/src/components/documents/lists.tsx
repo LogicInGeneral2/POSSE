@@ -10,42 +10,29 @@ import {
   Stack,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
 } from "@mui/material";
 import FileCard from "./cards";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  getDocumentModes,
-  getDocumentOptions,
-  getDocuments,
-} from "../../services";
+import { getDocumentModes, getDocuments } from "../../services";
 import ErrorNotice from "../commons/error";
 import { DocumentType, OptionType } from "../../services/types";
 import LoadingSpinner from "../commons/loading";
+import { ArrowDownwardRounded, ArrowUpwardRounded } from "@mui/icons-material";
 
-const DocumentsList = () => {
+const DocumentsList = ({ category }: { category: string }) => {
   const [alignment, setAlignment] = useState("descending");
   const [sortBy, setSortBy] = useState("date");
   const [documents, setDocuments] = useState<DocumentType[]>([]);
   const [isLoading, setIsloading] = useState(true);
-  const [options, setOptions] = useState<OptionType[]>([]);
-  const [selectedFilters, setSelectedFilters] = useState<
-    Record<string, boolean>
-  >({});
   const [modeFilter, setModeFilter] = useState<OptionType[]>([]);
   const [selectedMode, setSelectedMode] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchDocuments = async () => {
-      const data = await getDocuments();
+      const data = await getDocuments(category ?? "");
       setDocuments(data.data);
       setIsloading(false);
-    };
-    const fetchOptions = async () => {
-      const data: OptionType[] = (await getDocumentOptions()).data;
-      setOptions(data);
-      setSelectedFilters(
-        data.reduce((acc, option) => ({ ...acc, [option.label]: true }), {})
-      );
     };
     const fetchModes = async () => {
       const data: OptionType[] = (await getDocumentModes()).data;
@@ -59,8 +46,7 @@ const DocumentsList = () => {
     };
     fetchDocuments();
     fetchModes();
-    fetchOptions();
-  }, []);
+  }, [category]);
 
   const handleAlignmentChange = (
     _event: React.MouseEvent<HTMLElement>,
@@ -75,13 +61,6 @@ const DocumentsList = () => {
     setSortBy(event.target.value);
   };
 
-  const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedFilters((prev) => ({
-      ...prev,
-      [event.target.name]: event.target.checked,
-    }));
-  };
-
   const handleModeFilterChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -92,16 +71,10 @@ const DocumentsList = () => {
   };
 
   const filteredAndSortedDocuments = useMemo(() => {
-    if (
-      Object.keys(selectedFilters).length === 0 ||
-      Object.keys(selectedMode).length === 0
-    )
-      return [];
+    if (Object.keys(selectedMode).length === 0) return [];
 
     return documents
-      .filter(
-        (file) => selectedFilters[file.category] && selectedMode[file.mode]
-      )
+      .filter((file) => selectedMode[file.mode])
       .sort((a, b) => {
         if (sortBy === "date") {
           return alignment === "ascending"
@@ -122,7 +95,7 @@ const DocumentsList = () => {
         }
         return 0;
       });
-  }, [documents, alignment, sortBy, selectedFilters, selectedMode]);
+  }, [documents, alignment, sortBy, selectedMode]);
 
   return (
     <Grid container spacing={2} sx={{ marginTop: "20px", height: "100%" }}>
@@ -168,10 +141,14 @@ const DocumentsList = () => {
             sx={{ width: "100%" }}
           >
             <ToggleButton value="ascending" sx={{ width: "50%" }} size="small">
-              Ascending
+              <Tooltip title="Ascending">
+                <ArrowUpwardRounded />
+              </Tooltip>
             </ToggleButton>
             <ToggleButton value="descending" sx={{ width: "50%" }} size="small">
-              Descending
+              <Tooltip title="Descending">
+                <ArrowDownwardRounded />
+              </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
 
@@ -188,24 +165,6 @@ const DocumentsList = () => {
               />
             </RadioGroup>
           </FormControl>
-
-          {/* FILTER FOR FILTERING BY CATEGORY */}
-          <FormGroup>
-            <FormLabel>Filter By Category</FormLabel>
-            {options.map((option) => (
-              <FormControlLabel
-                key={option.label}
-                control={
-                  <Checkbox
-                    checked={selectedFilters[option.label] ?? false}
-                    onChange={handleFilterChange}
-                    name={option.label}
-                  />
-                }
-                label={option.label}
-              />
-            ))}
-          </FormGroup>
 
           {/* FILTER FOR FILTERING BY MODE */}
           <FormGroup>

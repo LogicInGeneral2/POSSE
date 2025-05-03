@@ -10,7 +10,7 @@ class DocumentAdmin(ImportExportModelAdmin):
     resource_class = DocumentResource
     list_display = (
         "title",
-        "get_category",
+        "category",
         "upload_date",
         "get_mode",
         "file_link",
@@ -20,11 +20,6 @@ class DocumentAdmin(ImportExportModelAdmin):
     list_filter = ("category", "mode")
     readonly_fields = ("upload_date", "thumbnail")
     date_hierarchy = "upload_date"
-
-    def get_category(self, obj):
-        return obj.category.label
-
-    get_category.short_description = "Category"
 
     def get_mode(self, obj):
         return obj.mode.label

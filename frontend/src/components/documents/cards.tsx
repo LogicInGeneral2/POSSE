@@ -7,14 +7,23 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { ColorType, DocumentType } from "../../services/types";
+import { DocumentType } from "../../services/types";
 import { format } from "date-fns";
-import { getDocumentColours } from "../../services";
-import { useEffect, useState } from "react";
 import ErrorNotice from "../commons/error";
 import DeveloperModeIcon from "@mui/icons-material/DeveloperMode";
 import ScienceIcon from "@mui/icons-material/Science";
 
+// Hardcoded category-based colors
+const categoryColors: Record<string, { primary: string; secondary: string }> = {
+  marking_scheme: { primary: "#FFF3E0", secondary: "#EF6C00" }, // soft orange
+  lecture_notes: { primary: "#E3F2FD", secondary: "#1976D2" }, // light blue
+  samples: { primary: "#E8F5E9", secondary: "#388E3C" }, // light green
+  templates: { primary: "#F3E5F5", secondary: "#8E24AA" }, // light purple
+  forms: { primary: "#FFFDE7", secondary: "#FBC02D" }, // light yellow
+  other: { primary: "#ECEFF1", secondary: "#455A64" }, // grey
+};
+
+// File downloader
 export const getFile = async (fileUrl: string) => {
   try {
     if (!fileUrl) return;
@@ -38,20 +47,12 @@ export const getFile = async (fileUrl: string) => {
 };
 
 function FileCard({ file }: { file: DocumentType }) {
-  const [colours, setColors] = useState<ColorType[]>([]);
-  const colors = colours.find(
-    (color: { value: string }) => color.value === file.category
-  ) || { primary: "#ffffff", secondary: "#58041D" };
+  const colors = categoryColors[file.category] || {
+    primary: "#ffffff",
+    secondary: "#58041D",
+  };
 
-  useEffect(() => {
-    const fetchColours = async () => {
-      const data: ColorType[] = (await getDocumentColours()).data;
-      setColors(data);
-    };
-    fetchColours();
-  }, []);
-
-  if (!colours) {
+  if (!file) {
     return <ErrorNotice />;
   }
 
@@ -110,18 +111,6 @@ function FileCard({ file }: { file: DocumentType }) {
               </Tooltip>
             </Box>
           </Box>
-
-          <Typography
-            variant="body2"
-            sx={{
-              color: colors.primary,
-              textAlign: "right",
-              backgroundColor: colors.secondary,
-              padding: 1,
-            }}
-          >
-            {file.category}
-          </Typography>
         </CardContent>
       </CardActionArea>
     </Card>

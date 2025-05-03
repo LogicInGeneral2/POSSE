@@ -3,7 +3,6 @@ import {
   Typography,
   TextField,
   Button,
-  Alert,
   Box,
   Avatar,
   CircularProgress,
@@ -13,6 +12,9 @@ import {
   ListItemIcon,
   ListItemText,
   List,
+  IconButton,
+  Alert,
+  Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import PersonIcon from "@mui/icons-material/Person";
@@ -24,10 +26,16 @@ import TopicIcon from "@mui/icons-material/Topic";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import AlternateEmailIcon from "@mui/icons-material/AlternateEmail";
 import AssessmentIcon from "@mui/icons-material/Assessment";
-import { changePassword, getCurrentUser } from "../../services";
+import EditIcon from "@mui/icons-material/Edit";
+import {
+  changePassword,
+  getCurrentUser,
+  updateStudentTopic,
+} from "../../services";
 import { Student, Supervisor, User } from "../../services/types";
 import { Grid2 as Grid } from "@mui/material";
 import { GradingRounded, SupervisorAccountRounded } from "@mui/icons-material";
+import Toast from "../commons/snackbar";
 
 type UserProfile = User | Student | Supervisor;
 
@@ -40,12 +48,22 @@ const ProfilePage = () => {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isEditingTopic, setIsEditingTopic] = useState(false);
+  const [topicInput, setTopicInput] = useState("");
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastSeverity, setToastSeverity] = useState<"success" | "error">(
+    "success"
+  );
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const userData = await getCurrentUser();
         setUser(userData);
+        if (userData.role === "student" && "topic" in userData) {
+          setTopicInput(userData.topic || "");
+        }
       } catch (err) {
         setError("Failed to load profile. Please try again.");
       } finally {
@@ -74,6 +92,51 @@ const ProfilePage = () => {
     } catch (err: any) {
       setError(err.message || "Failed to change password.");
     }
+  };
+
+  const handleTopicUpdate = async () => {
+    if (!topicInput.trim()) {
+      setToastMessage("Topic cannot be empty.");
+      setToastSeverity("error");
+      setToastOpen(true);
+      return;
+    }
+
+    if (topicInput.length > 255) {
+      setToastMessage("Topic cannot exceed 255 characters.");
+      setToastSeverity("error");
+      setToastOpen(true);
+      return;
+    }
+
+    try {
+      if (user && "student_id" in user && user.id) {
+        await updateStudentTopic(user.id, topicInput);
+        setUser({ ...user, topic: topicInput });
+        setToastMessage("Topic updated successfully.");
+        setToastSeverity("success");
+        setToastOpen(true);
+        setIsEditingTopic(false);
+      } else {
+        setToastMessage("Unable to update topic: Invalid user data.");
+        setToastSeverity("error");
+        setToastOpen(true);
+      }
+    } catch (err: any) {
+      setToastMessage(err.message || "Failed to update topic.");
+      setToastSeverity("error");
+      setToastOpen(true);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingTopic(false);
+    setTopicInput((user as any).topic || "");
+  };
+
+  const handleToastClose = () => {
+    setToastOpen(false);
+    setToastMessage("");
   };
 
   if (loading) {
@@ -204,7 +267,7 @@ const ProfilePage = () => {
                     </ListItemIcon>
                     <ListItemText
                       primary="Mode"
-                      secondary={user.mode || "Not assigned "}
+                      secondary={user.mode || "Not assigned"}
                     />
                   </ListItem>
 
@@ -212,10 +275,56 @@ const ProfilePage = () => {
                     <ListItemIcon>
                       <TopicIcon color="primary" />
                     </ListItemIcon>
-                    <ListItemText
-                      primary="Topic"
-                      secondary={user.topic || "Not assigned / Unknown"}
-                    />
+                    {isEditingTopic ? (
+                      <Box sx={{ width: "100%" }}>
+                        <TextField
+                          fullWidth
+                          label="Topic"
+                          value={topicInput}
+                          onChange={(e) => setTopicInput(e.target.value)}
+                          variant="outlined"
+                          size="small"
+                          sx={{ mb: 1 }}
+                        />
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          {" "}
+                          <Button size="small" onClick={handleCancelEdit}>
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            onClick={handleTopicUpdate}
+                          >
+                            Save
+                          </Button>
+                        </Box>
+                      </Box>
+                    ) : (
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            Topic
+                            <Tooltip title="Edit topic">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => setIsEditingTopic(true)}
+                                sx={{
+                                  scale: 0.5,
+                                  border: "1px solid",
+                                  p: "5px",
+                                }}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        }
+                        secondary={user.topic || "Not assigned / Unknown"}
+                      />
+                    )}
                   </ListItem>
 
                   <Divider sx={{ my: 1 }} />
@@ -334,6 +443,15 @@ const ProfilePage = () => {
           </Paper>
         </Grid>
       </Grid>
+
+      <Toast
+        open={toastOpen}
+        message={toastMessage}
+        severity={toastSeverity}
+        onClose={handleToastClose}
+        autoHideDuration={3000}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      />
     </Box>
   );
 };

@@ -212,8 +212,12 @@ export const statusOptions: Option[] = [
 ];
 
 export const modeOptions: Option[] = [
-  { label: "Development" },
+  { label: "development" },
   { label: "research" },
 ];
 
 export const courseOptions: Option[] = [{ label: "FYP1" }, { label: "FYP2" }];
+
+export interface phaseOptions {
+  title: string;
+}

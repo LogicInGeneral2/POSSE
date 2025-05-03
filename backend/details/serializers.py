@@ -33,3 +33,11 @@ class PeriodSerializer(serializers.ModelSerializer):
 
     def get_days_left(self, obj):
         return obj.days_left()
+
+
+class PeriodListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Period
+        fields = [
+            "title",
+        ]

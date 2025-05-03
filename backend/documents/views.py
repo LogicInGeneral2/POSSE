@@ -44,15 +44,17 @@ from django.core.mail import send_mail
 
 
 class DocumentListView(APIView):
-    def get(self, request, student_id=None):
-        if student_id:
+    def get(self, request, category=None, student_id=None):
+        if request.resolver_match.url_name == "marking-scheme":
             course = get_object_or_404(Student, id=student_id).course
             document = get_object_or_404(
-                Document, category__label="Marking Scheme", title=course
+                Document, category="marking_scheme", title=course
             )
             serializer = MarkingSchemeSerializer(document, context={"request": request})
         else:
-            documents = Document.objects.select_related("category", "mode").all()
+            documents = Document.objects.select_related("mode").filter(
+                category=category
+            )
             serializer = DocumentSerializer(
                 documents, many=True, context={"request": request}
             )
@@ -710,7 +712,7 @@ def export_logs_pdf(request, student_id):
     except Student.DoesNotExist:
         return HttpResponse("Student not found.", status=404)
 
-    logs = Logbook.objects.filter(student=student).order_by("date")
+    logs = Logbook.objects.filter(student=student, status="approved").order_by("date")
     if not logs.exists():
         return HttpResponse("No logs available for export.", status=404)
 
