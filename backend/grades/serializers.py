@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from .models import MarkingScheme, Grade, Student, User
+from .models import MarkingScheme, Grade, Student, TotalMarks, User
 
 
 class MarkingSchemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = MarkingScheme
-        fields = ["id", "label", "marks", "weightage", "pic", "contents"]
+        fields = ["id", "label", "marks", "weightage", "pic", "contents", "course"]
 
 
 class GradeSerializer(serializers.ModelSerializer):
@@ -73,5 +73,45 @@ class SaveGradeSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     f"Grades length ({len(grades)}) does not match contents length ({len(scheme.contents)}) for scheme {scheme_id}."
                 )
+
+        return data
+
+
+class TotalMarksSerializer(serializers.ModelSerializer):
+    student = serializers.StringRelatedField()
+    breakdown = serializers.JSONField()
+
+    class Meta:
+        model = TotalMarks
+        fields = ["id", "student", "course", "total_mark", "breakdown", "updated_at"]
+
+
+class UpdateTotalMarksSerializer(serializers.Serializer):
+    total_mark = serializers.FloatField()
+    breakdown = serializers.JSONField()
+
+    def validate(self, data):
+        total_mark = data.get("total_mark")
+        breakdown = data.get("breakdown")
+        student_id = self.context["student_id"]
+
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            raise serializers.ValidationError("Invalid student ID.")
+
+        # Verify breakdown keys match marking scheme labels
+        schemes = MarkingScheme.objects.filter(course=student.course)
+        expected_keys = {scheme.label for scheme in schemes}
+        provided_keys = set(breakdown.keys())
+        if provided_keys - expected_keys:
+            raise serializers.ValidationError("Invalid scheme labels in breakdown.")
+
+        # Verify breakdown sums to total_mark (within rounding error)
+        breakdown_sum = sum(breakdown.values())
+        if abs(breakdown_sum - total_mark) > 0.01:
+            raise serializers.ValidationError(
+                f"Breakdown sum ({breakdown_sum}) does not match total mark ({total_mark})."
+            )
 
         return data

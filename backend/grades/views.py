@@ -2,11 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from .models import MarkingScheme, Grade, Student, User
+from .models import MarkingScheme, Grade, Student, User, TotalMarks
 from .serializers import (
     MarkingSchemeSerializer,
     GradeSerializer,
     SaveGradeSerializer,
+    TotalMarksSerializer,
 )
 
 
@@ -81,7 +82,7 @@ class SaveGradesView(APIView):
                 )
 
             responses = []
-            any_created = False  # Track if any grade was created
+            any_created = False
             for grade_entry in grades_data:
                 scheme_id = grade_entry["scheme_id"]
                 grades = grade_entry["grades"]
@@ -101,7 +102,7 @@ class SaveGradesView(APIView):
                 )
                 responses.append(GradeSerializer(grade).data)
                 if created:
-                    any_created = True  # Set flag if any grade was created
+                    any_created = True
 
             return Response(
                 responses,
@@ -109,3 +110,35 @@ class SaveGradesView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetAllTotalMarksView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role == "student":
+            return Response(
+                {"error": "Only course coordinators can view total marks"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        total_marks = TotalMarks.objects.all().select_related("student__user")
+        serializer = TotalMarksSerializer(total_marks, many=True)
+        return Response(serializer.data)
+
+
+class GetMarkingSchemeGradesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        course = request.query_params.get("course", "")
+
+        schemes = (
+            MarkingScheme.objects.filter(course=course)
+            if course
+            else MarkingScheme.objects.all()
+        )
+
+        serializer = MarkingSchemeSerializer(schemes, many=True)
+        return Response(serializer.data)

@@ -1,6 +1,6 @@
 from import_export import resources, fields
 from import_export.widgets import JSONWidget
-from .models import MarkingScheme
+from .models import MarkingScheme, TotalMarks
 from import_export.widgets import ForeignKeyWidget
 from users.models import Student, User
 from .models import Grade
@@ -62,3 +62,16 @@ def before_import_row(self, row, **kwargs):
             row["contents"] = value
         else:
             raise ValueError(f"Unsupported type for contents in row: {row}")
+
+
+class TotalMarksResource(resources.ModelResource):
+    class Meta:
+        model = TotalMarks
+        fields = ["id", "student__user__name", "course", "total_mark", "updated_at"]
+        export_order = [
+            "id",
+            "student__user__name",
+            "course",
+            "total_mark",
+            "updated_at",
+        ]

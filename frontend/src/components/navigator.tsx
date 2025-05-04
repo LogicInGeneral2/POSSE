@@ -27,6 +27,7 @@ import {
   BookRounded,
   ExpandLess,
   ExpandMore,
+  GradeRounded,
   GradingRounded,
   Person3Rounded,
   SupervisedUserCircleRounded,
@@ -193,6 +194,11 @@ export default function NavigationBar() {
       text: "Profile",
       icon: <Person3Rounded sx={{ color: "primary.main" }} />,
       path: "/profile",
+    },
+    {
+      text: "Grades",
+      icon: <GradeRounded sx={{ color: "primary.main" }} />,
+      path: "/grades",
     },
     {
       text: "Logout",

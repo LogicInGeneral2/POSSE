@@ -1,9 +1,10 @@
+# admin.py
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 from users.models import CourseCoordinator
 from users.utils import get_coordinator_course_filter
-from .resources import GradeResource, MarkingSchemeResource
-from .models import MarkingScheme, Grade
+from .resources import GradeResource, MarkingSchemeResource, TotalMarksResource
+from .models import MarkingScheme, Grade, TotalMarks
 from .forms import BulkGradeUpdateForm, GradeAdminForm
 from django.http import HttpResponseRedirect
 from django.urls import path
@@ -21,10 +22,6 @@ class MarkingSchemeAdmin(ImportExportModelAdmin):
     search_fields = ["label", "contents"]
 
     def get_queryset(self, request):
-        """
-        Filter the queryset to show only MarkingSchemes for the coordinator's course
-        or those with course='Both', unless the user is a superuser.
-        """
         qs = super().get_queryset(request)
         course_filter, is_coordinator = get_coordinator_course_filter(request)
         if is_coordinator and course_filter:
@@ -32,24 +29,17 @@ class MarkingSchemeAdmin(ImportExportModelAdmin):
         return qs
 
     def get_form(self, request, obj=None, **kwargs):
-        """
-        Modify the form to restrict course choices based on the coordinator's course.
-        """
         form = super().get_form(request, obj, **kwargs)
         course_filter, is_coordinator = get_coordinator_course_filter(request)
         if is_coordinator and course_filter:
             coordinator = CourseCoordinator.objects.get(user=request.user)
             if coordinator.course != "Both":
-                # Restrict course choices to coordinator's course and 'Both'
                 form.base_fields["course"].queryset = form.base_fields[
                     "course"
                 ].queryset.filter(course__in=[coordinator.course, "Both"])
         return form
 
     def save_model(self, request, obj, form, change):
-        """
-        Prevent saving MarkingSchemes for courses outside the coordinator's permission.
-        """
         course_filter, is_coordinator = get_coordinator_course_filter(request)
         if is_coordinator and course_filter:
             coordinator_course = CourseCoordinator.objects.get(user=request.user).course
@@ -63,9 +53,6 @@ class MarkingSchemeAdmin(ImportExportModelAdmin):
         super().save_model(request, obj, form, change)
 
     def delete_model(self, request, obj):
-        """
-        Prevent deletion of MarkingSchemes for courses outside the coordinator's permission.
-        """
         course_filter, is_coordinator = get_coordinator_course_filter(request)
         if is_coordinator and course_filter:
             coordinator_course = CourseCoordinator.objects.get(user=request.user).course
@@ -79,9 +66,6 @@ class MarkingSchemeAdmin(ImportExportModelAdmin):
         super().delete_model(request, obj)
 
     def delete_queryset(self, request, queryset):
-        """
-        Prevent deletion of MarkingSchemes for courses outside the coordinator's permission.
-        """
         course_filter, is_coordinator = get_coordinator_course_filter(request)
         if is_coordinator and course_filter:
             coordinator_course = CourseCoordinator.objects.get(user=request.user).course
@@ -133,7 +117,7 @@ class MarkingSchemeFilter(SimpleListFilter):
 
 
 @admin.register(Grade)
-class GradeAdmin(ImportExportModelAdmin):  # change this line
+class GradeAdmin(ImportExportModelAdmin):
     resource_class = GradeResource
     form = GradeAdminForm
     list_display = [
@@ -183,7 +167,6 @@ class GradeAdmin(ImportExportModelAdmin):  # change this line
             coordinator = CourseCoordinator.objects.get(user=request.user)
             if coordinator.course != "Both":
                 qs = qs.filter(student__course__in=[coordinator.course, "Both"])
-            # If course is "Both", no filtering needed
         return qs
 
     def save_model(self, request, obj, form, change):
@@ -299,3 +282,150 @@ class GradeAdmin(ImportExportModelAdmin):  # change this line
             "admin/bulk_grade_update.html",
             {"form": form, "title": "Bulk Update Grades"},
         )
+
+
+class TotalMarksStudentNameFilter(SimpleListFilter):
+    title = "Student Name"
+    parameter_name = "student_name"
+
+    def lookups(self, request, model_admin):
+        students = (
+            TotalMarks.objects.select_related("student__user")
+            .values("student__user__name")
+            .distinct()
+        )
+        return [(s["student__user__name"], s["student__user__name"]) for s in students]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(student__user__name=self.value())
+        return queryset
+
+
+@admin.register(TotalMarks)
+class TotalMarksAdmin(ImportExportModelAdmin):
+    resource_class = TotalMarksResource
+    list_display = [
+        "student_name",
+        "course",
+        "total_mark",
+        "breakdown_display",
+        "updated_at",
+    ]
+    list_filter = ["course", TotalMarksStudentNameFilter]
+    search_fields = ["student__user__name", "course"]
+    list_editable = ["total_mark"]  # Removed 'breakdown' to avoid JSON editing issues
+    list_per_page = 25
+    raw_id_fields = ["student"]
+    autocomplete_fields = ["student"]
+    actions = ["export_total_marks_to_csv"]
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related("student__user")
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator = CourseCoordinator.objects.get(user=request.user)
+            if coordinator.course != "Both":
+                qs = qs.filter(course__in=[coordinator.course, "Both"])
+        return qs
+
+    def save_model(self, request, obj, form, change):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if obj.course != coordinator_course and obj.course != "Both":
+                self.message_user(
+                    request,
+                    f"You can only create/edit total marks for students in {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+
+        # Validate breakdown sum matches total_mark
+        total_mark = obj.total_mark
+        breakdown = obj.breakdown
+        breakdown_sum = sum(breakdown.values())
+        if abs(breakdown_sum - total_mark) > 0.01:
+            self.message_user(
+                request,
+                f"Breakdown sum ({breakdown_sum}) does not match total mark ({total_mark}).",
+                messages.ERROR,
+            )
+            return
+
+        # Update Grade records proportionally
+        student = obj.student
+        schemes = MarkingScheme.objects.filter(course=student.course)
+        for scheme in schemes:
+            scheme_key = scheme.label  # Use label instead of scheme_{id}
+            if scheme_key in breakdown:
+                target_score = breakdown[scheme_key]
+                grades = Grade.objects.filter(student=student, scheme=scheme)
+                if grades.exists():
+                    total_grades = []
+                    for grade in grades:
+                        total_grades.extend(grade.grades)
+                    if total_grades:
+                        num_grades = len(total_grades)
+                        max_marks = scheme.marks
+                        required_sum = (
+                            target_score * num_grades * max_marks
+                        ) / scheme.weightage
+                        current_sum = sum(total_grades)
+                        scale_factor = (
+                            required_sum / current_sum if current_sum > 0 else 1.0
+                        )
+                        for grade in grades:
+                            scaled_grades = [
+                                min(round(g * scale_factor), int(max_marks))
+                                for g in grade.grades
+                            ]
+                            grade.grades = scaled_grades
+                            grade.save()
+
+        super().save_model(request, obj, form, change)
+        self.message_user(
+            request,
+            "Total marks updated and grades adjusted proportionally.",
+            messages.SUCCESS,
+        )
+
+    def delete_model(self, request, obj):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if obj.course != coordinator_course and obj.course != "Both":
+                self.message_user(
+                    request,
+                    f"You can only delete total marks for students in {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            restricted = queryset.exclude(course=coordinator_course).exclude(
+                course="Both"
+            )
+            if restricted.exists():
+                self.message_user(
+                    request,
+                    f"You can only delete total marks for students in {coordinator_course}.",
+                    messages.ERROR,
+                )
+                return
+        super().delete_queryset(request, queryset)
+
+    def student_name(self, obj):
+        return obj.student.user.name if obj.student.user else "N/A"
+
+    student_name.short_description = "Student"
+    student_name.admin_order_field = "student__user__name"
+
+    def breakdown_display(self, obj):
+        return str(obj.breakdown)
+
+    breakdown_display.short_description = "Breakdown"

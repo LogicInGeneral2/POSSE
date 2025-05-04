@@ -1,7 +1,13 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from grades.views import GetGradesView, GetMarkingSchemeView, SaveGradesView
+from grades.views import (
+    GetAllTotalMarksView,
+    GetGradesView,
+    GetMarkingSchemeGradesView,
+    GetMarkingSchemeView,
+    SaveGradesView,
+)
 from settings.views import (
     DocumentCategoryListView,
     DocumentModeListView,
@@ -203,4 +209,14 @@ urlpatterns = [
         "grades/student/<int:student_id>/", GetGradesView.as_view(), name="get-grades"
     ),
     path("grades/save/<int:student_id>/", SaveGradesView.as_view(), name="save-grades"),
+    path(
+        "grades/total-marks/",
+        GetAllTotalMarksView.as_view(),
+        name="get-all-total-marks",
+    ),
+    path(
+        "grades/marking-schemes/",
+        GetMarkingSchemeGradesView.as_view(),
+        name="get-marking-schemes",
+    ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

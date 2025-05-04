@@ -221,3 +221,23 @@ export const courseOptions: Option[] = [{ label: "FYP1" }, { label: "FYP2" }];
 export interface phaseOptions {
   title: string;
 }
+
+/* TESTING FOR GRADES PAGE */
+export interface MarkingScheme {
+  id: number;
+  label: string;
+  marks: number;
+  weightage: number;
+  pic: string;
+  contents: any;
+  course: string;
+}
+
+export interface TotalMarks {
+  id: number;
+  student: string;
+  course: string;
+  total_mark: number;
+  breakdown: Record<string, number>;
+  updated_at: string;
+}

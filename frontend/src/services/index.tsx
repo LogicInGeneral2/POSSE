@@ -5,6 +5,8 @@ import {
   Supervisor,
   User,
   SystemTheme,
+  TotalMarks,
+  MarkingScheme,
 } from "./types";
 import { api, api_public } from "../api";
 
@@ -613,4 +615,19 @@ export const updateStudentTopic = async (
     { topic },
     { withCredentials: true }
   );
+};
+
+export const fetchAllTotalMarks = async (): Promise<TotalMarks[]> => {
+  const response = await api.get("/grades/total-marks/");
+  return response.data;
+};
+
+export const fetchMarkingSchemes = async (
+  course: string
+): Promise<MarkingScheme[]> => {
+  const response = await api.get("/grades/marking-schemes/", {
+    params: { course },
+  });
+
+  return response.data;
 };
