@@ -48,13 +48,20 @@ class DocumentListView(APIView):
         if request.resolver_match.url_name == "marking-scheme":
             course = get_object_or_404(Student, id=student_id).course
             document = get_object_or_404(
-                Document, category="marking_scheme", title=course
+                Document, category="marking_scheme", course=course
             )
             serializer = MarkingSchemeSerializer(document, context={"request": request})
         else:
-            documents = Document.objects.select_related("mode").filter(
-                category=category
-            )
+            if request.user.role == "student":
+                student = get_object_or_404(Student, user=request.user)
+                course = student.course
+                documents = Document.objects.select_related("mode").filter(
+                    category=category, course=course
+                )
+            else:
+                documents = Document.objects.select_related("mode").filter(
+                    category=category
+                )
             serializer = DocumentSerializer(
                 documents, many=True, context={"request": request}
             )

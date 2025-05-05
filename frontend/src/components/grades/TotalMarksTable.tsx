@@ -21,14 +21,11 @@ import {
   Tooltip,
   Chip,
   ListItemText,
-  Button,
   IconButton,
   Popover,
-  Divider,
 } from "@mui/material";
 import { TotalMarks, MarkingScheme } from "../../services/types";
 import SummaryDashboard from "./SummaryDashboard";
-import jsPDF from "jspdf";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 
 const extractStudentName = (student: string): string => {
@@ -142,47 +139,6 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
     const start = page * rowsPerPage;
     return sortedRowData.slice(start, start + rowsPerPage);
   }, [sortedRowData, page, rowsPerPage]);
-
-  // Export to PDF
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(`${tabValue} Grades Report`, 20, 20);
-
-    const headers = visibleColumns.map((col) =>
-      col === "student"
-        ? "Name"
-        : col === "total_mark"
-        ? "Total Marks"
-        : col === "updated_at"
-        ? "Updated At"
-        : col
-    );
-    const data = sortedRowData.map((row) => {
-      const rowData: string[] = [];
-      visibleColumns.forEach((col) => {
-        if (col === "student") {
-          rowData.push(extractStudentName(row.student));
-        } else if (col === "total_mark") {
-          rowData.push(row.total_mark.toString());
-        } else if (col === "updated_at") {
-          rowData.push(new Date(row.updated_at).toLocaleString());
-        } else {
-          rowData.push((row.breakdown[col] || 0).toString());
-        }
-      });
-      return rowData;
-    });
-
-    (doc as any).autoTable({
-      head: [headers],
-      body: data,
-      startY: 30,
-      theme: "grid",
-    });
-
-    doc.save(`${tabValue}_grades.pdf`);
-  };
 
   const handleTabChange = (
     _event: React.SyntheticEvent,
@@ -315,10 +271,6 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
           />
         </Box>
         <Box sx={{ display: "flex", alignItems: "right", gap: "10px" }}>
-          <Button variant="contained" onClick={exportToPDF}>
-            Export to PDF
-          </Button>
-          <Divider orientation="vertical" flexItem />
           <Tooltip title="Settings">
             <IconButton
               onClick={handleClick}
@@ -371,6 +323,7 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                 </Box>
               )}
             >
+              {/* Remove "select" from the options */}
               {[
                 "student",
                 ...filteredSchemes.map((s) => s.label),
@@ -405,17 +358,16 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              {visibleColumns.includes("select") && (
-                <TableCell>
-                  <Checkbox
-                    checked={
-                      selectedStudents.length ===
-                      totalMarks.filter((row) => row.course === tabValue).length
-                    }
-                    onChange={handleSelectAll}
-                  />
-                </TableCell>
-              )}
+              {/* Always show checkbox column */}
+              <TableCell>
+                <Checkbox
+                  checked={
+                    selectedStudents.length ===
+                    totalMarks.filter((row) => row.course === tabValue).length
+                  }
+                  onChange={handleSelectAll}
+                />
+              </TableCell>
               {visibleColumns.includes("student") && (
                 <TableCell
                   onClick={() => handleSort("student")}
@@ -470,10 +422,7 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
             {paginatedRowData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={
-                    visibleColumns.length +
-                    (visibleColumns.includes("select") ? 1 : 0)
-                  }
+                  colSpan={visibleColumns.length + 1} // +1 for the checkbox column
                   align="center"
                 >
                   No data available
@@ -482,21 +431,20 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
             ) : (
               paginatedRowData.map((row) => (
                 <TableRow key={row.id}>
-                  {visibleColumns.includes("select") && (
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedStudents.includes(row.id.toString())}
-                        onChange={() => handleStudentSelect(row.id.toString())}
-                      />
-                    </TableCell>
-                  )}
+                  {/* Always show checkbox */}
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedStudents.includes(row.id.toString())}
+                      onChange={() => handleStudentSelect(row.id.toString())}
+                    />
+                  </TableCell>
                   {visibleColumns.includes("student") && (
                     <TableCell>{extractStudentName(row.student)}</TableCell>
                   )}
                   {filteredSchemes
                     .filter((scheme) => visibleColumns.includes(scheme.label))
                     .map((scheme) => (
-                      <TableCell key={scheme.label}>
+                      <TableCell key={scheme.label} align="center">
                         {row.breakdown[scheme.label] || 0}
                       </TableCell>
                     ))}

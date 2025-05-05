@@ -1,4 +1,7 @@
 from django.contrib import admin
+
+from users.models import CourseCoordinator
+from users.utils import get_coordinator_course_filter
 from .resources import DocumentResource
 from .models import Document, Logbook, StudentSubmission, Feedback
 from import_export.admin import ImportExportModelAdmin
@@ -13,13 +16,21 @@ class DocumentAdmin(ImportExportModelAdmin):
         "category",
         "upload_date",
         "get_mode",
+        "course",
         "file_link",
         "thumbnail_preview",
     )
     search_fields = ("title", "category__label", "mode__label")
-    list_filter = ("category", "mode")
+    list_filter = ("category", "mode", "course")
     readonly_fields = ("upload_date", "thumbnail")
     date_hierarchy = "upload_date"
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            queryset = queryset.filter(course_filter)
+        return queryset
 
     def get_mode(self, obj):
         return obj.mode.label
@@ -58,6 +69,16 @@ class StudentSubmissionAdmin(admin.ModelAdmin):
         ("Metadata", {"fields": ("upload_date",), "classes": ("collapse",)}),
     )
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            # Get the coordinator's course directly
+            coordinator = CourseCoordinator.objects.get(user=request.user)
+            if coordinator.course != "Both":
+                queryset = queryset.filter(student__course=coordinator.course)
+        return queryset
+
 
 @admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
@@ -67,6 +88,18 @@ class FeedbackAdmin(admin.ModelAdmin):
     date_hierarchy = "upload_date"
 
     fieldsets = ((None, {"fields": ("supervisor", "submission", "file", "comment")}),)
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            # Get the coordinator's course directly
+            coordinator = CourseCoordinator.objects.get(user=request.user)
+            if coordinator.course != "Both":
+                queryset = queryset.filter(
+                    submission__student__course=coordinator.course
+                )
+        return queryset
 
 
 @admin.register(Logbook)
@@ -113,6 +146,16 @@ class LogbookAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            # Get the coordinator's course directly
+            coordinator = CourseCoordinator.objects.get(user=request.user)
+            if coordinator.course != "Both":
+                queryset = queryset.filter(student__course=coordinator.course)
+        return queryset
 
     def student_name(self, obj):
         return obj.student.user.name

@@ -78,6 +78,7 @@ const GradingStepper = ({ student }: { student: number }) => {
       }
     };
     fetchData();
+    setActiveStep(0);
   }, [student]);
 
   const steps = gradingContents.map((item) => item.label);
@@ -99,8 +100,8 @@ const GradingStepper = ({ student }: { student: number }) => {
     }));
   };
 
-  const allGraded = gradingContents.every(
-    (scheme) => grades[scheme.id].every((grade) => grade >= 0) // Allow 0 as a valid grade
+  const allGraded = gradingContents.every((scheme) =>
+    grades[scheme.id].every((grade) => grade >= 0)
   );
   const stepScores = gradingContents.map((scheme: GradingContentsType) =>
     grades[scheme.id].reduce((acc, curr) => acc + curr, 0)

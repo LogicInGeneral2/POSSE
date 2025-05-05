@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms import ValidationError
 from users.models import Student, User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete
@@ -8,14 +9,7 @@ class MarkingScheme(models.Model):
     label = models.CharField(max_length=255)
     marks = models.FloatField()
     weightage = models.FloatField()
-    pic = models.CharField(
-        max_length=50,
-        choices=[
-            ("supervisor", "Supervisor"),
-            ("examiner", "Examiner"),
-            ("coordinator", "Coordinator"),
-        ],
-    )
+    pic = models.JSONField(default=list)
     contents = models.JSONField()
     course = models.CharField(
         max_length=5,
@@ -28,6 +22,11 @@ class MarkingScheme(models.Model):
 
     def __str__(self):
         return self.label
+
+    def clean(self):
+        valid_roles = {"supervisor", "examiner", "coordinator"}
+        if not all(role in valid_roles for role in self.pic):
+            raise ValidationError("Invalid role(s) in pic")
 
 
 class Grade(models.Model):

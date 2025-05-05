@@ -40,6 +40,14 @@ class Document(models.Model):
         upload_to=pdf_thumbnail_upload_path, blank=True, null=True
     )
     mode = models.ForeignKey("settings.documentModes", on_delete=models.CASCADE)
+    course = models.CharField(
+        max_length=5,
+        default="FYP1",
+        choices=[
+            ("FYP1", "FYP1"),
+            ("FYP2", "FYP2"),
+        ],
+    )
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

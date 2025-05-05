@@ -2,6 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+
+from users.models import CourseCoordinator
 from .models import MarkingScheme, Grade, Student, User, TotalMarks
 from .serializers import (
     MarkingSchemeSerializer,
@@ -16,17 +18,35 @@ class GetMarkingSchemeView(APIView):
 
     def get(self, request, student_id):
         user = request.user
-        student = Student.objects.get(id=student_id)
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            return Response({"error": "Student not found"}, status=404)
 
-        if user.role == "course_coordinator":
-            schemes = MarkingScheme.objects.filter(course=student.course)
-        elif user.is_examiner and user in student.evaluators.all():
-            schemes = MarkingScheme.objects.filter(
-                pic="examiner", course=student.course
-            )
+        # Check course coordinator access
+        if user.role == "course_coordinator" and CourseCoordinator.DoesNotExist:
+            coordinator = CourseCoordinator.objects.get(user=user)
+            course = coordinator.course
+            if course == "Both":
+                schemes = MarkingScheme.objects.filter(course=student.course)
+            elif student.course == course:
+                schemes = MarkingScheme.objects.filter(course=course)
+            else:
+                return Response(
+                    {"error": "Not allowed to view this course's schemes."},
+                    status=403,
+                )
+
+        # For examiner or supervisor
         else:
+            if (
+                user.role == "examiner" or user.is_examiner
+            ) and user in student.evaluators.all():
+                role = "examiner"
+            else:
+                role = "supervisor"
             schemes = MarkingScheme.objects.filter(
-                pic="supervisor", course=student.course
+                course=student.course, pic__contains=[role]
             )
 
         serializer = MarkingSchemeSerializer(schemes, many=True)

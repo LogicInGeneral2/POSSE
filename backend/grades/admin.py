@@ -5,7 +5,7 @@ from users.models import CourseCoordinator
 from users.utils import get_coordinator_course_filter
 from .resources import GradeResource, MarkingSchemeResource, TotalMarksResource
 from .models import MarkingScheme, Grade, TotalMarks
-from .forms import BulkGradeUpdateForm, GradeAdminForm
+from .forms import BulkGradeUpdateForm, GradeAdminForm, MarkingSchemeForm
 from django.http import HttpResponseRedirect
 from django.urls import path
 from django.urls import reverse
@@ -16,6 +16,7 @@ from django.contrib.admin import SimpleListFilter
 
 @admin.register(MarkingScheme)
 class MarkingSchemeAdmin(ImportExportModelAdmin):
+    form = MarkingSchemeForm
     resource_class = MarkingSchemeResource
     list_display = ["label", "marks", "weightage", "pic", "course"]
     list_filter = ["pic", "course"]

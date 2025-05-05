@@ -29,7 +29,7 @@ export const GradingPage = () => {
       }
     };
     fetchDoc();
-  }, []);
+  }, [studentId]);
   return (
     <>
       <div

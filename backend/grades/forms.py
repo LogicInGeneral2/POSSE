@@ -1,6 +1,6 @@
 from django import forms
 from users.models import User, Student
-from .models import Grade
+from .models import Grade, MarkingScheme
 from users.utils import get_coordinator_course_filter
 
 
@@ -49,3 +49,24 @@ class GradeAdminForm(forms.ModelForm):
                     "Invalid grades format. Use comma-separated numbers (e.g., 80,90,85)."
                 )
         return []
+
+
+class MarkingSchemeForm(forms.ModelForm):
+    ROLE_CHOICES = [
+        ("supervisor", "Supervisor"),
+        ("examiner", "Examiner"),
+        ("coordinator", "Coordinator"),
+    ]
+
+    pic = forms.MultipleChoiceField(
+        choices=ROLE_CHOICES,
+        widget=forms.SelectMultiple,  # Dropdown with multiple select
+        required=False,
+    )
+
+    class Meta:
+        model = MarkingScheme
+        fields = "__all__"
+
+    def clean_pic(self):
+        return self.cleaned_data["pic"]
