@@ -24,6 +24,7 @@ export const SubmissionsPage = () => {
       setIsLoading(true);
       try {
         const response = await getUserSubmissionData(user.id);
+        console.log(response);
         if (response) {
           setMeta(response.data);
         }

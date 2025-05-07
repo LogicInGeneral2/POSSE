@@ -3,6 +3,7 @@ from django.db import models
 from django.core.files.base import ContentFile
 import os
 import fitz
+from django.db.models import Q
 
 
 def pdf_thumbnail_upload_path(instance, filename):
@@ -85,9 +86,17 @@ class StudentSubmission(models.Model):
         return f"{self.student.user.name} - {self.submission_phase.title}"
 
 
+def supervisor_choices():
+    return Q(role__in=["supervisor", "course_coordinator", "examiner"])
+
+
 class Feedback(models.Model):
     supervisor = models.ForeignKey(
-        "users.User", on_delete=models.CASCADE, limit_choices_to={"role": "supervisor"}
+        "users.User",
+        on_delete=models.CASCADE,
+        limit_choices_to=lambda: Q(
+            role__in=["supervisor", "course_coordinator", "examiner"]
+        ),
     )
     comment = models.TextField(blank=True)
     submission = models.ForeignKey(StudentSubmission, on_delete=models.CASCADE)

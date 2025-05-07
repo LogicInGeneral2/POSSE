@@ -371,7 +371,7 @@ export default function DataTable({
                 // Use "No Submission" as fallback if no matching submission found
                 const currentSubmission = selectedSubmission || {
                   status: "No Submission",
-                  assignment_title: "No Submission",
+                  assignment_title: "-",
                 };
 
                 return (

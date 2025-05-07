@@ -18,36 +18,43 @@ class GetMarkingSchemeView(APIView):
 
     def get(self, request, student_id):
         user = request.user
+
         try:
             student = Student.objects.get(id=student_id)
         except Student.DoesNotExist:
             return Response({"error": "Student not found"}, status=404)
 
-        # Check course coordinator access
-        if user.role == "course_coordinator" and CourseCoordinator.DoesNotExist:
-            coordinator = CourseCoordinator.objects.get(user=user)
-            course = coordinator.course
-            if course == "Both":
-                schemes = MarkingScheme.objects.filter(course=student.course)
-            elif student.course == course:
-                schemes = MarkingScheme.objects.filter(course=course)
-            else:
-                return Response(
-                    {"error": "Not allowed to view this course's schemes."},
-                    status=403,
-                )
+        schemes = None
+        user_roles = []
 
-        # For examiner or supervisor
-        else:
-            if (
-                user.role == "examiner" or user.is_examiner
-            ) and user in student.evaluators.all():
-                role = "examiner"
+        # Check if the user is an evaluator for this student
+        if user in student.evaluators.all():
+            if user.role == "examiner" or user.is_examiner:
+                user_roles.append("examiner")
             else:
-                role = "supervisor"
+                user_roles.append("supervisor")
+
+        # Check if the user is the course coordinator for this student's course
+        if user.role == "course_coordinator":
+            try:
+                coordinator = CourseCoordinator.objects.get(user=user)
+                course = coordinator.course
+                if course == "Both" or course == student.course:
+                    user_roles.append("course_coordinator")
+                else:
+                    return Response(
+                        {"error": "Not allowed to view this course's schemes."},
+                        status=403,
+                    )
+            except CourseCoordinator.DoesNotExist:
+                return Response({"error": "Coordinator record not found"}, status=403)
+
+        if user_roles:
             schemes = MarkingScheme.objects.filter(
-                course=student.course, pic__contains=[role]
+                course=student.course, pic__overlap=user_roles
             )
+        else:
+            return Response({"error": "Access denied."}, status=403)
 
         serializer = MarkingSchemeSerializer(schemes, many=True)
         return Response(serializer.data)

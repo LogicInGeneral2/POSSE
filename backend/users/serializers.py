@@ -21,6 +21,10 @@ class UserSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
 
+        if hasattr(instance, "course_coordinator_profile"):
+            instance.role = "course_coordinator"
+            data["role"] = "course_coordinator"
+
         if instance.role == "student" and hasattr(instance, "student"):
             student = instance.student
             data["student_id"] = student.student_id

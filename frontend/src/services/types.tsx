@@ -124,6 +124,7 @@ export interface SubmissionType extends FileType {
 export interface FeedbackType extends FileType {
   type: "feedback";
   supervisorId: number;
+  supervisorName?: string;
   submissionId: number;
   comment: string;
 }
@@ -180,7 +181,7 @@ export interface SubmissionsMetaType {
   status: string;
   description: string;
   submission: SubmissionType;
-  feedback: FeedbackType;
+  feedback: FeedbackType[];
 }
 
 export interface LogType {

@@ -184,18 +184,18 @@ export default function NavigationBar() {
       icon: <BookRounded sx={{ color: "primary.main" }} />,
       path: "/logs",
     },
+    {
+      text: "Profile",
+      icon: <Person3Rounded sx={{ color: "primary.main" }} />,
+      path: "/profile",
+    },
     user?.role === "course_coordinator" && {
       text: "POSSE Admin",
       icon: <AdminPanelSettingsIcon sx={{ color: "primary.main" }} />,
       path: "http://127.0.0.1:8000/admin",
       external: true,
     },
-    {
-      text: "Profile",
-      icon: <Person3Rounded sx={{ color: "primary.main" }} />,
-      path: "/profile",
-    },
-    {
+    user?.role === "course_coordinator" && {
       text: "Grades",
       icon: <GradeRounded sx={{ color: "primary.main" }} />,
       path: "/grades",

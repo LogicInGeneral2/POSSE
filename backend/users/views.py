@@ -195,7 +195,7 @@ class SuperviseeSubmissionsView(APIView):
                 {
                     "id": submission.id,
                     "status": "Reviewed"
-                    if submission.feedback_set.exists()
+                    if submission.feedback_set.filter(supervisor=request.user).exists()
                     else "Submitted",
                     "type": "submission",
                     "assignment_title": submission.submission_phase.title,
@@ -212,7 +212,7 @@ class SuperviseeSubmissionsView(APIView):
                         "course": student.course,
                         "mode": student.mode,
                         "student_id": student.student_id,
-                        "supervisor": request.user.name,
+                        "supervisor": student.supervisor.name,
                         "topic": student.topic,
                     },
                     "submissions": submissions_list,

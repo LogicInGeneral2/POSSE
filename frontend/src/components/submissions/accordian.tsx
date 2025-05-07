@@ -54,7 +54,7 @@ function SubmissionCards({
   statusInfo,
 }: {
   submission: SubmissionType | null;
-  feedback: FeedbackType | null;
+  feedback: FeedbackType[] | null;
   meta: SubmissionsMetaType;
   refreshSubmissions: () => void;
   statusInfo: StatusInfo[];
@@ -72,6 +72,7 @@ function SubmissionCards({
     message: "",
     severity: "success",
   });
+  const [expandedFeedbacks, setExpandedFeedbacks] = useState<boolean[]>([]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) {
@@ -170,9 +171,16 @@ function SubmissionCards({
     setOpenDialog(false);
   };
 
+  const toggleFeedbackExpand = (index: number) => {
+    setExpandedFeedbacks((prev) => {
+      const newExpanded = [...prev];
+      newExpanded[index] = !newExpanded[index];
+      return newExpanded;
+    });
+  };
+
   const status = statusInfo.find((s) => s.value === meta.status);
   const statusIcon = status?.icon || null;
-  const [expanded, setExpanded] = useState(false);
   const maxPreviewLines = 2;
 
   return (
@@ -182,7 +190,7 @@ function SubmissionCards({
         message={toast.message}
         severity={toast.severity}
         onClose={() => setToast((prev) => ({ ...prev, open: false }))}
-      />{" "}
+      />
       <ConfirmationDialog
         open={openDialog}
         title="Confirm Deletion"
@@ -240,7 +248,7 @@ function SubmissionCards({
                       fontSize: "0.75rem",
                     }}
                   >
-                    {icon} {text}{" "}
+                    {icon} {text}
                     {index < 2 && <Divider orientation="vertical" flexItem />}
                   </Typography>
                 ))}
@@ -258,51 +266,58 @@ function SubmissionCards({
           meta.status === "Feedback" ||
           meta.status === "Closed") && (
           <AccordionActions sx={{ backgroundColor: "base.main" }}>
-            {meta.status === "Feedback" && feedback && (
+            {meta.status === "Feedback" && feedback && feedback.length > 0 && (
               <Box
                 sx={{
                   display: "flex",
-                  flexDirection: "column",
+                  flexDirection: "row",
                   gap: 2,
                   m: 2,
+                  width: "100%",
                 }}
               >
-                <Box
-                  sx={{
-                    border: "2px solid",
-                    p: 2,
-                    borderRadius: "8px",
-                  }}
-                >
-                  <Typography variant="subtitle2" gutterBottom>
-                    SV's Comment:
-                  </Typography>
-                  <Collapse in={expanded} collapsedSize={maxPreviewLines * 24}>
-                    <Typography
-                      sx={{
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      {feedback.comment}
-                    </Typography>
-                  </Collapse>
-                  <Button
-                    size="small"
-                    onClick={() => setExpanded(!expanded)}
-                    sx={{ mt: 1 }}
+                {feedback.map((singleFeedback, index) => (
+                  <Box
+                    key={singleFeedback.id}
+                    sx={{
+                      border: "2px solid",
+                      p: 2,
+                      borderRadius: "8px",
+                    }}
                   >
-                    {expanded ? "Show less" : "Read more"}
-                  </Button>
-                </Box>
-                {feedback.src && (
-                  <Download_Button
-                    fileUrl={feedback.src}
-                    text={feedback.title}
-                    variants="contained"
-                    disabled={false}
-                  />
-                )}
+                    <Typography variant="subtitle2" gutterBottom>
+                      Feedback from {singleFeedback.supervisorName}:
+                    </Typography>
+                    <Collapse
+                      in={expandedFeedbacks[index] || false}
+                      collapsedSize={maxPreviewLines * 24}
+                    >
+                      <Typography
+                        sx={{
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {singleFeedback.comment}
+                      </Typography>
+                    </Collapse>
+                    <Button
+                      size="small"
+                      onClick={() => toggleFeedbackExpand(index)}
+                      sx={{ mt: 1 }}
+                    >
+                      {expandedFeedbacks[index] ? "Show less" : "Read more"}
+                    </Button>
+                    {singleFeedback.src && (
+                      <Download_Button
+                        fileUrl={singleFeedback.src}
+                        text={singleFeedback.title}
+                        variants="contained"
+                        disabled={false}
+                      />
+                    )}
+                  </Box>
+                ))}
               </Box>
             )}
             {meta.status === "Closed" && submission && (

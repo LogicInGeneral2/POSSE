@@ -135,20 +135,26 @@ class CombinedSubmissionSerializer(serializers.Serializer):
         student = self.context.get("student")
         submission = obj.studentsubmission_set.filter(student=student).first()
         if not submission:
-            return {}
-        feedback = submission.feedback_set.first()
-        if not feedback:
-            return {}
-        return {
-            "id": feedback.id,
-            "title": "Feedback",
-            "upload_date": feedback.upload_date,
-            "comment": feedback.comment,
-            "src": feedback.file.url if feedback.file else "",
-            "type": "feedback",
-            "supervisorId": feedback.supervisor.id,
-            "submissionId": submission.id,
-        }
+            return []
+
+        feedbacks = submission.feedback_set.all()
+        if not feedbacks:
+            return []
+
+        return [
+            {
+                "id": feedback.id,
+                "title": "Feedback",
+                "upload_date": feedback.upload_date,
+                "comment": feedback.comment,
+                "src": feedback.file.url if feedback.file else "",
+                "type": "feedback",
+                "supervisorId": feedback.supervisor.id,
+                "supervisorName": feedback.supervisor.name,
+                "submissionId": submission.id,
+            }
+            for feedback in feedbacks
+        ]
 
 
 class StudentAllSubmissionSerializer(serializers.Serializer):
@@ -169,7 +175,12 @@ class StudentAllSubmissionSerializer(serializers.Serializer):
         return request.build_absolute_uri(obj.file.url) if obj.file and request else ""
 
     def get_status(self, obj):
-        return "Reviewed" if obj.feedback_set.exists() else "Submitted"
+        request = self.context.get("request")
+        return (
+            "Reviewed"
+            if request and obj.feedback_set.filter(supervisor=request.user).exists()
+            else "Submitted"
+        )
 
     def get_type(self, obj):
         return "submission"
@@ -181,7 +192,11 @@ class StudentAllSubmissionSerializer(serializers.Serializer):
         return obj.submission_phase.id
 
     def get_feedback(self, obj):
-        feedback = obj.feedback_set.first()
+        request = self.context.get("request")
+        if not request:
+            return {}
+
+        feedback = obj.feedback_set.filter(supervisor=request.user).first()
         if not feedback:
             return {}
 
@@ -189,7 +204,9 @@ class StudentAllSubmissionSerializer(serializers.Serializer):
             "id": feedback.id,
             "title": "Feedback",
             "upload_date": feedback.upload_date,
-            "src": feedback.file.url if feedback.file else "",
+            "src": request.build_absolute_uri(feedback.file.url)
+            if feedback.file
+            else "",
             "comment": feedback.comment,
             "type": "feedback",
             "supervisorId": feedback.supervisor.id,
