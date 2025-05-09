@@ -3,6 +3,8 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 import urllib
+from documents.models import Logbook, StudentSubmission
+from grades.models import Grade, TotalMarks
 from .forms import CustomUserChangeForm, ExaminerSelectionForm
 from .models import SupervisorsRequest, User, Student, CourseCoordinator
 from django.utils.html import format_html
@@ -272,7 +274,7 @@ class StudentAdmin(ImportExportModelAdmin):
     )
     list_filter = ("course",)
     search_fields = ("user__name", "student_id", "user__email")
-    actions = ["promote_to_fyp2", "bulk_assign_examiner"]
+    actions = ["promote_to_fyp2", "bulk_assign_examiner", "deactivate", "reactivate"]
 
     def get_urls(self):
         urls = super().get_urls()
@@ -388,20 +390,102 @@ class StudentAdmin(ImportExportModelAdmin):
     def supervisor_name(self, obj):
         return obj.supervisor.name if obj.supervisor else "-"
 
-    @admin.action(description="Promote selected students to FYP2")
-    def promote_to_fyp2(self, request, queryset):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            if coordinator_course == "FYP2":
-                self.message_user(
-                    request,
-                    "FYP2 coordinators cannot promote students to FYP2.",
-                    messages.ERROR,
-                )
-                return
-        updated_count = queryset.filter(course="FYP1").update(course="FYP2")
-        self.message_user(request, f"{updated_count} student(s) promoted to FYP2.")
+
+@admin.action(description="Promote selected students to FYP2")
+def promote_to_fyp2(self, request, queryset):
+    course_filter, is_coordinator = get_coordinator_course_filter(request)
+    if is_coordinator and course_filter:
+        coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+        if coordinator_course == "FYP2":
+            self.message_user(
+                request,
+                "FYP2 coordinators cannot promote students to FYP2.",
+                messages.ERROR,
+            )
+            return
+
+    promoted_count = 0
+    for student in queryset.filter(course="FYP1"):
+        try:
+            with transaction.atomic():
+                # Delete related data from models with ForeignKey to Student
+                Logbook.objects.filter(student=student).delete()
+                StudentSubmission.objects.filter(student=student).delete()
+                Grade.objects.filter(student=student).delete()
+                TotalMarks.objects.filter(student=student).delete()
+
+                # Clear many-to-many relationships (e.g., evaluators)
+                student.evaluators.clear()
+
+                # Promote to FYP2
+                student.course = "FYP2"
+                student.save()
+
+                promoted_count += 1
+        except Exception as e:
+            self.message_user(
+                request,
+                f"Failed to promote {student.user.name}: {str(e)}",
+                messages.WARNING,
+            )
+            continue
+
+    self.message_user(
+        request,
+        f"{promoted_count} student(s) promoted to FYP2 and related data cleared.",
+        messages.SUCCESS if promoted_count > 0 else messages.ERROR,
+    )
+
+    @admin.action(description="Deactivate selected students and delete related data")
+    def deactivate(self, request, queryset):
+        updated_count = 0
+        for student in queryset:
+            if student.user.is_active:  # Only process active students
+                try:
+                    with transaction.atomic():
+                        # Delete related data from models with ForeignKey to Student
+                        Logbook.objects.filter(student=student).delete()
+                        StudentSubmission.objects.filter(student=student).delete()
+                        Grade.objects.filter(student=student).delete()
+                        TotalMarks.objects.filter(student=student).delete()
+
+                        # Clear many-to-many relationships (e.g., evaluators)
+                        student.evaluators.clear()
+
+                        # Deactivate the user and update the student's course
+                        student.user.is_active = False
+                        student.user.save()
+                        student.course = "inactive"
+                        student.save()
+
+                        updated_count += 1
+                except Exception as e:
+                    self.message_user(
+                        request,
+                        f"Failed to deactivate {student.user.name}: {str(e)}",
+                        messages.WARNING,
+                    )
+                    continue
+
+        self.message_user(
+            request,
+            f"{updated_count} student(s) deactivated, marked as 'Inactive', and related data deleted.",
+            messages.SUCCESS if updated_count > 0 else messages.ERROR,
+        )
+
+    @admin.action(description="Reactivate selected students")
+    def reactivate(self, request, queryset):
+        updated_count = 0
+        for student in queryset:
+            if not student.user.is_active:
+                student.user.is_active = True
+                student.user.save()
+                student.course = "FYP2"
+                student.save()
+                updated_count += 1
+        self.message_user(
+            request, f"{updated_count} student(s) activated and moved to 'FYP2'."
+        )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

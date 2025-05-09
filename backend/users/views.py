@@ -179,9 +179,17 @@ class SuperviseeSubmissionsView(APIView):
             return Response(result)
 
         if request.path.endswith("evaluatees/"):
-            target = Student.objects.filter(evaluators=request.user)
+            target = Student.objects.filter(
+                evaluators=request.user,
+                user__is_active=True,
+                course__in=["FYP1", "FYP2"],
+            )
         else:
-            target = Student.objects.filter(supervisor=request.user)
+            target = Student.objects.filter(
+                supervisor=request.user,
+                user__is_active=True,
+                course__in=["FYP1", "FYP2"],
+            )
 
         result = []
 

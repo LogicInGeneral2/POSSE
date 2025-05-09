@@ -106,7 +106,7 @@ class CourseCoordinator(models.Model):
 
 
 class Student(models.Model):
-    COURSE_CHOICES = [("FYP1", "FYP1"), ("FYP2", "FYP2")]
+    COURSE_CHOICES = [("FYP1", "FYP1"), ("FYP2", "FYP2"), ("inactive", "Inactive")]
     MODE_CHOICES = [("research", "research"), ("development", "development")]
 
     user = models.OneToOneField(
