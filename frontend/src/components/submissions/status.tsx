@@ -1,6 +1,7 @@
 import {
   CheckCircle,
   ErrorRounded,
+  LockRounded,
   PendingRounded,
   WarningAmber,
 } from "@mui/icons-material";
@@ -61,9 +62,9 @@ const defaultStatusConfig: Array<{
   },
   {
     value: "Closed",
-    icon: CheckCircle,
-    fallbackColor: "#28a745",
-    fallbackIconColor: "#3cfc68",
+    icon: LockRounded,
+    fallbackColor: "#6c757d",
+    fallbackIconColor: "#1f1f1f",
   },
   {
     value: "Feedback",

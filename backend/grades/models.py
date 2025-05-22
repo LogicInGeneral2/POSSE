@@ -24,7 +24,7 @@ class MarkingScheme(models.Model):
         return self.label
 
     def clean(self):
-        valid_roles = {"supervisor", "examiner", "coordinator"}
+        valid_roles = {"supervisor", "examiner", "course_coordinator"}
         if not all(role in valid_roles for role in self.pic):
             raise ValidationError("Invalid role(s) in pic")
 

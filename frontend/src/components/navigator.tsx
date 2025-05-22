@@ -153,7 +153,7 @@ export default function NavigationBar() {
       external: false,
     },
     {
-      text: "Course Outline",
+      text: "Additional Notices",
       icon: <InfoIcon sx={{ color: "primary.main" }} />,
       path: "/course_outline",
     },

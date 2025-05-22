@@ -6,6 +6,8 @@ import { getEvaluatees, getSupervisees } from "../../services";
 import ErrorNotice from "../commons/error";
 import LoadingSpinner from "../commons/loading";
 import { useSearchParams } from "react-router";
+import LegendCard from "../commons/legends";
+import { action_options } from "./actions";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -23,6 +25,7 @@ function CustomTabPanel(props: TabPanelProps) {
       id={`students-tabpanel-${index}`}
       aria-labelledby={`students-tab-${index}`}
       {...other}
+      style={{ height: "100%" }}
     >
       {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
@@ -142,7 +145,10 @@ export const SuperviseesPage = () => {
             onRefresh={handleRefresh}
           />
         )}
-      </CustomTabPanel>
+      </CustomTabPanel>{" "}
+      <Box>
+        <LegendCard statusInfo={action_options} />
+      </Box>
     </div>
   );
 };

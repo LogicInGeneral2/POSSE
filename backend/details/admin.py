@@ -97,6 +97,7 @@ class PeriodAdmin(ImportExportModelAdmin):
     ]
     search_fields = ["title", "directory", "course"]
     list_filter = ["directory", "course"]
+    actions = ["create_submission_from_period"]
 
     def get_form(self, request, obj=None, **kwargs):
         kwargs["form"] = PeriodAdminForm

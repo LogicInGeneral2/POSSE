@@ -69,6 +69,13 @@ export interface StatusInfo {
   legend: JSX.Element;
 }
 
+export interface Action {
+  label: string;
+  icon: JSX.Element;
+  type: "dialog" | "navigate";
+  path?: string;
+}
+
 export interface SubmissionTheme {
   label: string;
   primary: string;

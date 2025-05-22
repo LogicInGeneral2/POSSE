@@ -28,6 +28,7 @@ import { useNavigate } from "react-router";
 import DownloadDialog from "./downloadDialog";
 import UploadDialog from "./uploadDialog";
 import {
+  Action,
   courseOptions,
   DataTableProps,
   modeOptions,
@@ -35,7 +36,7 @@ import {
   statusOptions,
   SuperviseeSubmission,
 } from "../../services/types";
-import { Action, action_options } from "./actions";
+import { action_options } from "./actions";
 import { ArrowDropDown, QuestionMarkRounded } from "@mui/icons-material";
 import { getPeriodOptions } from "../../services";
 import TopicDialog from "./topicDialog";

@@ -390,51 +390,50 @@ class StudentAdmin(ImportExportModelAdmin):
     def supervisor_name(self, obj):
         return obj.supervisor.name if obj.supervisor else "-"
 
+    @admin.action(description="Promote selected students to FYP2")
+    def promote_to_fyp2(self, request, queryset):
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
+            if coordinator_course == "FYP2":
+                self.message_user(
+                    request,
+                    "FYP2 coordinators cannot promote students to FYP2.",
+                    messages.ERROR,
+                )
+                return
 
-@admin.action(description="Promote selected students to FYP2")
-def promote_to_fyp2(self, request, queryset):
-    course_filter, is_coordinator = get_coordinator_course_filter(request)
-    if is_coordinator and course_filter:
-        coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-        if coordinator_course == "FYP2":
-            self.message_user(
-                request,
-                "FYP2 coordinators cannot promote students to FYP2.",
-                messages.ERROR,
-            )
-            return
+        promoted_count = 0
+        for student in queryset.filter(course="FYP1"):
+            try:
+                with transaction.atomic():
+                    # Delete related data from models with ForeignKey to Student
+                    Logbook.objects.filter(student=student).delete()
+                    StudentSubmission.objects.filter(student=student).delete()
+                    Grade.objects.filter(student=student).delete()
+                    TotalMarks.objects.filter(student=student).delete()
 
-    promoted_count = 0
-    for student in queryset.filter(course="FYP1"):
-        try:
-            with transaction.atomic():
-                # Delete related data from models with ForeignKey to Student
-                Logbook.objects.filter(student=student).delete()
-                StudentSubmission.objects.filter(student=student).delete()
-                Grade.objects.filter(student=student).delete()
-                TotalMarks.objects.filter(student=student).delete()
+                    # Clear many-to-many relationships (e.g., evaluators)
+                    student.evaluators.clear()
 
-                # Clear many-to-many relationships (e.g., evaluators)
-                student.evaluators.clear()
+                    # Promote to FYP2
+                    student.course = "FYP2"
+                    student.save()
 
-                # Promote to FYP2
-                student.course = "FYP2"
-                student.save()
+                    promoted_count += 1
+            except Exception as e:
+                self.message_user(
+                    request,
+                    f"Failed to promote {student.user.name}: {str(e)}",
+                    messages.WARNING,
+                )
+                continue
 
-                promoted_count += 1
-        except Exception as e:
-            self.message_user(
-                request,
-                f"Failed to promote {student.user.name}: {str(e)}",
-                messages.WARNING,
-            )
-            continue
-
-    self.message_user(
-        request,
-        f"{promoted_count} student(s) promoted to FYP2 and related data cleared.",
-        messages.SUCCESS if promoted_count > 0 else messages.ERROR,
-    )
+        self.message_user(
+            request,
+            f"{promoted_count} student(s) promoted to FYP2 and related data cleared.",
+            messages.SUCCESS if promoted_count > 0 else messages.ERROR,
+        )
 
     @admin.action(description="Deactivate selected students and delete related data")
     def deactivate(self, request, queryset):
@@ -649,9 +648,10 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 student_profile.mode = supervisor_request.mode or student_profile.mode
                 student_profile.save()
 
+                # Delete ALL supervisor requests for the student, including the approved one
                 SupervisorsRequest.objects.filter(
                     student=supervisor_request.student
-                ).exclude(id=supervisor_request.id).delete()
+                ).delete()
 
                 success_message = (
                     f"Supervisor '{supervisor_request.supervisor_name}' assigned, "
@@ -719,6 +719,7 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 student_profile.topic = obj.topic or ""
                 student_profile.save()
 
+                # Delete ALL supervisor requests for the student, including the approved one
                 SupervisorsRequest.objects.filter(student=obj.student).delete()
                 success += 1
             except (User.DoesNotExist, Student.DoesNotExist):

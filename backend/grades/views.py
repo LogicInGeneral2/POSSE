@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-
+from django.db.models import Q
 from users.models import CourseCoordinator
 from .models import MarkingScheme, Grade, Student, User, TotalMarks
 from .serializers import (
@@ -31,8 +31,9 @@ class GetMarkingSchemeView(APIView):
         if user in student.evaluators.all():
             if user.role == "examiner" or user.is_examiner:
                 user_roles.append("examiner")
-            else:
-                user_roles.append("supervisor")
+
+        if user == student.supervisor:
+            user_roles.append("supervisor")
 
         # Check if the user is the course coordinator for this student's course
         if user.role == "course_coordinator":
@@ -50,9 +51,10 @@ class GetMarkingSchemeView(APIView):
                 return Response({"error": "Coordinator record not found"}, status=403)
 
         if user_roles:
-            schemes = MarkingScheme.objects.filter(
-                course=student.course, pic__overlap=user_roles
-            )
+            query = Q(course=student.course)
+            for role in user_roles:
+                query &= Q(pic__contains=role)  # Matches if role is in the pic list
+            schemes = MarkingScheme.objects.filter(query)
         else:
             return Response({"error": "Access denied."}, status=403)
 

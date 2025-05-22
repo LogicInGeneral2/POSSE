@@ -1,7 +1,7 @@
 import { Box, Divider, Typography } from "@mui/material";
 import "./style.css";
 import SubmissionCards from "./accordian";
-import LegendCard from "./card";
+import LegendCard from "../commons/legends";
 import { useEffect, useState } from "react";
 import ErrorNotice from "../commons/error";
 import {

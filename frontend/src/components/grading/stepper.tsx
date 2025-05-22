@@ -44,6 +44,7 @@ const GradingStepper = ({ student }: { student: number }) => {
       try {
         setIsLoading(true);
         const schemeData = await getMarkingScheme(student);
+        console.log(schemeData);
         if (schemeData) {
           setGradingContents(schemeData);
           setGrades(

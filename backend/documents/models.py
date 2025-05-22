@@ -86,7 +86,7 @@ class StudentSubmission(models.Model):
         return f"{self.student.user.name} - {self.submission_phase.title}"
 
 
-def supervisor_choices():
+def limit_to_feedback_roles():
     return Q(role__in=["supervisor", "course_coordinator", "examiner"])
 
 
@@ -94,9 +94,7 @@ class Feedback(models.Model):
     supervisor = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
-        limit_choices_to=lambda: Q(
-            role__in=["supervisor", "course_coordinator", "examiner"]
-        ),
+        limit_choices_to=limit_to_feedback_roles,
     )
     comment = models.TextField(blank=True)
     submission = models.ForeignKey(StudentSubmission, on_delete=models.CASCADE)

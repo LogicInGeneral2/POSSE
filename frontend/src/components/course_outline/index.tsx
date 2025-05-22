@@ -37,7 +37,7 @@ export const CourseOulinePage = () => {
               color="primary"
               sx={{ fontWeight: "bold" }}
             >
-              Course Outline
+              Additional Notices
             </Typography>
             <Divider
               sx={{ borderBottomWidth: 2, borderColor: "primary.main" }}

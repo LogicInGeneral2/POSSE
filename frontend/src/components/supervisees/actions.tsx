@@ -2,17 +2,10 @@ import SearchIcon from "@mui/icons-material/Search";
 import DownloadIcon from "@mui/icons-material/Download";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import EditNoteIcon from "@mui/icons-material/EditNote";
-import { JSX } from "react";
 import { BookRounded, EditRounded } from "@mui/icons-material";
+import { Action } from "../../services/types";
 
-export interface Action {
-  label: string;
-  icon: JSX.Element;
-  type: "dialog" | "navigate";
-  path?: string;
-}
-
-export const action_options = [
+export const action_options: Action[] = [
   {
     label: "View Submission",
     icon: <SearchIcon />,
