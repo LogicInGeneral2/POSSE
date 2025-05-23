@@ -30,7 +30,7 @@ SECRET_KEY = "django-insecure-1llaf2)*r=f!#f_hu17g_-gqk$(c6ep&vixhq5ip4zr^*_2#@!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["127.0.0.1", ".vercel.app"]
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -103,7 +103,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "backend.wsgi.application"
+WSGI_APPLICATION = "api.wsgi.application"
 
 
 # Database
