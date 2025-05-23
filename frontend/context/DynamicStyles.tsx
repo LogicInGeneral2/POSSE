@@ -15,12 +15,12 @@ export const DynamicStyles: React.FC = () => {
     return [r, g, b];
   };
 
-  const darkenColor = (hex: string, amount: number = 0.2): string => {
-    const [r, g, b] = hexToRgb(hex);
-    return `rgb(${clamp(r - 255 * amount)}, ${clamp(g - 255 * amount)}, ${clamp(
-      b - 255 * amount
-    )})`;
-  };
+  // const darkenColor = (hex: string, amount: number = 0.2): string => {
+  //   const [r, g, b] = hexToRgb(hex);
+  //   return `rgb(${clamp(r - 255 * amount)}, ${clamp(g - 255 * amount)}, ${clamp(
+  //     b - 255 * amount
+  //   )})`;
+  // };
 
   const lightenColor = (hex: string, amount: number = 0.2): string => {
     const [r, g, b] = hexToRgb(hex);
