@@ -10,7 +10,7 @@ import { startOfWeek } from "date-fns/startOfWeek";
 import { getDay } from "date-fns/getDay";
 import { enUS } from "date-fns/locale/en-US";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import "./Calender.css";
+import "./calender.css";
 import { LogType, periodTypes } from "../../services/types";
 import { getEvents, getLogsLists } from "../../services";
 import LoadingSpinner from "../commons/loading";
