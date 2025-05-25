@@ -315,11 +315,26 @@ class TotalMarksAdmin(ImportExportModelAdmin):
     ]
     list_filter = ["course", TotalMarksStudentNameFilter]
     search_fields = ["student__user__name", "course"]
-    list_editable = ["total_mark"]  # Removed 'breakdown' to avoid JSON editing issues
     list_per_page = 25
     raw_id_fields = ["student"]
     autocomplete_fields = ["student"]
     actions = ["export_total_marks_to_csv"]
+    readonly_fields = [
+        "student",
+        "course",
+        "total_mark",
+        "breakdown_display",
+        "updated_at",
+    ]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
     def get_queryset(self, request):
         qs = super().get_queryset(request).select_related("student__user")
@@ -329,96 +344,6 @@ class TotalMarksAdmin(ImportExportModelAdmin):
             if coordinator.course != "Both":
                 qs = qs.filter(course__in=[coordinator.course, "Both"])
         return qs
-
-    def save_model(self, request, obj, form, change):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            if obj.course != coordinator_course and obj.course != "Both":
-                self.message_user(
-                    request,
-                    f"You can only create/edit total marks for students in {coordinator_course}.",
-                    messages.ERROR,
-                )
-                return
-
-        # Validate breakdown sum matches total_mark
-        total_mark = obj.total_mark
-        breakdown = obj.breakdown
-        breakdown_sum = sum(breakdown.values())
-        if abs(breakdown_sum - total_mark) > 0.01:
-            self.message_user(
-                request,
-                f"Breakdown sum ({breakdown_sum}) does not match total mark ({total_mark}).",
-                messages.ERROR,
-            )
-            return
-
-        # Update Grade records proportionally
-        student = obj.student
-        schemes = MarkingScheme.objects.filter(course=student.course)
-        for scheme in schemes:
-            scheme_key = scheme.label  # Use label instead of scheme_{id}
-            if scheme_key in breakdown:
-                target_score = breakdown[scheme_key]
-                grades = Grade.objects.filter(student=student, scheme=scheme)
-                if grades.exists():
-                    total_grades = []
-                    for grade in grades:
-                        total_grades.extend(grade.grades)
-                    if total_grades:
-                        num_grades = len(total_grades)
-                        max_marks = scheme.marks
-                        required_sum = (
-                            target_score * num_grades * max_marks
-                        ) / scheme.weightage
-                        current_sum = sum(total_grades)
-                        scale_factor = (
-                            required_sum / current_sum if current_sum > 0 else 1.0
-                        )
-                        for grade in grades:
-                            scaled_grades = [
-                                min(round(g * scale_factor), int(max_marks))
-                                for g in grade.grades
-                            ]
-                            grade.grades = scaled_grades
-                            grade.save()
-
-        super().save_model(request, obj, form, change)
-        self.message_user(
-            request,
-            "Total marks updated and grades adjusted proportionally.",
-            messages.SUCCESS,
-        )
-
-    def delete_model(self, request, obj):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            if obj.course != coordinator_course and obj.course != "Both":
-                self.message_user(
-                    request,
-                    f"You can only delete total marks for students in {coordinator_course}.",
-                    messages.ERROR,
-                )
-                return
-        super().delete_model(request, obj)
-
-    def delete_queryset(self, request, queryset):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            restricted = queryset.exclude(course=coordinator_course).exclude(
-                course="Both"
-            )
-            if restricted.exists():
-                self.message_user(
-                    request,
-                    f"You can only delete total marks for students in {coordinator_course}.",
-                    messages.ERROR,
-                )
-                return
-        super().delete_queryset(request, queryset)
 
     def student_name(self, obj):
         return obj.student.user.name if obj.student.user else "N/A"
