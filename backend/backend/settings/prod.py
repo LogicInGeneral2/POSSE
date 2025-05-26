@@ -9,9 +9,8 @@ ALLOWED_HOSTS = ["*"]  # Update with your Render/Vercel domain for security
 # Database
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.getenv(
-            "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/mysite"
-        ),
+        # Replace this value with your local database's connection string.
+        default="postgresql://postgres:postgres@localhost:5432/mysite",
         conn_max_age=600,
     )
 }
