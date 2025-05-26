@@ -192,7 +192,7 @@ export default function NavigationBar() {
     user?.role === "course_coordinator" && {
       text: "POSSE Admin",
       icon: <AdminPanelSettingsIcon sx={{ color: "primary.main" }} />,
-      path: "http://127.0.0.1:8000/admin",
+      path: "https://posse-r81n.onrender.com/admin",
       external: true,
     },
     user?.role === "course_coordinator" && {
