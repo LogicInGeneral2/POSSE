@@ -183,12 +183,9 @@ export default function Breadcrumb({
       if (foundStudent) {
         setSelectedStudent(foundStudent);
         getBreadcrumbInfo(studentId);
-        if (location.pathname === "/viewing") {
-          getStudentSubmissions(studentId);
-        } else {
-          setSubmissions([]);
-          setSelectedSubmission(null);
-        }
+        getStudentSubmissions(studentId);
+        setSubmissions([]);
+        setSelectedSubmission(null);
       } else {
         setSelectedStudent(null);
         setBreadcrumbInfo(null);

@@ -28,12 +28,16 @@ export function Item({ item }: { item: AnnouncementTypes }) {
       >
         {item.message}
       </Typography>
-      <Download_Button
-        fileUrl={item.src}
-        text="Download Attachment"
-        disabled={false}
-      />
-      <PDFViewer src={item.src} />
+      {item.src && (
+        <>
+          <Download_Button
+            fileUrl={item.src}
+            text="Download Attachment"
+            disabled={false}
+          />
+          <PDFViewer src={item.src} />
+        </>
+      )}
     </Box>
   );
 }

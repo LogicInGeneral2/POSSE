@@ -22,9 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+backend/media/
 
 # Ignore env directory and API
 .env
 /env/
 **/node_modules/
 /frontend/.env
+

@@ -38,12 +38,8 @@ export default function FileUpload({ student, submission }: FileUploadProps) {
 
         let data;
         if (submission) {
-          console.log(
-            `Fetching submission ${submission} for student ${studentId}`
-          );
           data = await getUserSubmission(studentId, submission);
         } else {
-          console.log(`Fetching latest submission for student ${studentId}`);
           data = await getLatestUserSubmission(studentId);
         }
 
@@ -69,14 +65,12 @@ export default function FileUpload({ student, submission }: FileUploadProps) {
     ).toString();
 
     if (source?.file) {
-      console.log("Setting file in context:", source.file);
       contextValues.setFile(source.file);
       setDocIsLoading(true);
     }
   }, [source, contextValues]);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-    console.log("Document loaded with", numPages, "pages");
     contextValues.setEdits({});
     contextValues.setNumPages(numPages);
     contextValues.setCurrPage(1);
@@ -88,11 +82,6 @@ export default function FileUpload({ student, submission }: FileUploadProps) {
         const pageWidth = viewport.width;
         const pageHeight = viewport.height;
 
-        console.log(
-          "Initializing canvas with dimensions:",
-          pageWidth,
-          pageHeight
-        );
         contextValues.setCanvas(initCanvas(pageWidth, pageHeight));
         setTimeout(() => setDocIsLoading(false), 1000); // Reduced timeout for faster feedback
       });
