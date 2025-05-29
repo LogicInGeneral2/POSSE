@@ -102,7 +102,6 @@ export const CanvasProvider = ({ children }) => {
 
       canvas.add(rect);
       canvas.renderAll();
-      setIsHighlightMode(false); 
     };
 
     canvas.on("mouse:down", handleCanvasClick);
@@ -360,6 +359,7 @@ export const CanvasProvider = ({ children }) => {
         highlightHeight, // Add to context
         setHighlightHeight, // Add to context
         isDrawingMode,
+
       }}
     >
       {children}

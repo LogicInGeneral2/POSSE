@@ -15,7 +15,7 @@ import {
   VisibilityOff,
   Visibility,
 } from "@mui/icons-material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import logo from "../../assets/icon.png";
 import "./login.css";
 import { useNavigate } from "react-router";
@@ -41,6 +41,13 @@ export const LoginPage = () => {
   ) => {
     event.preventDefault();
   };
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleLogin = async (event: { preventDefault: () => void }) => {
     setLoading(true);

@@ -79,6 +79,9 @@ class StudentSubmissionAdmin(admin.ModelAdmin):
                 queryset = queryset.filter(student__course=coordinator.course)
         return queryset
 
+    def has_add_permission(self, request):
+        return False
+
 
 @admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
@@ -100,6 +103,9 @@ class FeedbackAdmin(admin.ModelAdmin):
                     submission__student__course=coordinator.course
                 )
         return queryset
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(Logbook)
@@ -166,3 +172,6 @@ class LogbookAdmin(admin.ModelAdmin):
         return obj.supervisor.name
 
     supervisor_name.short_description = "Supervisor"
+
+    def has_add_permission(self, request):
+        return False

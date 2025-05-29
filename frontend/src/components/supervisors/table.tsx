@@ -178,7 +178,7 @@ export default function SupervisorsTable({
           </Select>
         </FormControl>
         <TextField
-          label="FYP Topic"
+          label="FYP Topic (Optional)"
           variant="outlined"
           fullWidth
           disabled={!isEditing}

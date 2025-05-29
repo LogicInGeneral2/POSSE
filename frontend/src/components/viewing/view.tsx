@@ -66,7 +66,7 @@ export default function FileUpload({ student, submission }: FileUploadProps) {
 
     if (source?.file) {
       contextValues.setFile(source.file);
-      setDocIsLoading(true);
+      setDocIsLoading(false);
     }
   }, [source, contextValues]);
 
