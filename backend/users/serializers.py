@@ -120,17 +120,21 @@ class SupervisorsListSerializer(serializers.ModelSerializer):
 
 
 class SupervisorChoiceSerializer(serializers.ModelSerializer):
-    proof = serializers.SerializerMethodField()
-
     class Meta:
         model = SupervisorsRequest
         fields = [
-            "priority",
-            "supervisor_id",
-            "supervisor_name",
-            "proof",
+            "first_id",
+            "first_name",
+            "second_id",
+            "second_name",
+            "third_id",
+            "third_name",
             "topic",
             "mode",
+            "cgpa",
+            "first_proof",
+            "second_proof",
+            "third_proof",
         ]
 
     def get_proof(self, obj):

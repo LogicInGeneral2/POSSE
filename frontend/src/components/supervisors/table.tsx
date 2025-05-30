@@ -36,6 +36,7 @@ export default function SupervisorsTable({
   >([null, null, null]);
   const [mode, setMode] = useState<string>("development");
   const [topic, setTopic] = useState<string>("");
+  const [cgpa, setCgpa] = useState<number>(0);
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
@@ -66,31 +67,29 @@ export default function SupervisorsTable({
       const formData = new FormData();
       formData.append("studentId", student.id.toString());
 
-      const simplifiedChoices = supervisorChoices.map((supervisor, index) => {
-        const priority = index + 1;
-
-        if (!supervisor?.name) {
-          throw new Error(
-            `Supervisor name is required for choice #${priority}`
-          );
-        }
-
+      const choices = supervisorChoices.map((supervisor, index) => {
         const choice = {
-          priority,
-          supervisorId: supervisor.id || null,
-          supervisorName: supervisor.name,
+          [`${["first", "second", "third"][index]}Id`]: supervisor?.id || null,
+          [`${["first", "second", "third"][index]}Name`]:
+            supervisor?.name || null,
           topic: topic || null,
           mode: mode || "development",
+          cgpa: cgpa,
         };
 
-        if (supervisor.proof instanceof File) {
-          formData.append(`proof_${priority}`, supervisor.proof);
+        if (supervisor?.proof instanceof File) {
+          formData.append(
+            `proof_${["first", "second", "third"][index]}`,
+            supervisor.proof
+          );
         }
 
         return choice;
       });
 
-      formData.append("choices", JSON.stringify(simplifiedChoices));
+      // Merge choices into a single object
+      const mergedChoices = Object.assign({}, ...choices);
+      formData.append("choices", JSON.stringify(mergedChoices));
 
       await saveSupervisorChoices(formData);
       setIsEditing(false);
@@ -115,26 +114,22 @@ export default function SupervisorsTable({
         const response = await getSupervisorChoices(student.id);
         const data = response.data;
 
-        const filledChoices: (SupervisorsSelectionType | null)[] = [
-          null,
-          null,
-          null,
-        ];
-
-        data.forEach((choice: any) => {
-          const index = choice.priority - 1;
-          filledChoices[index] = {
-            name: choice.supervisor_name,
-            id: choice.supervisor_id,
-          };
-        });
-
-        if (data.length > 0) {
-          setTopic(data[0].topic || "");
-          setMode(data[0].mode || "development");
+        if (data) {
+          setSupervisorChoices([
+            data.first_id || data.first_name
+              ? { id: data.first_id, name: data.first_name }
+              : null,
+            data.second_id || data.second_name
+              ? { id: data.second_id, name: data.second_name }
+              : null,
+            data.third_id || data.third_name
+              ? { id: data.third_id, name: data.third_name }
+              : null,
+          ]);
+          setTopic(data.topic || "");
+          setMode(data.mode || "development");
+          setCgpa(data.cgpa || 0);
         }
-
-        setSupervisorChoices(filledChoices);
       } catch (error) {
         console.error("Error fetching supervisor choices:", error);
       }
@@ -177,6 +172,15 @@ export default function SupervisorsTable({
             <MenuItem value="research">Research</MenuItem>
           </Select>
         </FormControl>
+        <TextField
+          label="Current CGPA"
+          variant="outlined"
+          type="number"
+          fullWidth
+          disabled={!isEditing}
+          value={cgpa || 0}
+          onChange={(e) => setCgpa(Number(e.target.value))}
+        />
         <TextField
           label="FYP Topic (Optional)"
           variant="outlined"

@@ -68,6 +68,29 @@ class EvaluateeInline(admin.TabularInline):
         return False  # Prevent deleting evaluatees from the inline
 
 
+class CgpaRangeFilter(admin.SimpleListFilter):
+    title = "CGPA Range"
+    parameter_name = "cgpa"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("0-1", "0-1 CGPA"),
+            ("1-2", "1-2 CGPA"),
+            ("2-3", "2-3 CGPA"),
+            ("3-4", "3-4 CGPA"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "0-1":
+            return queryset.filter(cgpa__range=(0, 1))
+        if self.value() == "1-2":
+            return queryset.filter(cgpa__range=(1, 2))
+        if self.value() == "2-3":
+            return queryset.filter(cgpa__range=(2, 3))
+        if self.value() == "3-4":
+            return queryset.filter(cgpa__range=(3, 4))
+
+
 @admin.register(User)
 class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
     resource_class = UserResource
@@ -652,39 +675,99 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
     list_display = (
         "id",
         "student",
-        "supervisor_id",
-        "supervisor_name",
+        "cgpa",
+        "first_name",
+        "approve_first_button",
+        "second_name",
+        "approve_second_button",
+        "third_name",
+        "approve_third_button",
         "topic",
         "mode",
-        "priority",
-        "proof_link",
-        "approve_button",
+        "first_proof_link",
+        "second_proof_link",
+        "third_proof_link",
     )
-    list_filter = ("priority", "mode")
+    list_filter = ("mode",)
     search_fields = (
         "student__user__name",
         "student__student_id",
         "student__user__email",
+        "first_name",
+        "second_name",
+        "third_name",
     )
-    actions = ["bulk_approve"]
+    actions = [
+        "bulk_approve_first_choice",
+        "bulk_approve_second_choice",
+        "bulk_approve_third_choice",
+    ]
 
-    def proof_link(self, obj):
-        if obj.proof:
+    def approve_first_button(self, obj):
+        if obj.first_name and obj.first_id:
             return format_html(
-                '<a href="{}" target="_blank">View Proof</a>', obj.proof.url
+                '<a class="button" href="{}" onclick="return confirm(\'Approve {} as supervisor?\')">Approve</a>',
+                reverse("admin:approve_supervisor_request", args=[obj.pk])
+                + "?choice=first",
+                obj.first_name,
             )
         return "-"
 
-    proof_link.short_description = "Proof"
+    approve_first_button.short_description = "Action"
+    approve_first_button.allow_tags = True
 
-    def approve_button(self, obj):
-        return format_html(
-            '<a class="button" href="{}">Approve</a>',
-            reverse("admin:approve_supervisor_request", args=[obj.pk]),
-        )
+    def approve_second_button(self, obj):
+        if obj.second_name and obj.second_id:
+            return format_html(
+                '<a class="button" href="{}" onclick="return confirm(\'Approve {} as supervisor?\')">Approve</a>',
+                reverse("admin:approve_supervisor_request", args=[obj.pk])
+                + "?choice=second",
+                obj.second_name,
+            )
+        return "-"
 
-    approve_button.short_description = "Approve"
-    approve_button.allow_tags = True
+    approve_second_button.short_description = "Action"
+    approve_second_button.allow_tags = True
+
+    def approve_third_button(self, obj):
+        if obj.third_name and obj.third_id:
+            return format_html(
+                '<a class="button" href="{}" onclick="return confirm(\'Approve {} as supervisor?\')">Approve</a>',
+                reverse("admin:approve_supervisor_request", args=[obj.pk])
+                + "?choice=third",
+                obj.third_name,
+            )
+        return "-"
+
+    approve_third_button.short_description = "Action"
+    approve_third_button.allow_tags = True
+
+    def first_proof_link(self, obj):
+        if obj.first_proof:
+            return format_html(
+                '<a href="{}" target="_blank">View Proof</a>', obj.first_proof.url
+            )
+        return "-"
+
+    first_proof_link.short_description = "First Proof"
+
+    def second_proof_link(self, obj):
+        if obj.second_proof:
+            return format_html(
+                '<a href="{}" target="_blank">View Proof</a>', obj.second_proof.url
+            )
+        return "-"
+
+    second_proof_link.short_description = "Second Proof"
+
+    def third_proof_link(self, obj):
+        if obj.third_proof:
+            return format_html(
+                '<a href="{}" target="_blank">View Proof</a>', obj.third_proof.url
+            )
+        return "-"
+
+    third_proof_link.short_description = "Third Proof"
 
     def get_urls(self):
         urls = super().get_urls()
@@ -711,24 +794,56 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 reverse("admin:users_supervisorsrequest_changelist")
             )
 
-        try:
-            supervisor = User.objects.get(
-                id=supervisor_request.supervisor_id, role="supervisor"
+        # Get the selected choice from query parameter
+        choice = request.GET.get(
+            "choice", "first"
+        )  # Default to 'first' if not specified
+        if choice not in ["first", "second", "third"]:
+            self.message_user(request, "Invalid choice specified.", messages.ERROR)
+            return HttpResponseRedirect(
+                reverse("admin:users_supervisorsrequest_changelist")
             )
-        except User.DoesNotExist:
+
+        # Map choice to supervisor ID and name
+        supervisor_id = None
+        supervisor_name = None
+        if choice == "first":
+            supervisor_id = supervisor_request.first_id
+            supervisor_name = supervisor_request.first_name
+        elif choice == "second":
+            supervisor_id = supervisor_request.second_id
+            supervisor_name = supervisor_request.second_name
+        elif choice == "third":
+            supervisor_id = supervisor_request.third_id
+            supervisor_name = supervisor_request.third_name
+
+        if not supervisor_id or not supervisor_name:
             self.message_user(
                 request,
-                f"Supervisor '{supervisor_request.supervisor_name}' not found. Please create the user first.",
+                f"No supervisor found for {choice} choice.",
                 messages.WARNING,
             )
             return HttpResponseRedirect(
                 reverse("admin:users_user_add")
-                + f"?name={urllib.parse.quote(supervisor_request.supervisor_name)}&role=supervisor"
+                + f"?name={urllib.parse.quote(supervisor_name or '')}&role=supervisor"
+            )
+
+        try:
+            supervisor = User.objects.get(id=supervisor_id, role="supervisor")
+        except User.DoesNotExist:
+            self.message_user(
+                request,
+                f"Supervisor '{supervisor_name}' not found. Please create the user first.",
+                messages.WARNING,
+            )
+            return HttpResponseRedirect(
+                reverse("admin:users_user_add")
+                + f"?name={urllib.parse.quote(supervisor_name or '')}&role=supervisor"
             )
         except User.MultipleObjectsReturned:
             self.message_user(
                 request,
-                "Multiple supervisors found with the same ID. Please contact support.",
+                f"Multiple supervisors found for {supervisor_name}. Please contact support.",
                 messages.ERROR,
             )
             return HttpResponseRedirect(
@@ -757,15 +872,14 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 student_profile.supervisor = supervisor
                 student_profile.topic = supervisor_request.topic or ""
                 student_profile.mode = supervisor_request.mode or student_profile.mode
+                student_profile.cgpa = supervisor_request.cgpa or 0
                 student_profile.save()
 
-                # Delete ALL supervisor requests for the student, including the approved one
-                SupervisorsRequest.objects.filter(
-                    student=supervisor_request.student
-                ).delete()
+                # Delete the supervisor request for the student
+                supervisor_request.delete()
 
                 success_message = (
-                    f"Supervisor '{supervisor_request.supervisor_name}' assigned, "
+                    f"Supervisor '{supervisor_name}' assigned, "
                     f"mode set to '{student_profile.mode}', "
                     f"topic set to '{student_profile.topic}'"
                 )
@@ -778,7 +892,7 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                         message = (
                             f"Hi {student_profile.user.name},\n\n"
                             f"Your supervisor request has been approved.\n"
-                            f"Assigned Supervisor: {supervisor.name}\n"
+                            f"Assigned Supervisor: {supervisor_name}\n"
                             f"Requested Topic: {student_profile.topic or ''}\n"
                             f"Mode: {student_profile.mode}\n"
                             f"Please check your student profile for more details or contact your supervisor.\n\n"
@@ -819,28 +933,62 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
             reverse("admin:users_supervisorsrequest_changelist")
         )
 
-    def bulk_approve(self, request, queryset):
+    def bulk_approve_first_choice(self, request, queryset):
+        self.bulk_approve_choice(request, queryset, "first")
+
+    bulk_approve_first_choice.short_description = "Bulk Approve First Choice"
+
+    def bulk_approve_second_choice(self, request, queryset):
+        self.bulk_approve_choice(request, queryset, "second")
+
+    bulk_approve_second_choice.short_description = "Bulk Approve Second Choice"
+
+    def bulk_approve_third_choice(self, request, queryset):
+        self.bulk_approve_choice(request, queryset, "third")
+
+    bulk_approve_third_choice.short_description = "Bulk Approve Third Choice"
+
+    def bulk_approve_choice(self, request, queryset, choice):
         success, failed = 0, 0
         for obj in queryset.select_related("student"):
-            try:
-                supervisor = User.objects.get(id=obj.supervisor_id, role="supervisor")
-                student_profile = Student.objects.get(user_id=obj.student.id)
+            supervisor_id = None
+            supervisor_name = None
+            if choice == "first":
+                supervisor_id = obj.first_id
+                supervisor_name = obj.first_name
+            elif choice == "second":
+                supervisor_id = obj.second_id
+                supervisor_name = obj.second_name
+            elif choice == "third":
+                supervisor_id = obj.third_id
+                supervisor_name = obj.third_name
 
+            if not supervisor_id or not supervisor_name:
+                failed += 1
+                continue
+
+            try:
+                supervisor = User.objects.get(id=supervisor_id, role="supervisor")
+            except (User.DoesNotExist, User.MultipleObjectsReturned):
+                failed += 1
+                continue
+
+            try:
+                student_profile = Student.objects.get(user_id=obj.student.id)
                 student_profile.supervisor = supervisor
                 student_profile.topic = obj.topic or ""
+                student_profile.mode = obj.mode or student_profile.mode
+                student_profile.cgpa = obj.cgpa or 0
                 student_profile.save()
 
-                # Delete ALL supervisor requests for the student, including the approved one
-                SupervisorsRequest.objects.filter(student=obj.student).delete()
+                obj.delete()
                 success += 1
-            except (User.DoesNotExist, Student.DoesNotExist):
+            except (Student.DoesNotExist, Student.MultipleObjectsReturned):
                 failed += 1
 
         self.message_user(
             request,
-            f"{success} requests approved successfully with student profiles updated. "
+            f"{success} {choice} choice requests approved successfully with student profiles updated. "
             f"{failed} failed. Ensure supervisor and student records exist.",
             messages.INFO,
         )
-
-    bulk_approve.short_description = "Bulk Approve Selected Requests"

@@ -18,8 +18,17 @@ from django.contrib.admin import SimpleListFilter
 class MarkingSchemeAdmin(ImportExportModelAdmin):
     form = MarkingSchemeForm
     resource_class = MarkingSchemeResource
-    list_display = ["label", "marks", "weightage", "pic", "course"]
-    list_filter = ["pic", "course"]
+    list_display = [
+        "label",
+        "marks",
+        "weightage",
+        "pic",
+        "course",
+        "mode",
+        "steps",
+    ]
+    list_filter = ["pic", "course", "steps"]
+    list_editable = ["steps"]
     search_fields = ["label", "contents"]
 
     def get_queryset(self, request):

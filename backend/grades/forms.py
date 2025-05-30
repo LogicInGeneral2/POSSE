@@ -55,12 +55,12 @@ class MarkingSchemeForm(forms.ModelForm):
     ROLE_CHOICES = [
         ("supervisor", "Supervisor"),
         ("examiner", "Examiner"),
-        ("coordinator", "Coordinator"),
+        ("course_coordinator", "Course Coordinator"),
     ]
 
     pic = forms.MultipleChoiceField(
         choices=ROLE_CHOICES,
-        widget=forms.SelectMultiple,  # Dropdown with multiple select
+        widget=forms.SelectMultiple,
         required=False,
     )
 

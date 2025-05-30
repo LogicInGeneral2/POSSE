@@ -44,7 +44,6 @@ const GradingStepper = ({ student }: { student: number }) => {
       try {
         setIsLoading(true);
         const schemeData = await getMarkingScheme(student);
-        console.log(schemeData);
         if (schemeData) {
           setGradingContents(schemeData);
           setGrades(
@@ -101,15 +100,13 @@ const GradingStepper = ({ student }: { student: number }) => {
     }));
   };
 
-  const allGraded = gradingContents.every((scheme) =>
-    grades[scheme.id].every((grade) => grade >= 0)
-  );
   const stepScores = gradingContents.map((scheme: GradingContentsType) =>
     grades[scheme.id].reduce((acc, curr) => acc + curr, 0)
   );
   const totalScore = stepScores.reduce((acc, curr) => acc + curr, 0);
 
   const handleNext = () => setActiveStep((prev) => prev + 1);
+  const handleFinish = () => setActiveStep(gradingContents.length);
   const handleBack = () => setActiveStep((prev) => prev - 1);
   const handleSave = async () => {
     try {
@@ -277,18 +274,21 @@ const GradingStepper = ({ student }: { student: number }) => {
               Back
             </Button>
             <Box sx={{ flex: "1 1 auto" }} />
-            {activeStep === steps.length - 1 ? (
-              <Button onClick={handleNext} disabled={!allGraded}>
-                Finish
-              </Button>
-            ) : activeStep === steps.length ? (
+            {activeStep === steps.length ? (
               <Button onClick={handleSave} color="primary">
                 Save
               </Button>
             ) : (
-              <Button onClick={handleNext}>Next</Button>
+              <Stack
+                direction="row"
+                alignItems="center"
+                divider={<Divider orientation="vertical" flexItem />}
+              >
+                <Button onClick={handleNext}>Next</Button>
+                <Button onClick={handleFinish}>Finish</Button>
+              </Stack>
             )}
-          </Box>{" "}
+          </Box>
           <Toast
             open={toast.open}
             message={toast.message}

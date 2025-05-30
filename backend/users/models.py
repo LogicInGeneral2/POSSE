@@ -131,6 +131,7 @@ class Student(models.Model):
 
     mode = models.CharField(max_length=20, choices=MODE_CHOICES, default="development")
     topic = models.CharField(max_length=255, null=True, blank=True)
+    cgpa = models.FloatField(default=0.0)
 
     def __str__(self):
         return f"{self.user.name} ({self.course})"
@@ -140,28 +141,49 @@ class Student(models.Model):
 
 
 class SupervisorsRequest(models.Model):
-    PRIORITY_CHOICES = [(1, "First Choice"), (2, "Second Choice"), (3, "Third Choice")]
-    MODE_CHOICES = [("research", "research"), ("development", "development")]
+    MODE_CHOICES = [("research", "Research"), ("development", "Development")]
 
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="supervisor_requests",
         limit_choices_to={"role": "student"},
+        unique=True,  # Ensure one entry per student
     )
-    supervisor_id = models.PositiveIntegerField(null=True, blank=True)
-    supervisor_name = models.CharField(max_length=255, null=True, blank=True)
-    priority = models.PositiveSmallIntegerField(choices=PRIORITY_CHOICES)
-    proof = models.FileField(
+    # First choice
+    first_id = models.PositiveIntegerField(null=True, blank=True)
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    first_proof = models.FileField(
         upload_to=upload_to_supervisor_requests,
         null=True,
         blank=True,
-        help_text="Proof of request (image or PDF)",
+        help_text="Proof of first choice request (image or PDF)",
     )
-
+    # Second choice
+    second_id = models.PositiveIntegerField(null=True, blank=True)
+    second_name = models.CharField(max_length=255, null=True, blank=True)
+    second_proof = models.FileField(
+        upload_to=upload_to_supervisor_requests,
+        null=True,
+        blank=True,
+        help_text="Proof of second choice request (image or PDF)",
+    )
+    # Third choice
+    third_id = models.PositiveIntegerField(null=True, blank=True)
+    third_name = models.CharField(max_length=255, null=True, blank=True)
+    third_proof = models.FileField(
+        upload_to=upload_to_supervisor_requests,
+        null=True,
+        blank=True,
+        help_text="Proof of third choice request (image or PDF)",
+    )
+    # Shared fields
     mode = models.CharField(max_length=20, choices=MODE_CHOICES, default="development")
     topic = models.CharField(max_length=255, null=True, blank=True)
+    cgpa = models.FloatField(default=0.0)
 
     class Meta:
-        unique_together = ("student", "priority")
-        ordering = ["student", "priority"]
+        ordering = ["student"]
+
+    def __str__(self):
+        return f"Supervisor Request for {self.student}"

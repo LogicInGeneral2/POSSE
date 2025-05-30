@@ -58,13 +58,16 @@ class SupervisorListsView(APIView):
 
     def get(self, request, student_id):
         try:
-            choices = SupervisorsRequest.objects.filter(student_id=student_id).order_by(
-                "priority"
-            )
-            serializer = SupervisorChoiceSerializer(
-                choices, many=True, context={"request": request}
-            )
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            try:
+                supervisor_request = SupervisorsRequest.objects.get(
+                    student_id=student_id
+                )
+                serializer = SupervisorChoiceSerializer(
+                    supervisor_request, context={"request": request}
+                )
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except SupervisorsRequest.DoesNotExist:
+                return Response({}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -80,39 +83,45 @@ class SupervisorListsView(APIView):
             else:
                 choices = raw_choices
 
-            if not student_id or not isinstance(choices, list) or not choices:
+            if not student_id or not isinstance(choices, dict):
                 return Response(
-                    {"error": "Invalid payload: studentId and choices are required"},
+                    {
+                        "error": "Invalid payload: studentId and choices (as an object) are required"
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            for choice in choices:
-                if not choice.get("supervisorName") or not choice.get("priority"):
-                    return Response(
-                        {"error": "Each choice must have supervisorName and priority"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
+            # Validate required fields
+            if (
+                not choices.get("firstName")
+                and not choices.get("secondName")
+                and not choices.get("thirdName")
+            ):
+                return Response(
+                    {"error": "At least one supervisor name is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
+            # Delete existing request for the student
             SupervisorsRequest.objects.filter(student_id=student_id).delete()
 
-            instances = []
-            for choice in choices:
-                priority = choice.get("priority")
-                proof_field_name = f"proof_{priority}"
-                proof_file = request.FILES.get(proof_field_name)
-
-                instance = SupervisorsRequest(
-                    student_id=student_id,
-                    supervisor_id=choice.get("supervisorId"),
-                    supervisor_name=choice.get("supervisorName"),
-                    priority=priority,
-                    proof=proof_file,
-                    topic=choice.get("topic") or "",
-                    mode=choice.get("mode") or "development",
-                )
-                instances.append(instance)
-
-            SupervisorsRequest.objects.bulk_create(instances)
+            # Create new request
+            instance = SupervisorsRequest(
+                student_id=student_id,
+                first_id=choices.get("firstId"),
+                first_name=choices.get("firstName"),
+                first_proof=request.FILES.get("proof_first"),
+                second_id=choices.get("secondId"),
+                second_name=choices.get("secondName"),
+                second_proof=request.FILES.get("proof_second"),
+                third_id=choices.get("thirdId"),
+                third_name=choices.get("thirdName"),
+                third_proof=request.FILES.get("proof_third"),
+                topic=choices.get("topic") or "",
+                mode=choices.get("mode") or "development",
+                cgpa=choices.get("cgpa") or 0.0,
+            )
+            instance.save()
 
             return Response(
                 {"message": "Supervisor choices saved successfully"},

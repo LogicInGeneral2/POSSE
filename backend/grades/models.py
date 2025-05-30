@@ -19,6 +19,19 @@ class MarkingScheme(models.Model):
         ],
         default="FYP1",
     )
+    mode = models.CharField(
+        max_length=255,
+        choices=[
+            ("both", "Both"),
+            ("development", "Development"),
+            ("research", "Research"),
+        ],
+        default="both",
+    )
+    steps = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["steps"]
 
     def __str__(self):
         return self.label

@@ -53,8 +53,8 @@ class GetMarkingSchemeView(APIView):
         if user_roles:
             query = Q(course=student.course)
             for role in user_roles:
-                query &= Q(pic__contains=role)  # Matches if role is in the pic list
-            schemes = MarkingScheme.objects.filter(query)
+                query &= Q(pic__contains=role) & (Q(mode=student.mode) | Q(mode="both"))
+            schemes = MarkingScheme.objects.filter(query).order_by("steps")
         else:
             return Response({"error": "Access denied."}, status=403)
 
