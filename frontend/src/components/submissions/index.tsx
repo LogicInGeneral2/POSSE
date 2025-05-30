@@ -86,7 +86,7 @@ export const SubmissionsPage = () => {
               width: "100%",
               display: "flex",
               flexDirection: "column",
-              gap: 1,
+              gap: "20px",
               overflow: "auto",
               scrollbarWidth: "none",
               alignItems: meta.length === 0 ? "center" : "initial",

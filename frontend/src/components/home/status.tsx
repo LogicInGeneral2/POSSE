@@ -175,7 +175,9 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
                 }}
               >
                 <Typography sx={{ fontWeight: "bold" }}>START DATE</Typography>
-                <CalendarMonth sx={{ fontSize: "3rem" }} />
+                <CalendarMonth
+                  sx={{ fontSize: "3rem", color: "primary.main" }}
+                />
                 <Typography sx={{ fontWeight: "bold" }}>
                   {period.start_date
                     ? format(new Date(period.start_date), "dd MMM yyyy")
@@ -196,7 +198,9 @@ export function Status({ isStudent }: { isStudent: Boolean }) {
                 }}
               >
                 <Typography sx={{ fontWeight: "bold" }}>END DATE</Typography>
-                <EventBusyRounded sx={{ fontSize: "3rem" }} />
+                <EventBusyRounded
+                  sx={{ fontSize: "3rem", color: "primary.main" }}
+                />
                 <Typography sx={{ fontWeight: "bold" }}>
                   {period.start_date
                     ? format(new Date(period.start_date), "dd MMM yyyy")

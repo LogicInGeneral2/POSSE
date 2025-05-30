@@ -6,7 +6,6 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import SupervisorsSelection from "./select";
 import {
-  Button,
   FormControl,
   InputLabel,
   MenuItem,
@@ -14,12 +13,18 @@ import {
   Select,
   SelectChangeEvent,
   TextField,
+  Button,
+  Box,
+  Typography,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
 import { useEffect, useState } from "react";
 import { useUser } from "../../../context/UserContext";
 import { Student, SupervisorsSelectionType } from "../../services/types";
 import { getSupervisorChoices, saveSupervisorChoices } from "../../services";
 import Toast from "../commons/snackbar";
+import { ErrorRounded } from "@mui/icons-material";
 
 interface SupervisorsTableProps {
   supervisor: string;
@@ -36,7 +41,8 @@ export default function SupervisorsTable({
   >([null, null, null]);
   const [mode, setMode] = useState<string>("development");
   const [topic, setTopic] = useState<string>("");
-  const [cgpa, setCgpa] = useState<number>(0);
+  const [cgpa, setCgpa] = useState<number | string>("");
+  const [cgpaError, setCgpaError] = useState<string>("");
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
@@ -62,7 +68,38 @@ export default function SupervisorsTable({
     });
   };
 
+  const validateCgpa = (value: string) => {
+    const numValue = Number(value);
+    if (value === "") {
+      return "CGPA is required";
+    }
+    if (isNaN(numValue) || numValue <= 0) {
+      return "CGPA must be greater than 0";
+    }
+    if (numValue > 4.0) {
+      return "CGPA cannot exceed 4.0";
+    }
+    return "";
+  };
+
+  const handleCgpaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCgpa(value);
+    setCgpaError(validateCgpa(value));
+  };
+
   const handleSave = async () => {
+    const cgpaValidationError = validateCgpa(cgpa.toString());
+    if (cgpaValidationError) {
+      setCgpaError(cgpaValidationError);
+      setToast({
+        open: true,
+        message: cgpaValidationError,
+        severity: "error",
+      });
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append("studentId", student.id.toString());
@@ -74,7 +111,7 @@ export default function SupervisorsTable({
             supervisor?.name || null,
           topic: topic || null,
           mode: mode || "development",
-          cgpa: cgpa,
+          cgpa: Number(cgpa),
         };
 
         if (supervisor?.proof instanceof File) {
@@ -87,7 +124,6 @@ export default function SupervisorsTable({
         return choice;
       });
 
-      // Merge choices into a single object
       const mergedChoices = Object.assign({}, ...choices);
       formData.append("choices", JSON.stringify(mergedChoices));
 
@@ -102,7 +138,7 @@ export default function SupervisorsTable({
       console.error("Error saving supervisor choices:", error);
       setToast({
         open: true,
-        message: error.message || "Failed to save choices. Please try again.",
+        message: "Failed to save choices. Please try again.",
         severity: "error",
       });
     }
@@ -128,7 +164,7 @@ export default function SupervisorsTable({
           ]);
           setTopic(data.topic || "");
           setMode(data.mode || "development");
-          setCgpa(data.cgpa || 0);
+          setCgpa(data.cgpa || "");
         }
       } catch (error) {
         console.error("Error fetching supervisor choices:", error);
@@ -144,22 +180,60 @@ export default function SupervisorsTable({
 
   return (
     <>
-      <Paper
+      <Box
         sx={{
-          padding: "10px",
-          textAlign: "left",
           display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          mb: "10px",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
         }}
       >
-        <Toast
-          open={toast.open}
-          message={toast.message}
-          severity={toast.severity}
-          onClose={() => setToast((prev) => ({ ...prev, open: false }))}
-        />
+        <Box sx={{ display: "flex", alignItems: "flex-start", p: 2, flex: 1 }}>
+          <ErrorRounded
+            color="error"
+            sx={{ mr: 1, mt: "4px", fontSize: "1rem" }}
+          />
+          <Typography
+            sx={{ fontSize: "1rem", color: "error.main", textAlign: "left" }}
+          >
+            Supervisor Selection Period is currently ongoing. Select your FYP
+            mode and topic (if any) and rank your top three preferred
+            supervisors. Alternatively, add a new supervisor below if they are
+            not from the SE program, together with a screenshot as proof of
+            agreement.{" "}
+            <b>Type in a new name to add new lecturers, and provide proof.</b>
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "flex-start", p: 2 }}>
+          <Toast
+            open={toast.open}
+            message={toast.message}
+            severity={toast.severity}
+            onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={!!supervisor}
+            onClick={isEditing ? handleSave : handleToggleEdit}
+            startIcon={isEditing ? <SaveIcon /> : <EditIcon />}
+            sx={{ fontWeight: "bold", color: "secondary.main" }}
+          >
+            {isEditing ? "Save Selections" : "Edit Selections"}
+          </Button>
+        </Box>
+      </Box>
+
+      <Paper
+        sx={{
+          padding: "20px",
+          borderRadius: "12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+          textAlign: "left",
+        }}
+      >
         <FormControl fullWidth>
           <InputLabel>FYP Mode</InputLabel>
           <Select
@@ -167,6 +241,7 @@ export default function SupervisorsTable({
             label="FYP Mode"
             onChange={handleChange}
             disabled={!isEditing}
+            fullWidth
           >
             <MenuItem value="development">Development</MenuItem>
             <MenuItem value="research">Research</MenuItem>
@@ -178,8 +253,11 @@ export default function SupervisorsTable({
           type="number"
           fullWidth
           disabled={!isEditing}
-          value={cgpa || 0}
-          onChange={(e) => setCgpa(Number(e.target.value))}
+          value={cgpa}
+          onChange={handleCgpaChange}
+          error={!!cgpaError}
+          helperText={cgpaError}
+          inputProps={{ min: 0, max: 4.0, step: 0.01 }}
         />
         <TextField
           label="FYP Topic (Optional)"
@@ -190,7 +268,7 @@ export default function SupervisorsTable({
           onChange={(e) => setTopic(e.target.value)}
         />
       </Paper>
-      <TableContainer>
+      <TableContainer sx={{ mt: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -225,15 +303,6 @@ export default function SupervisorsTable({
           </TableBody>
         </Table>
       </TableContainer>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={isEditing ? handleSave : handleToggleEdit}
-        disabled={!!supervisor}
-        sx={{ borderRadius: "8px", marginTop: "20px", width: "100px" }}
-      >
-        {isEditing ? "Save" : "Edit"}
-      </Button>
     </>
   );
 }

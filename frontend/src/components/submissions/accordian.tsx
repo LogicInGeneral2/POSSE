@@ -182,6 +182,7 @@ function SubmissionCards({
   const status = statusInfo.find((s) => s.value === meta.status);
   const statusIcon = status?.icon || null;
   const maxPreviewLines = 2;
+  const isDisabled = meta.status === "Closed" || meta.status === "Upcoming";
 
   return (
     <>
@@ -199,7 +200,21 @@ function SubmissionCards({
         onCancel={handleCloseDialog}
         isLoading={isLoading}
       />
-      <Accordion sx={{ m: 0, p: 0 }}>
+      <Accordion
+        sx={{
+          m: 0,
+          p: 0,
+          borderRadius: "12px",
+          opacity: isDisabled ? 0.6 : 1,
+          transition: "all 0.3s",
+          "&:hover": {
+            transform: meta.status === "Pending" ? "scale(1.01)" : "none",
+            boxShadow:
+              meta.status === "Pending" ? "0 4px 8px rgba(0,0,0,0.1)" : "none",
+          },
+        }}
+        disabled={isDisabled}
+      >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           id="submissions-header"
@@ -220,6 +235,7 @@ function SubmissionCards({
                   display: "flex",
                   alignItems: "center",
                   paddingTop: "0.25rem",
+                  color: isDisabled ? "text.disabled" : "primary.main",
                 }}
               >
                 {meta.title}

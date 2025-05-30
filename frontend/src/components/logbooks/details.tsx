@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Chip,
+  Collapse,
   Divider,
   Paper,
   Stack,
@@ -31,6 +32,7 @@ export default function Details({
   onDelete,
   userRole,
 }: DetailsProps) {
+  const maxPreviewLines = 2;
   const [logDetails, setLogDetails] = useState<LogType | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -247,20 +249,48 @@ export default function Details({
         margin="normal"
         disabled={userRole === "supervisor" || logDetails.status === "approved"}
       />
-      <TextField
-        fullWidth
-        multiline
-        label="Feedback"
-        name="comment"
-        value={logDetails.comment || ""}
-        onChange={handleChange}
-        margin="normal"
-        disabled={
-          userRole === "student" ||
-          logDetails.status === "feedback" ||
-          logDetails.status === "approved"
-        }
-      />
+      {userRole !== "student" ? (
+        <TextField
+          fullWidth
+          multiline
+          label="Supervisor's Feedback"
+          name="comment"
+          value={logDetails.comment || ""}
+          onChange={handleChange}
+          margin="normal"
+          disabled={
+            userRole === "student" ||
+            logDetails.status === "feedback" ||
+            logDetails.status === "approved"
+          }
+        />
+      ) : (
+        userRole === "student" &&
+        logDetails.status === "feedback" && (
+          <Box
+            sx={{
+              border: "2px solid",
+              p: 2,
+              borderRadius: "8px",
+              my: "20px",
+            }}
+          >
+            <Typography variant="subtitle2" gutterBottom>
+              Supervisor's Feedback:
+            </Typography>
+            <Collapse collapsedSize={maxPreviewLines * 24}>
+              <Typography
+                sx={{
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
+              >
+                {logDetails.comment}
+              </Typography>
+            </Collapse>
+          </Box>
+        )
+      )}
 
       {userRole === "supervisor" ? (
         <>
@@ -268,7 +298,11 @@ export default function Details({
 
           {logDetails.status !== "approved" && (
             <Box
-              sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 2,
+              }}
             >
               <Button
                 variant="contained"

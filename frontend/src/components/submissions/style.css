@@ -30,3 +30,20 @@ button#submissions-header[aria-expanded="true"] {
     min-height: 0 !important;
 }
 
+.css-i2svoj-MuiButtonBase-root-MuiAccordionSummary-root.Mui-expanded {
+    min-height: 0 !important;
+}   
+
+.css-1i7g6qd-MuiAccordionDetails-root {
+    border-radius: 12px !important;
+}
+
+.css-1lj3qo4-MuiAccordionActions-root {
+    border-bottom-right-radius: 12px !important;
+    border-bottom-left-radius: 12px !important;
+
+}
+
+.css-1i7g6qd-MuiAccordionDetails-root:has(+ .css-1lj3qo4-MuiAccordionActions-root) {
+    border-radius: 0px !important;
+}

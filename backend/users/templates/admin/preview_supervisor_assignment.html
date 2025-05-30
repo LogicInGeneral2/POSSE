@@ -1,0 +1,72 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 30px auto; padding: 20px; background: #f9f9f9; border-radius: 6px;">
+    <h2 style="margin-bottom: 20px; color: #333;">
+        Preview Supervisor Assignment
+    </h2>
+
+    <!-- Assignment Details -->
+    <div style="margin-bottom: 20px;">
+        <h3 style="margin-bottom: 10px; color: #555;">Assignment Details</h3>
+        <p><strong>Student:</strong> {{ student_name }}</p>
+        <p><strong>Student CGPA:</strong> {{ student_cgpa|default:"No data" }}</p>
+        <p><strong>Requested Topic:</strong> {{ supervisor_request.topic|default:"Not specified" }}</p>
+        <p><strong>Mode:</strong> {{ supervisor_request.get_mode_display }}</p>
+        <p><strong>Choice:</strong> {{ choice|title }}</p>
+        <p><strong>Supervisor:</strong> {{ supervisor_name }}</p>
+        {% if supervisor %}
+            <p><strong>Supervisor Email:</strong> {{ supervisor.email }}</p>
+            <p><strong>Status:</strong> <span style="color: #0c63e4;">Found in system</span></p>
+        {% else %}
+            <p><strong>Status:</strong> <span style="color: #dc3545;">Not found in system</span></p>
+        {% endif %}
+    </div>
+
+    {% if supervisor %}
+        <!-- Impact Analysis -->
+        <div style="margin-bottom: 20px;">
+            <h3 style="margin-bottom: 10px; color: #555;">Impact Analysis</h3>
+            <div style="display: flex; justify-content: space-between;">
+                <div>
+                    <strong>Current:</strong><br>
+                    Students: {{ current_count }}<br>
+                    Avg CGPA: {{ current_avg|default:"No data" }}
+                </div>
+                <div>
+                    <strong>After Assignment:</strong><br>
+                    Students: {{ projected_count }} (+1)<br>
+                    Avg CGPA: {{ projected_avg|default:"No data" }}
+                    {% if current_avg and projected_avg %}
+                        <span style="color: {% if projected_avg > current_avg %}#0c63e4{% elif projected_avg < current_avg %}#dc3545{% else %}#555{% endif %};">
+                            ({{ projected_avg|add:current_avg|add:"-"|floatformat:2 }})
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="text-align: center;">
+            <a href="{% url 'admin:approve_supervisor_request' supervisor_request.id %}?choice={{ choice }}"
+               style="padding: 8px 16px;  text-decoration: none; border-radius: 4px; margin-right: 10px;"
+               onclick="return confirm('Proceed with assignment?')">
+                Approve Assignment
+            </a>
+            <a href="{% url 'admin:users_supervisorsrequest_changelist' %}"
+               style="padding: 8px 16px; color: #555; text-decoration: none;">
+                Cancel
+            </a>
+        </div>
+    {% else %}
+        <!-- Supervisor Not Found -->
+        <div style="margin-bottom: 20px; color: #dc3545;">
+            <p>The supervisor "{{ supervisor_name }}" was not found in the system. Please create the user first.</p>
+            <a href="{% url 'admin:users_user_add' %}?name={{ supervisor_name|urlencode }}&role=supervisor"
+               style="padding: 8px 16px; background-color: #0c63e4; color: white; text-decoration: none; border-radius: 4px;">
+                Create Supervisor
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

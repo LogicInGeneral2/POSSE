@@ -1,4 +1,4 @@
-import { ErrorRounded, SupervisorAccountRounded } from "@mui/icons-material";
+import { SupervisorAccountRounded } from "@mui/icons-material";
 import { Box, Divider, Paper, Typography } from "@mui/material";
 import SupervisorsTable from "./table";
 import { useUser } from "../../../context/UserContext";
@@ -39,48 +39,41 @@ export const SupervisorsPage = () => {
 
         <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
         <Paper
+          elevation={3}
           sx={{
             marginTop: "20px",
-            fontSize: "1rem",
-            padding: "5px",
-            border: "1px solid",
+            marginBottom: "40px",
+            padding: "20px",
             borderRadius: "8px",
+            border: "1px solid",
+            color: "primary.main",
             display: "flex",
             alignItems: "center",
             fontWeight: "bold",
           }}
         >
           <SupervisorAccountRounded sx={{ mr: 1, fontSize: "2rem" }} />
-          Assigned Supervisor: {supervisor ? supervisor : " Pending..."}
+          <Typography variant="h6" color="inherit">
+            Assigned Supervisor: {supervisor ? supervisor : "Pending..."}
+          </Typography>
         </Paper>
         <Box
           sx={{
             marginTop: "20px",
-            backgroundColor: "base.main",
-            borderRadius: "8px",
-            padding: "20px",
+
             display: "flex",
             flexDirection: "column",
             gap: "20px",
             textAlign: "center",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "flex-start" }}>
-            <ErrorRounded sx={{ mr: 1, mt: 0.5, fontSize: "1rem" }} />
-            <Typography
-              sx={{
-                fontSize: "1rem",
-                textAlign: "left",
-              }}
-            >
-              Supervisor Selection Period is currently ongoing. Select your FYP
-              mode and topic (if any) and Rank your top three preffered
-              supervisors. Alternatively, add a new supervisor below if they are
-              not from the SE program, together with a screenshot as a proof of
-              agreement. *Type in a name to add new lecturers.
-            </Typography>
-          </Box>
-          <Box>
+          <Box
+            sx={{
+              borderRadius: "8px",
+              backgroundColor: "base.main",
+              padding: "20px",
+            }}
+          >
             <SupervisorsTable supervisor={supervisor} />
           </Box>
         </Box>

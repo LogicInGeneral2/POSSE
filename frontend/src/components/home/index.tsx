@@ -37,13 +37,17 @@ export const HomePage = () => {
         </Typography>
 
         <Divider sx={{ borderBottomWidth: 2, borderColor: "primary.main" }} />
-        <Grid container spacing={2} sx={{ marginTop: "20px", height: "100%" }}>
+        <Grid
+          container
+          spacing={"40px"}
+          sx={{ marginTop: "20px", height: "100%" }}
+        >
           <Grid size={4} sx={{ height: "100%" }}>
             <Stack direction="column" sx={{ height: "100%" }}>
               <Info />
               <Paper
                 sx={{
-                  mt: "20px",
+                  mt: "40px",
                   border: "1px solid",
                   backgroundColor: "base.main",
                   borderRadius: "8px",
@@ -76,7 +80,7 @@ export const HomePage = () => {
           </Grid>
 
           <Grid size={8} sx={{ height: "100%" }}>
-            <Stack spacing={2} sx={{ width: "100%" }}>
+            <Stack spacing={"40px"} sx={{ width: "100%" }}>
               <Status isStudent={user.role === "student" ? true : false} />
               <DashboardCalender id={user.id} role={user.role} />
             </Stack>

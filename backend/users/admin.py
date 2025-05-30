@@ -16,6 +16,8 @@ from backend import settings
 from django.db import transaction
 from .utils import get_coordinator_course_filter
 from django.shortcuts import render
+from django.db.models import Avg
+from django.template.response import TemplateResponse
 
 
 # Inline for Supervisees (students supervised by a supervisor)
@@ -676,12 +678,15 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
         "id",
         "student",
         "cgpa",
-        "first_name",
+        "first_name_with_stats",  # Updated to include stats
         "approve_first_button",
-        "second_name",
+        "preview_first_button",
+        "second_name_with_stats",  # Updated to include stats
         "approve_second_button",
-        "third_name",
+        "preview_second_button",
+        "third_name_with_stats",  # Updated to include stats
         "approve_third_button",
+        "preview_third_button",
         "topic",
         "mode",
         "first_proof_link",
@@ -702,6 +707,105 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
         "bulk_approve_second_choice",
         "bulk_approve_third_choice",
     ]
+
+    def first_name_with_stats(self, obj):
+        if obj.first_name and obj.first_id:
+            try:
+                supervisor = User.objects.get(id=obj.first_id, role="supervisor")
+                current_students = Student.objects.filter(supervisor=supervisor)
+                student_count = current_students.count()
+                avg_cgpa = current_students.filter(cgpa__gt=0).aggregate(
+                    avg_cgpa=Avg("cgpa")
+                )["avg_cgpa"]
+                return format_html(
+                    "{} (Students: {}, Avg CGPA: {})",
+                    obj.first_name,
+                    student_count,
+                    round(avg_cgpa, 2) if avg_cgpa else "N/A",
+                )
+            except User.DoesNotExist:
+                return obj.first_name
+        return "-"
+
+    first_name_with_stats.short_description = "First Supervisor"
+
+    def second_name_with_stats(self, obj):
+        if obj.second_name and obj.second_id:
+            try:
+                supervisor = User.objects.get(id=obj.second_id, role="supervisor")
+                current_students = Student.objects.filter(supervisor=supervisor)
+                student_count = current_students.count()
+                avg_cgpa = current_students.filter(cgpa__gt=0).aggregate(
+                    avg_cgpa=Avg("cgpa")
+                )["avg_cgpa"]
+                return format_html(
+                    "{} (Students: {}, Avg CGPA: {})",
+                    obj.second_name,
+                    student_count,
+                    round(avg_cgpa, 2) if avg_cgpa else "N/A",
+                )
+            except User.DoesNotExist:
+                return obj.second_name
+        return "-"
+
+    second_name_with_stats.short_description = "Second Supervisor"
+
+    def third_name_with_stats(self, obj):
+        if obj.third_name and obj.third_id:
+            try:
+                supervisor = User.objects.get(id=obj.third_id, role="supervisor")
+                current_students = Student.objects.filter(supervisor=supervisor)
+                student_count = current_students.count()
+                avg_cgpa = current_students.filter(cgpa__gt=0).aggregate(
+                    avg_cgpa=Avg("cgpa")
+                )["avg_cgpa"]
+                return format_html(
+                    "{} (Students: {}, Avg CGPA: {})",
+                    obj.third_name,
+                    student_count,
+                    round(avg_cgpa, 2) if avg_cgpa else "N/A",
+                )
+            except User.DoesNotExist:
+                return obj.third_name
+        return "-"
+
+    third_name_with_stats.short_description = "Third Supervisor"
+
+    def preview_first_button(self, obj):
+        if obj.first_name and obj.first_id:
+            return format_html(
+                '<a class="button" href="{}">Preview Impact</a>',
+                reverse("admin:preview_supervisor_assignment", args=[obj.pk])
+                + "?choice=first",
+            )
+        return "-"
+
+    preview_first_button.short_description = "Preview"
+    preview_first_button.allow_tags = True
+
+    def preview_second_button(self, obj):
+        if obj.second_name and obj.second_id:
+            return format_html(
+                '<a class="button" href="{}">Preview Impact</a>',
+                reverse("admin:preview_supervisor_assignment", args=[obj.pk])
+                + "?choice=second",
+            )
+        return "-"
+
+    preview_second_button.short_description = "Preview"
+    preview_second_button.allow_tags = True
+
+    def preview_third_button(self, obj):
+        if obj.third_name and obj.third_id:
+            return format_html(
+                '<a class="button" href="{}" >Preview Impact</a>',
+                reverse("admin:preview_supervisor_assignment", args=[obj.pk])
+                + "?choice=third",
+            )
+        return "-"
+
+    preview_third_button.short_description = "Preview"
+    preview_third_button.allow_tags = True
 
     def approve_first_button(self, obj):
         if obj.first_name and obj.first_id:
@@ -777,8 +881,103 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
                 self.admin_site.admin_view(self.process_approve),
                 name="approve_supervisor_request",
             ),
+            path(
+                "preview/<int:request_id>/",
+                self.admin_site.admin_view(self.preview_assignment),
+                name="preview_supervisor_assignment",
+            ),
         ]
         return custom_urls + urls
+
+    def preview_assignment(self, request, request_id):
+        """Show the impact of assigning a supervisor to a student"""
+        supervisor_request = self.get_object(request, request_id)
+        if not supervisor_request:
+            self.message_user(request, "Supervisor request not found.", messages.ERROR)
+            return HttpResponseRedirect(
+                reverse("admin:users_supervisorsrequest_changelist")
+            )
+
+        choice = request.GET.get("choice", "first")
+        if choice not in ["first", "second", "third"]:
+            self.message_user(request, "Invalid choice specified.", messages.ERROR)
+            return HttpResponseRedirect(
+                reverse("admin:users_supervisorsrequest_changelist")
+            )
+
+        # Get supervisor details
+        supervisor_id = None
+        supervisor_name = None
+        if choice == "first":
+            supervisor_id = supervisor_request.first_id
+            supervisor_name = supervisor_request.first_name
+        elif choice == "second":
+            supervisor_id = supervisor_request.second_id
+            supervisor_name = supervisor_request.second_name
+        elif choice == "third":
+            supervisor_id = supervisor_request.third_id
+            supervisor_name = supervisor_request.third_name
+
+        if not supervisor_id:
+            self.message_user(
+                request, f"No supervisor found for {choice} choice.", messages.ERROR
+            )
+            return HttpResponseRedirect(
+                reverse("admin:users_supervisorsrequest_changelist")
+            )
+
+        try:
+            supervisor = User.objects.get(id=supervisor_id, role="supervisor")
+        except User.DoesNotExist:
+            supervisor = None
+
+        # Calculate current and projected statistics
+        current_students = (
+            Student.objects.filter(supervisor=supervisor)
+            if supervisor
+            else Student.objects.none()
+        )
+        current_count = current_students.count()
+        current_avg = current_students.filter(cgpa__gt=0).aggregate(
+            avg_cgpa=Avg("cgpa")
+        )["avg_cgpa"]
+
+        # Calculate projected statistics if this student is assigned
+        student_cgpa = supervisor_request.cgpa or 0
+        projected_count = current_count + 1
+
+        # Calculate projected average (only if student has CGPA > 0)
+        if student_cgpa > 0:
+            if current_avg:
+                # Weighted average calculation
+                current_total_cgpa = (
+                    current_avg * current_students.filter(cgpa__gt=0).count()
+                )
+                projected_avg = (current_total_cgpa + student_cgpa) / (
+                    current_students.filter(cgpa__gt=0).count() + 1
+                )
+            else:
+                projected_avg = student_cgpa
+        else:
+            projected_avg = current_avg
+
+        context = {
+            "supervisor_request": supervisor_request,
+            "choice": choice,
+            "supervisor": supervisor,
+            "supervisor_name": supervisor_name,
+            "student_name": supervisor_request.student.name,
+            "student_cgpa": student_cgpa,
+            "current_count": current_count,
+            "current_avg": round(current_avg, 2) if current_avg else 0,
+            "projected_count": projected_count,
+            "projected_avg": round(projected_avg, 2) if projected_avg else 0,
+            "title": f"Preview Assignment Impact - {choice.title()} Choice",
+        }
+
+        return TemplateResponse(
+            request, "admin/preview_supervisor_assignment.html", context
+        )
 
     def process_approve(self, request, request_id):
         if not request_id:
