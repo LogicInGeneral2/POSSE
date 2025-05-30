@@ -5,7 +5,7 @@ from django.urls import path, reverse
 import urllib
 from documents.models import Logbook, StudentSubmission
 from grades.models import Grade, TotalMarks
-from .forms import CustomUserChangeForm, ExaminerSelectionForm
+from .forms import CustomUserChangeForm, ExaminerSelectionForm, SupervisorSelectionForm
 from .models import SupervisorsRequest, User, Student, CourseCoordinator
 from django.utils.html import format_html
 from django.contrib import messages
@@ -274,7 +274,13 @@ class StudentAdmin(ImportExportModelAdmin):
     )
     list_filter = ("course",)
     search_fields = ("user__name", "student_id", "user__email")
-    actions = ["promote_to_fyp2", "bulk_assign_examiner", "deactivate", "reactivate"]
+    actions = [
+        "promote_to_fyp2",
+        "bulk_assign_examiner",
+        "bulk_assign_supervisor",
+        "deactivate",
+        "reactivate",
+    ]
 
     def get_urls(self):
         urls = super().get_urls()
@@ -283,6 +289,11 @@ class StudentAdmin(ImportExportModelAdmin):
                 "select-examiner-bulk/<str:student_ids>/",
                 self.admin_site.admin_view(self.select_examiner_for_bulk),
                 name="select_examiner_for_bulk",
+            ),
+            path(
+                "select-supervisor-bulk/<str:student_ids>/",
+                self.admin_site.admin_view(self.select_supervisor_for_bulk),
+                name="select_supervisor_for_bulk",
             ),
         ]
         return custom_urls + urls
@@ -378,6 +389,106 @@ class StudentAdmin(ImportExportModelAdmin):
                 "students": students,
                 "title": "Select Examiner for Selected Students",
             },
+        )
+
+    def select_supervisor_for_bulk(self, request, student_ids):
+        student_ids_list = student_ids.split(",")
+        students = self.get_queryset(request).filter(id__in=student_ids_list)
+        if not students.exists():
+            self.message_user(request, "No valid students found.", messages.ERROR)
+            return HttpResponseRedirect(reverse("admin:users_student_changelist"))
+
+        if request.method == "POST":
+            form = SupervisorSelectionForm(request.POST)
+            if form.is_valid():
+                selected_supervisor = form.cleaned_data["supervisor"]
+                course_filter, is_coordinator = get_coordinator_course_filter(request)
+                success_count = 0
+                failed_count = 0
+
+                for student in students:
+                    if is_coordinator and course_filter:
+                        coordinator_course = CourseCoordinator.objects.get(
+                            user=request.user
+                        ).course
+                        if (
+                            student.course != coordinator_course
+                            and student.course != "Both"
+                        ):
+                            failed_count += 1
+                            continue
+                    try:
+                        with transaction.atomic():
+                            student.supervisor = selected_supervisor
+                            student.save()
+                            # Delete any existing supervisor requests for the student
+                            SupervisorsRequest.objects.filter(
+                                student=student.user
+                            ).delete()
+                            try:
+                                student_email = student.user.email
+                                supervisor_email = selected_supervisor.email
+                                if student_email and supervisor_email:
+                                    subject = "Supervisor Assigned to Your Project"
+                                    message = (
+                                        f"Hi {student.user.name},\n\n"
+                                        f"A supervisor has been assigned to your project.\n"
+                                        f"Assigned Supervisor: {selected_supervisor.name}\n"
+                                        f"Please contact your supervisor for further details.\n\n"
+                                        f"Best regards,\n"
+                                        f"POSSE"
+                                    )
+                                    send_mail(
+                                        subject=subject,
+                                        message=message,
+                                        from_email=settings.DEFAULT_FROM_EMAIL,
+                                        recipient_list=[
+                                            student_email,
+                                            supervisor_email,
+                                        ],
+                                        fail_silently=True,
+                                    )
+                            except Exception as email_error:
+                                self.message_user(
+                                    request,
+                                    f"Email notification failed for {student.user.name} - {selected_supervisor.name}: {str(email_error)}",
+                                    messages.WARNING,
+                                )
+                            success_count += 1
+                    except Exception as e:
+                        failed_count += 1
+                        self.message_user(
+                            request,
+                            f"Failed to assign supervisor to {student.user.name}: {str(e)}",
+                            messages.WARNING,
+                        )
+                        continue
+
+                self.message_user(
+                    request,
+                    f"{success_count} student(s) updated with supervisor. {failed_count} failed due to permission issues.",
+                    messages.SUCCESS if success_count > 0 else messages.ERROR,
+                )
+                return HttpResponseRedirect(reverse("admin:users_student_changelist"))
+        else:
+            form = SupervisorSelectionForm()
+
+        return render(
+            request,
+            "select_supervisor_form.html",
+            {
+                "form": form,
+                "student_ids": student_ids,
+                "students": students,
+                "title": "Select Supervisor for Selected Students",
+            },
+        )
+
+    @admin.action(description="Assign supervisor to selected students")
+    def bulk_assign_supervisor(self, request, queryset):
+        student_ids = ",".join(map(str, queryset.values_list("id", flat=True)))
+        return HttpResponseRedirect(
+            reverse("admin:select_supervisor_for_bulk", args=[student_ids])
         )
 
     @admin.action(description="Assign examiner to selected students")

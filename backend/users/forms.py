@@ -61,3 +61,11 @@ class ExaminerSelectionForm(forms.Form):
         required=True,
         widget=forms.CheckboxSelectMultiple,
     )
+
+
+class SupervisorSelectionForm(forms.Form):
+    supervisor = forms.ModelChoiceField(
+        queryset=User.objects.filter(role="supervisor"),  # adjust filter as needed
+        required=True,
+        label="Select Supervisor",
+    )

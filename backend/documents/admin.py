@@ -1,11 +1,14 @@
 from django.contrib import admin
-
+from django.urls import path
+from django.http import HttpResponse
+from django.utils.html import format_html
+import zipfile
+from io import BytesIO
 from users.models import CourseCoordinator
 from users.utils import get_coordinator_course_filter
 from .resources import DocumentResource
 from .models import Document, Logbook, StudentSubmission, Feedback
 from import_export.admin import ImportExportModelAdmin
-from django.utils.html import format_html
 
 
 @admin.register(Document)
@@ -58,22 +61,75 @@ class DocumentAdmin(ImportExportModelAdmin):
 
 @admin.register(StudentSubmission)
 class StudentSubmissionAdmin(admin.ModelAdmin):
-    list_display = ("id", "student", "submission_phase", "upload_date")
+    list_display = ("id", "student", "submission_phase", "upload_date", "download_file")
     list_filter = ("submission_phase",)
     search_fields = ("student__user__name", "submission_phase__title")
     date_hierarchy = "upload_date"
     readonly_fields = ("upload_date", "file")
+    actions = ["download_selected_files"]
 
     fieldsets = (
         (None, {"fields": ("student", "submission_phase", "file")}),
         ("Metadata", {"fields": ("upload_date",), "classes": ("collapse",)}),
     )
 
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "<path:object_id>/download/",
+                self.admin_site.admin_view(self.download_file_view),
+                name="studentsubmission-download-file",
+            ),
+        ]
+        return custom_urls + urls
+
+    def download_file(self, obj):
+        """Display a download link for the file in the list view."""
+        if obj.file:
+            return format_html(
+                '<a href="{}" download>Download</a>',
+                obj.file.url,
+            )
+        return "-"
+
+    download_file.short_description = "File"
+
+    def download_file_view(self, request, object_id):
+        """Handle individual file download."""
+        submission = self.get_object(request, object_id)
+        if not submission or not submission.file:
+            return HttpResponse("File not found.", status=404)
+
+        file = submission.file
+        response = HttpResponse(file, content_type="application/octet-stream")
+        response["Content-Disposition"] = f'attachment; filename="{file.name}"'
+        return response
+
+    def download_selected_files(self, request, queryset):
+        """Action to download selected files as a ZIP archive."""
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for submission in queryset:
+                if submission.file:
+                    file_path = submission.file.path
+                    # Use a unique filename to avoid conflicts
+                    filename = f"{submission.student.user.name}_{submission.submission_phase.title}_{submission.file.name.split('/')[-1]}"
+                    zip_file.write(file_path, filename)
+
+        zip_buffer.seek(0)
+        response = HttpResponse(
+            zip_buffer.getvalue(), content_type="application/x-zip-compressed"
+        )
+        response["Content-Disposition"] = 'attachment; filename="submissions.zip"'
+        return response
+
+    download_selected_files.short_description = "Download selected files as ZIP"
+
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         course_filter, is_coordinator = get_coordinator_course_filter(request)
         if is_coordinator and course_filter:
-            # Get the coordinator's course directly
             coordinator = CourseCoordinator.objects.get(user=request.user)
             if coordinator.course != "Both":
                 queryset = queryset.filter(student__course=coordinator.course)
