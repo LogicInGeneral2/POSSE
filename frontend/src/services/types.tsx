@@ -247,5 +247,7 @@ export interface TotalMarks {
   course: string;
   total_mark: number;
   breakdown: Record<string, number>;
-  updated_at: string;
+  grade_letter: string;
+  grade_gpa: number;
+  mode: string;
 }

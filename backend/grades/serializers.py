@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Rubric, Criteria, StudentMark, StudentGrade
+from .models import Rubric, Criteria, StudentMark
 
 
 class CriteriaSerializer(serializers.ModelSerializer):
@@ -46,25 +46,23 @@ class StudentMarkSerializer(serializers.ModelSerializer):
         fields = ["student", "criteria", "mark", "evaluator"]
 
 
-class StudentGradeSerializer(serializers.ModelSerializer):
-    student = serializers.StringRelatedField()
+class TotalMarksSerializer(serializers.Serializer):
+    id = serializers.IntegerField(source="student.id")
+    student = serializers.CharField(source="student.__str__")
+    mode = serializers.CharField(source="student.mode")
+    course = serializers.CharField(source="student.course")
+    total_mark = serializers.FloatField()
+    breakdown = serializers.SerializerMethodField()
     grade_letter = serializers.SerializerMethodField()
+    grade_gpa = serializers.SerializerMethodField()
 
-    class Meta:
-        model = StudentGrade
-        fields = ["student", "total_mark", "grade_letter"]
+    def get_grade_gpa(self, obj):
+        grade = obj.grade
+        return grade.gpa_value if grade else "N/A"
 
     def get_grade_letter(self, obj):
         grade = obj.grade
         return grade.grade_letter if grade else "N/A"
-
-
-class TotalMarksSerializer(serializers.Serializer):
-    id = serializers.IntegerField(source="student.id")
-    student = serializers.CharField(source="student.__str__")
-    course = serializers.CharField(source="student.course")
-    total_mark = serializers.FloatField()
-    breakdown = serializers.SerializerMethodField()
 
     def get_breakdown(self, obj):
         student_marks = StudentMark.objects.filter(student=obj.student).select_related(

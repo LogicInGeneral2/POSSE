@@ -51,6 +51,7 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedSchemes, setSelectedSchemes] = useState<string[]>([]);
+  const [selectedMode, setSelectedMode] = useState<string>("");
   const [minGrade, setMinGrade] = useState("");
   const [maxGrade, setMaxGrade] = useState("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -58,6 +59,8 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
     "student",
     ...markingSchemes.map((s) => s.label),
     "total_mark",
+    "grade_letter",
+    "grade_gpa",
   ]);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -90,8 +93,11 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
         data = data.filter((row) => row.total_mark <= max);
       }
     }
+    if (selectedMode) {
+      data = data.filter((row) => row.mode === selectedMode);
+    }
     return data;
-  }, [totalMarks, tabValue, search, minGrade, maxGrade]);
+  }, [totalMarks, tabValue, search, minGrade, maxGrade, selectedMode]);
 
   // Filter for dashboard calculations based on selected students
   const dashboardRowData = useMemo(() => {
@@ -153,6 +159,7 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
         .filter((s) => s.course === newValue)
         .map((s) => s.label),
       "total_mark",
+      "",
     ]);
   };
 
@@ -264,6 +271,20 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
             size="small"
             sx={{ width: 120 }}
           />
+          <FormControl sx={{ width: 150 }} size="small">
+            <InputLabel>Mode</InputLabel>
+            <Select
+              value={selectedMode}
+              onChange={(e) => setSelectedMode(e.target.value as string)}
+              label="Mode"
+            >
+              <MenuItem value="">
+                <em>All</em>
+              </MenuItem>
+              <MenuItem value="development">Development</MenuItem>
+              <MenuItem value="production">Production</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
         <Box sx={{ display: "flex", alignItems: "right", gap: "10px" }}>
           <Tooltip title="Settings">
@@ -307,6 +328,8 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                           ? "Name"
                           : value === "total_mark"
                           ? "Total Marks"
+                          : value === "grade_letter"
+                          ? "Grade"
                           : value
                       }
                       onDelete={handleDeleteColumnChip(value)}
@@ -321,6 +344,8 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                 "student",
                 ...filteredSchemes.map((s) => s.label),
                 "total_mark",
+                "grade_letter",
+                "grade_gpa",
               ].map((col) => (
                 <MenuItem key={col} value={col}>
                   <Checkbox checked={visibleColumns.includes(col)} />
@@ -330,6 +355,10 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                         ? "Name"
                         : col === "total_mark"
                         ? "Total Marks"
+                        : col === "grade_letter"
+                        ? "Grade"
+                        : col === "grade_gpa"
+                        ? "GPA"
                         : col
                     }
                   />
@@ -396,6 +425,26 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                     (sortDirection === "asc" ? "↑" : "↓")}
                 </TableCell>
               )}
+              {visibleColumns.includes("grade_letter") && (
+                <TableCell
+                  onClick={() => handleSort("grade_letter")}
+                  sx={{ cursor: "pointer" }}
+                >
+                  Grade Letter{" "}
+                  {sortColumn === "grade_letter" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
+                </TableCell>
+              )}
+              {visibleColumns.includes("grade_gpa") && (
+                <TableCell
+                  onClick={() => handleSort("grade_gpa")}
+                  sx={{ cursor: "pointer" }}
+                >
+                  GPA{" "}
+                  {sortColumn === "grade_gpa" &&
+                    (sortDirection === "asc" ? "↑" : "↓")}
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -430,6 +479,12 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                     ))}
                   {visibleColumns.includes("total_mark") && (
                     <TableCell>{row.total_mark}</TableCell>
+                  )}
+                  {visibleColumns.includes("grade_letter") && (
+                    <TableCell>{row.grade_letter}</TableCell>
+                  )}
+                  {visibleColumns.includes("grade_gpa") && (
+                    <TableCell>{row.grade_gpa}</TableCell>
                   )}
                 </TableRow>
               ))

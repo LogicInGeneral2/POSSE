@@ -26,7 +26,6 @@ export const GradesPage = () => {
         setTotalMarks(totalMarksData);
         console.log(totalMarksData);
         setMarkingSchemes(schemesData);
-        console.log(schemesData);
         setLoading(false);
       } catch (error: any) {
         setToast({
