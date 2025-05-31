@@ -1,366 +1,155 @@
-# admin.py
 from django.contrib import admin
+from django.http import HttpResponse
+from grades.resources import (
+    CriteriaResource,
+    GradeResource,
+    RubricResource,
+    StudentGradesResource,
+    StudentMarkResource,
+)
+from .models import Grade, Rubric, Criteria, StudentMark, StudentGrade
 from import_export.admin import ImportExportModelAdmin
-from users.models import CourseCoordinator
-from users.utils import get_coordinator_course_filter
-from .resources import GradeResource, MarkingSchemeResource, TotalMarksResource
-from .models import MarkingScheme, Grade, TotalMarks
-from .forms import BulkGradeUpdateForm, GradeAdminForm, MarkingSchemeForm
-from django.http import HttpResponseRedirect
-from django.urls import path
-from django.urls import reverse
-from django.contrib import messages
-from django.shortcuts import render
-from django.contrib.admin import SimpleListFilter
+import csv
 
 
-@admin.register(MarkingScheme)
-class MarkingSchemeAdmin(ImportExportModelAdmin):
-    form = MarkingSchemeForm
-    resource_class = MarkingSchemeResource
-    list_display = [
-        "label",
-        "marks",
-        "weightage",
-        "pic",
-        "course",
-        "mode",
-        "steps",
-    ]
-    list_filter = ["pic", "course", "steps"]
-    list_editable = ["steps"]
-    search_fields = ["label", "contents"]
+# Rubric Admin
+@admin.register(Rubric)
+class RubricAdmin(ImportExportModelAdmin):
+    resource_class = RubricResource
+    list_display = ("label", "weightage", "course", "mode", "steps", "pic")
+    list_filter = ("course", "mode")
+    search_fields = ("label",)
+    ordering = ("steps",)
+    actions = ["get_scheme"]
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            qs = qs.filter(course_filter)
-        return qs
-
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator = CourseCoordinator.objects.get(user=request.user)
-            if coordinator.course != "Both":
-                form.base_fields["course"].queryset = form.base_fields[
-                    "course"
-                ].queryset.filter(course__in=[coordinator.course, "Both"])
-        return form
-
-    def save_model(self, request, obj, form, change):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            if obj.course != coordinator_course and obj.course != "Both":
-                self.message_user(
-                    request,
-                    f"You can only create/edit marking schemes for {coordinator_course}.",
-                    messages.ERROR,
-                )
-                return
-        super().save_model(request, obj, form, change)
-
-    def delete_model(self, request, obj):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            if obj.course != coordinator_course and obj.course != "Both":
-                self.message_user(
-                    request,
-                    f"You can only delete marking schemes for {coordinator_course}.",
-                    messages.ERROR,
-                )
-                return
-        super().delete_model(request, obj)
-
-    def delete_queryset(self, request, queryset):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            restricted = queryset.exclude(course=coordinator_course).exclude(
-                course="Both"
-            )
-            if restricted.exists():
-                self.message_user(
-                    request,
-                    f"You can only delete marking schemes for {coordinator_course}.",
-                    messages.ERROR,
-                )
-                return
-        super().delete_queryset(request, queryset)
-
-
-class StudentNameFilter(SimpleListFilter):
-    title = "Student Name"
-    parameter_name = "student_name"
-
-    def lookups(self, request, model_admin):
-        students = (
-            Grade.objects.select_related("student__user")
-            .values("student__user__name")
-            .distinct()
+    def get_scheme(self, request, queryset):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            'attachment; filename="rubric_criteria_scheme.csv"'
         )
-        return [(s["student__user__name"], s["student__user__name"]) for s in students]
-
-    def queryset(self, request, queryset):
-        if self.value():
-            return queryset.filter(student__user__name=self.value())
-        return queryset
-
-
-class MarkingSchemeFilter(SimpleListFilter):
-    title = "Marking Scheme"
-    parameter_name = "marking_scheme"
-
-    def lookups(self, request, model_admin):
-        schemes = (
-            Grade.objects.select_related("scheme").values("scheme__label").distinct()
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "rubric_label",
+                "rubric_weightage",
+                "rubric_pic",
+                "rubric_course",
+                "rubric_mode",
+                "rubric_steps",
+                "label",
+                "weightage",
+                "max_mark",
+            ]
         )
-        return [(s["scheme__label"], s["scheme__label"]) for s in schemes]
+        return response
 
-    def queryset(self, request, queryset):
-        if self.value():
-            return queryset.filter(scheme__label=self.value())
-        return queryset
+    get_scheme.short_description = "Download CSV scheme for Rubric/Criteria"
 
 
+# Criteria Admin
+@admin.register(Criteria)
+class CriteriaAdmin(ImportExportModelAdmin):
+    resource_class = CriteriaResource
+    list_display = ("label", "weightage", "max_mark", "rubric")
+    list_filter = ("rubric__course", "rubric__mode")
+    search_fields = ("label", "rubric__label")
+    list_select_related = ("rubric",)
+    actions = ["get_scheme"]
+
+    def get_scheme(self, request, queryset):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            'attachment; filename="rubric_criteria_scheme.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "rubric_label",
+                "rubric_weightage",
+                "rubric_pic",
+                "rubric_course",
+                "rubric_mode",
+                "rubric_steps",
+                "label",
+                "weightage",
+                "max_mark",
+            ]
+        )
+        return response
+
+    get_scheme.short_description = "Download CSV scheme for Rubric/Criteria"
+
+
+# StudentMark Admin
+@admin.register(StudentMark)
+class StudentMarkAdmin(ImportExportModelAdmin):
+    resource_class = StudentMarkResource
+    list_display = ("student", "criteria", "evaluator", "mark")
+    list_filter = ("criteria__rubric__course", "criteria__rubric__mode")
+    search_fields = ("student__first_name", "student__last_name", "criteria__label")
+    list_select_related = ("student", "criteria", "evaluator")
+    actions = ["get_scheme"]
+
+    def get_scheme(self, request, queryset):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            'attachment; filename="studentmark_scheme.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(["student_id", "criteria_id", "evaluator_id", "mark"])
+        return response
+
+    get_scheme.short_description = "Download CSV scheme for StudentMark"
+
+
+# StudentGrades Admin
+@admin.register(StudentGrade)
+class StudentGradesAdmin(ImportExportModelAdmin):
+    resource_class = StudentGradesResource
+    list_display = ("student", "total_mark", "grade")
+    search_fields = ("student__first_name", "student__last_name")
+    list_select_related = ("student",)
+    readonly_fields = ("grade", "total_mark", "student")
+    actions = ["get_scheme"]
+
+    def get_scheme(self, request, queryset):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            'attachment; filename="studentgrades_scheme.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(["student_id", "total_mark"])
+        return response
+
+    get_scheme.short_description = "Download CSV scheme for StudentGrades"
+
+
+# Grade Admin
 @admin.register(Grade)
 class GradeAdmin(ImportExportModelAdmin):
     resource_class = GradeResource
-    form = GradeAdminForm
-    list_display = [
-        "student_name",
-        "scheme_label",
-        "grader_name",
-        "grades",
-        "grade_summary",
-        "created_at",
-        "updated_at",
-        "course",
-    ]
-    list_filter = [
-        "scheme__pic",
-        "grader__role",
-        "student__course",
-        ("created_at", admin.DateFieldListFilter),
-        ("updated_at", admin.DateFieldListFilter),
-        StudentNameFilter,
-        MarkingSchemeFilter,
-    ]
-    search_fields = [
-        "student__user__name",
-        "grader__name",
-        "scheme__label",
-        "student__course",
-    ]
-    list_editable = ["grades"]
-    list_per_page = 25
-    raw_id_fields = ["student", "grader", "scheme"]
-    autocomplete_fields = ["student", "grader", "scheme"]
-    actions = ["export_grades_to_csv", "bulk_update_grades"]
+    list_display = (
+        "grade_letter",
+        "gpa_value",
+        "min_mark",
+        "max_mark",
+        "range_display",
+    )
+    search_fields = ("grade_letter",)
+    ordering = ("-min_mark",)
+    list_editable = ("gpa_value", "min_mark", "max_mark")
+    list_per_page = 20
 
-    def get_form(self, request, obj=None, **kwargs):
-        kwargs["form"] = GradeAdminForm
-        kwargs["form"].request = request
-        return super().get_form(request, obj, **kwargs)
+    def range_display(self, obj):
+        return f"{obj.min_mark} – {obj.max_mark}"
 
-    def get_queryset(self, request):
-        qs = (
-            super()
-            .get_queryset(request)
-            .select_related("student__user", "grader", "scheme")
-        )
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator = CourseCoordinator.objects.get(user=request.user)
-            if coordinator.course != "Both":
-                qs = qs.filter(student__course__in=[coordinator.course, "Both"])
-        return qs
+    range_display.short_description = "Mark Range"
 
     def save_model(self, request, obj, form, change):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            if (
-                obj.student.course != coordinator_course
-                and obj.student.course != "Both"
-            ):
-                self.message_user(
-                    request,
-                    f"You can only create/edit grades for students in {coordinator_course}.",
-                    messages.ERROR,
-                )
-                return
-        super().save_model(request, obj, form, change)
+        if obj.min_mark > obj.max_mark:
+            from django.core.exceptions import ValidationError
 
-    def delete_model(self, request, obj):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            if (
-                obj.student.course != coordinator_course
-                and obj.student.course != "Both"
-            ):
-                self.message_user(
-                    request,
-                    f"You can only delete grades for students in {coordinator_course}.",
-                    messages.ERROR,
-                )
-                return
-        super().delete_model(request, obj)
-
-    def delete_queryset(self, request, queryset):
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator_course = CourseCoordinator.objects.get(user=request.user).course
-            restricted = queryset.exclude(student__course=coordinator_course).exclude(
-                student__course="Both"
+            raise ValidationError(
+                "Minimum mark must be less than or equal to maximum mark."
             )
-            if restricted.exists():
-                self.message_user(
-                    request,
-                    f"You can only delete grades for students in {coordinator_course}.",
-                    messages.ERROR,
-                )
-                return
-        super().delete_queryset(request, queryset)
-
-    def student_name(self, obj):
-        return obj.student.user.name if obj.student.user else "N/A"
-
-    student_name.short_description = "Student"
-    student_name.admin_order_field = "student__user__name"
-
-    def scheme_label(self, obj):
-        return obj.scheme.label
-
-    scheme_label.short_description = "Marking Scheme"
-    scheme_label.admin_order_field = "scheme__label"
-
-    def grader_name(self, obj):
-        return obj.grader.name if obj.grader else "N/A"
-
-    grader_name.short_description = "Grader"
-    grader_name.admin_order_field = "grader__name"
-
-    def course(self, obj):
-        return obj.student.course if obj.student.course else "N/A"
-
-    course.short_description = "Course"
-    course.admin_order_field = "student__course"
-
-    def grade_summary(self, obj):
-        grades = obj.grades
-        if isinstance(grades, list) and grades:
-            return sum(grades)
-        return "N/A"
-
-    grade_summary.short_description = "Grade Total"
-
-    def get_urls(self):
-        urls = super().get_urls()
-        custom_urls = [
-            path(
-                "bulk-update-grades/",
-                self.admin_site.admin_view(self.bulk_update_grades_view),
-                name="bulk-update-grades",
-            ),
-        ]
-        return custom_urls + urls
-
-    def bulk_update_grades_view(self, request):
-        if request.method == "POST":
-            form = BulkGradeUpdateForm(request.POST)
-            if form.is_valid():
-                grades = form.cleaned_data["grades"]
-                grader = form.cleaned_data["grader"]
-                queryset = self.get_queryset(request)
-                updated = queryset.update(grades=grades, grader=grader)
-                self.message_user(
-                    request,
-                    f"Successfully updated {updated} grades.",
-                    messages.SUCCESS,
-                )
-                return HttpResponseRedirect(reverse("admin:grades_grade_changelist"))
-        else:
-            form = BulkGradeUpdateForm()
-
-        return render(
-            request,
-            "admin/bulk_grade_update.html",
-            {"form": form, "title": "Bulk Update Grades"},
-        )
-
-
-class TotalMarksStudentNameFilter(SimpleListFilter):
-    title = "Student Name"
-    parameter_name = "student_name"
-
-    def lookups(self, request, model_admin):
-        students = (
-            TotalMarks.objects.select_related("student__user")
-            .values("student__user__name")
-            .distinct()
-        )
-        return [(s["student__user__name"], s["student__user__name"]) for s in students]
-
-    def queryset(self, request, queryset):
-        if self.value():
-            return queryset.filter(student__user__name=self.value())
-        return queryset
-
-
-@admin.register(TotalMarks)
-class TotalMarksAdmin(ImportExportModelAdmin):
-    resource_class = TotalMarksResource
-    list_display = [
-        "student_name",
-        "course",
-        "total_mark",
-        "breakdown_display",
-        "updated_at",
-    ]
-    list_filter = ["course", TotalMarksStudentNameFilter]
-    search_fields = ["student__user__name", "course"]
-    list_per_page = 25
-    raw_id_fields = ["student"]
-    autocomplete_fields = ["student"]
-    actions = ["export_total_marks_to_csv"]
-    readonly_fields = [
-        "student",
-        "course",
-        "total_mark",
-        "breakdown_display",
-        "updated_at",
-    ]
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related("student__user")
-        course_filter, is_coordinator = get_coordinator_course_filter(request)
-        if is_coordinator and course_filter:
-            coordinator = CourseCoordinator.objects.get(user=request.user)
-            if coordinator.course != "Both":
-                qs = qs.filter(course__in=[coordinator.course, "Both"])
-        return qs
-
-    def student_name(self, obj):
-        return obj.student.user.name if obj.student.user else "N/A"
-
-    student_name.short_description = "Student"
-    student_name.admin_order_field = "student__user__name"
-
-    def breakdown_display(self, obj):
-        return str(obj.breakdown)
-
-    breakdown_display.short_description = "Breakdown"
+        super().save_model(request, obj, form, change)

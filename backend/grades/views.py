@@ -1,173 +1,219 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from django.db.models import Q
-from users.models import CourseCoordinator
-from .models import MarkingScheme, Grade, Student, User, TotalMarks
-from .serializers import (
-    MarkingSchemeSerializer,
-    GradeSerializer,
-    SaveGradeSerializer,
-    TotalMarksSerializer,
-)
+from django.shortcuts import get_object_or_404
+from .models import Rubric, StudentMark, StudentGrade
+from users.models import Student, User
+from .serializers import RubricSerializer, TotalMarksSerializer, MarkingSchemeSerializer
+from django.db import transaction
+from django.db.models import Prefetch
 
 
 class GetMarkingSchemeView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def get(self, request, student_id):
-        user = request.user
-
         try:
-            student = Student.objects.get(id=student_id)
-        except Student.DoesNotExist:
-            return Response({"error": "Student not found"}, status=404)
+            student = get_object_or_404(Student, id=student_id)
+            user = request.user
+            if not user.is_authenticated:
+                return Response(
+                    {"error": "User not authenticated"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
-        schemes = None
-        user_roles = []
+            # Get user role
+            user_role = getattr(user, "role", None)
+            if not user_role:
+                return Response(
+                    {"error": "User role not found"}, status=status.HTTP_400_BAD_REQUEST
+                )
 
-        # Check if the user is an evaluator for this student
-        if user in student.evaluators.all():
-            if user.role == "examiner" or user.is_examiner:
-                user_roles.append("examiner")
+            # Initialize rubric query
+            rubric_query = Rubric.objects.filter(
+                course=student.course, mode__in=[student.mode, "both"]
+            )
 
-        if user == student.supervisor:
-            user_roles.append("supervisor")
+            if user == student.supervisor:
+                rubric_query = rubric_query.filter(pic__contains=["supervisor"])
+            elif user in student.evaluators.all():
+                rubric_query = rubric_query.filter(pic__contains=["examiner"])
+            else:
+                return Response(
+                    {
+                        "error": "User does not have permission to access this student's marking scheme"
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
-        # Check if the user is the course coordinator for this student's course
-        if user.role == "course_coordinator":
-            try:
-                coordinator = CourseCoordinator.objects.get(user=user)
-                course = coordinator.course
-                if course == "Both" or course == student.course:
-                    user_roles.append("course_coordinator")
-                else:
-                    return Response(
-                        {"error": "Not allowed to view this course's schemes."},
-                        status=403,
-                    )
-            except CourseCoordinator.DoesNotExist:
-                return Response({"error": "Coordinator record not found"}, status=403)
-
-        if user_roles:
-            query = Q(course=student.course)
-            for role in user_roles:
-                query &= Q(pic__contains=role) & (Q(mode=student.mode) | Q(mode="both"))
-            schemes = MarkingScheme.objects.filter(query).order_by("steps")
-        else:
-            return Response({"error": "Access denied."}, status=403)
-
-        serializer = MarkingSchemeSerializer(schemes, many=True)
-        return Response(serializer.data)
+            # Order by steps
+            rubrics = rubric_query.order_by("steps")
+            serializer = RubricSerializer(rubrics, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetGradesView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def get(self, request, student_id):
         try:
-            student = Student.objects.get(id=student_id)
-        except Student.DoesNotExist:
-            return Response(
-                {"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        user = request.user
-        if user.role == "supervisor" and student.supervisor != user:
-            if user.role == "examiner" and user not in student.evaluators.all():
+            student = get_object_or_404(Student, id=student_id)
+            user = request.user
+            if not user.is_authenticated:
                 return Response(
-                    {"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN
+                    {"error": "User not authenticated"},
+                    status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-        grades = Grade.objects.filter(student=student, grader=user)
-        serializer = GradeSerializer(grades, many=True)
-        return Response(serializer.data)
+            rubrics = Rubric.objects.filter(course=student.course).order_by("steps")
+            result = []
+            for rubric in rubrics:
+                # Fetch marks for the student, rubric, and authenticated user as evaluator
+                marks = StudentMark.objects.filter(
+                    student=student, criteria__rubric=rubric, evaluator=user
+                ).order_by("criteria__id")
+
+                # If marks exist, use them; otherwise, initialize with zeros
+                if marks.exists():
+                    grades = [mark.mark for mark in marks]
+                else:
+                    # Initialize grades with zeros for each criterion in the rubric
+                    criteria_count = rubric.criterias.count()
+                    grades = [0] * criteria_count
+
+                result.append(
+                    {"scheme": RubricSerializer(rubric).data, "grades": grades}
+                )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SaveGradesView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request, student_id):
         try:
-            student = Student.objects.get(id=student_id)
-        except Student.DoesNotExist:
-            return Response(
-                {"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+            student = get_object_or_404(Student, id=student_id)
+            user = get_object_or_404(User, id=request.data.get("user_id"))
+            grades_data = request.data.get("grades", [])
 
-        serializer = SaveGradeSerializer(
-            data=request.data, context={"student_id": student_id}
-        )
-        if serializer.is_valid():
-            user_id = serializer.validated_data["user_id"]
-            grades_data = serializer.validated_data["grades"]
+            with transaction.atomic():
+                # Delete existing marks only for the rubrics being updated
+                rubric_ids = [grade_entry["scheme_id"] for grade_entry in grades_data]
+                StudentMark.objects.filter(
+                    student=student, evaluator=user, criteria__rubric__id__in=rubric_ids
+                ).delete()
 
-            try:
-                grader = User.objects.get(id=user_id)
-            except User.DoesNotExist:
-                return Response(
-                    {"error": "Invalid grader ID"}, status=status.HTTP_400_BAD_REQUEST
+                # Save new marks
+                for grade_entry in grades_data:
+                    rubric = get_object_or_404(Rubric, id=grade_entry["scheme_id"])
+                    criteria_list = rubric.criterias.all().order_by("id")
+                    grades = grade_entry["grades"]
+
+                    if len(grades) != len(criteria_list):
+                        return Response(
+                            {
+                                "error": f"Invalid number of grades for rubric {rubric.label}"
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                    for idx, (criteria, mark) in enumerate(zip(criteria_list, grades)):
+                        if not (0 <= mark <= criteria.max_mark):
+                            return Response(
+                                {
+                                    "error": f"Mark {mark} for {criteria.label} is out of range"
+                                },
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                        # Save all marks, including zeros
+                        StudentMark.objects.create(
+                            student=student,
+                            criteria=criteria,
+                            evaluator=user,
+                            mark=mark,
+                        )
+
+                # Calculate total_mark
+                total_mark = 0
+                rubrics = Rubric.objects.filter(course=student.course).order_by("steps")
+                for rubric in rubrics:
+                    criteria_list = rubric.criterias.all().order_by("id")
+                    rubric_score = 0
+                    for criteria in criteria_list:
+                        # Get all marks for this criteria and student, excluding zeros
+                        marks = StudentMark.objects.filter(
+                            student=student, criteria=criteria
+                        ).exclude(mark=0)
+                        if marks.exists():
+                            avg_mark = sum(mark.mark for mark in marks) / marks.count()
+                            normalized_score = (
+                                avg_mark / criteria.max_mark * criteria.weightage
+                            ) / 100
+                            rubric_score += normalized_score
+                    # Apply rubric weightage (not divided by 100)
+                    total_mark += rubric_score * rubric.weightage
+
+                # Update or create StudentGrade
+                student_grade, created = StudentGrade.objects.get_or_create(
+                    student=student, defaults={"total_mark": total_mark}
                 )
-
-            responses = []
-            any_created = False
-            for grade_entry in grades_data:
-                scheme_id = grade_entry["scheme_id"]
-                grades = grade_entry["grades"]
-                try:
-                    scheme = MarkingScheme.objects.get(id=scheme_id)
-                except MarkingScheme.DoesNotExist:
-                    return Response(
-                        {"error": f"Invalid scheme ID: {scheme_id}"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                grade, created = Grade.objects.update_or_create(
-                    student=student,
-                    scheme=scheme,
-                    grader=grader,
-                    defaults={"grades": grades},
-                )
-                responses.append(GradeSerializer(grade).data)
-                if created:
-                    any_created = True
+                if not created:
+                    student_grade.total_mark = total_mark
+                    student_grade.save()
 
             return Response(
-                responses,
-                status=status.HTTP_201_CREATED if any_created else status.HTTP_200_OK,
+                {"message": "Grades saved successfully"}, status=status.HTTP_200_OK
             )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetAllTotalMarksView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def get(self, request):
-        user = request.user
-        if user.role == "student":
-            return Response(
-                {"error": "Only course coordinators can view total marks"},
-                status=status.HTTP_403_FORBIDDEN,
+        try:
+            # Optimize query with select_related and prefetch_related
+            grades = (
+                StudentGrade.objects.select_related("student", "grade")
+                .prefetch_related(
+                    Prefetch(
+                        "student__studentmark_set",
+                        queryset=StudentMark.objects.select_related("criteria__rubric"),
+                    )
+                )
+                .all()
             )
 
-        total_marks = TotalMarks.objects.all().select_related("student__user")
-        serializer = TotalMarksSerializer(total_marks, many=True)
-        return Response(serializer.data)
+            print(f"Found {grades.count()} student grades")
+
+            if not grades.exists():
+                return Response([], status=status.HTTP_200_OK)
+
+            serializer = TotalMarksSerializer(grades, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(f"Error in GetAllTotalMarksView: {e}")
+            return Response(
+                {"error": f"Failed to fetch total marks: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class GetMarkingSchemeGradesView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def get(self, request):
         course = request.query_params.get("course", "")
+        try:
+            if course:
+                rubrics = Rubric.objects.filter(course=course).order_by("steps")
+                print(f"Found {rubrics.count()} rubrics for course {course}")
+            else:
+                rubrics = Rubric.objects.all().order_by("course", "steps")
+                print(f"Found {rubrics.count()} total rubrics")
 
-        schemes = (
-            MarkingScheme.objects.filter(course=course)
-            if course
-            else MarkingScheme.objects.all()
-        )
+            serializer = MarkingSchemeSerializer(rubrics, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
-        serializer = MarkingSchemeSerializer(schemes, many=True)
-        return Response(serializer.data)
+        except Exception as e:
+            print(f"Error in GetMarkingSchemeGradesView: {e}")
+            return Response(
+                {"error": f"Failed to fetch marking schemes: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

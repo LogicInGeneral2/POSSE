@@ -4,7 +4,6 @@ from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 import urllib
 from documents.models import Logbook, StudentSubmission
-from grades.models import Grade, TotalMarks
 from .forms import CustomUserChangeForm, ExaminerSelectionForm, SupervisorSelectionForm
 from .models import SupervisorsRequest, User, Student, CourseCoordinator
 from django.utils.html import format_html
@@ -546,8 +545,6 @@ class StudentAdmin(ImportExportModelAdmin):
                     # Delete related data from models with ForeignKey to Student
                     Logbook.objects.filter(student=student).delete()
                     StudentSubmission.objects.filter(student=student).delete()
-                    Grade.objects.filter(student=student).delete()
-                    TotalMarks.objects.filter(student=student).delete()
 
                     # Clear many-to-many relationships (e.g., evaluators)
                     student.evaluators.clear()
@@ -581,8 +578,6 @@ class StudentAdmin(ImportExportModelAdmin):
                         # Delete related data from models with ForeignKey to Student
                         Logbook.objects.filter(student=student).delete()
                         StudentSubmission.objects.filter(student=student).delete()
-                        Grade.objects.filter(student=student).delete()
-                        TotalMarks.objects.filter(student=student).delete()
 
                         # Clear many-to-many relationships (e.g., evaluators)
                         student.evaluators.clear()

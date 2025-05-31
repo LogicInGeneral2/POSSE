@@ -1,117 +1,110 @@
 from rest_framework import serializers
-from .models import MarkingScheme, Grade, Student, TotalMarks, User
+from .models import Rubric, Criteria, StudentMark, StudentGrade
+
+
+class CriteriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Criteria
+        fields = ["id", "label", "weightage", "max_mark"]
+
+
+class RubricSerializer(serializers.ModelSerializer):
+    contents = serializers.SerializerMethodField()
+    marks = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Rubric
+        fields = [
+            "id",
+            "label",
+            "weightage",
+            "course",
+            "mode",
+            "steps",
+            "contents",
+            "marks",
+        ]
+
+    def get_contents(self, obj):
+        # Assuming contents are the labels of related Criteria
+        return [criteria.label for criteria in obj.criterias.all()]
+
+    def get_marks(self, obj):
+        # Assuming max_mark from Criteria determines the number of marks (e.g., max_mark=5 means 0-5 scale)
+        # Use the first Criteria's max_mark for simplicity, assuming all Criteria have the same max_mark
+        criteria = obj.criterias.first()
+        return int(criteria.max_mark) if criteria else 0
+
+
+class StudentMarkSerializer(serializers.ModelSerializer):
+    criteria = CriteriaSerializer()
+    student = serializers.StringRelatedField()
+    evaluator = serializers.StringRelatedField()
+
+    class Meta:
+        model = StudentMark
+        fields = ["student", "criteria", "mark", "evaluator"]
+
+
+class StudentGradeSerializer(serializers.ModelSerializer):
+    student = serializers.StringRelatedField()
+    grade_letter = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StudentGrade
+        fields = ["student", "total_mark", "grade_letter"]
+
+    def get_grade_letter(self, obj):
+        grade = obj.grade
+        return grade.grade_letter if grade else "N/A"
+
+
+class TotalMarksSerializer(serializers.Serializer):
+    id = serializers.IntegerField(source="student.id")
+    student = serializers.CharField(source="student.__str__")
+    course = serializers.CharField(source="student.course")
+    total_mark = serializers.FloatField()
+    breakdown = serializers.SerializerMethodField()
+
+    def get_breakdown(self, obj):
+        student_marks = StudentMark.objects.filter(student=obj.student).select_related(
+            "criteria__rubric"
+        )
+        breakdown = {}
+        for rubric in Rubric.objects.filter(course=obj.student.course).order_by(
+            "steps"
+        ):
+            criteria_list = rubric.criterias.all()
+            rubric_score = 0
+            for criteria in criteria_list:
+                marks = student_marks.filter(criteria_id=criteria.id)
+                if marks.exists():
+                    avg_mark = sum(mark.mark for mark in marks) / marks.count()
+                    normalized_score = (
+                        avg_mark / criteria.max_mark * criteria.weightage
+                    ) / 100
+                    rubric_score += normalized_score
+            # Apply rubric weightage
+            rubric_total = rubric_score * rubric.weightage
+            breakdown[rubric.label] = round(
+                rubric_total, 2
+            )  # Round to 2 decimal places
+        return breakdown
 
 
 class MarkingSchemeSerializer(serializers.ModelSerializer):
+    contents = serializers.SerializerMethodField()
+    marks = serializers.SerializerMethodField()
+
     class Meta:
-        model = MarkingScheme
+        model = Rubric
         fields = ["id", "label", "marks", "weightage", "pic", "contents", "course"]
 
+    def get_contents(self, obj):
+        # Return labels of related Criteria
+        return [criteria.label for criteria in obj.criterias.all()]
 
-class GradeSerializer(serializers.ModelSerializer):
-    scheme = MarkingSchemeSerializer(read_only=True)
-    student = serializers.StringRelatedField()
-    grader = serializers.StringRelatedField()
-
-    class Meta:
-        model = Grade
-        fields = [
-            "id",
-            "student",
-            "scheme",
-            "grader",
-            "grades",
-            "created_at",
-            "updated_at",
-        ]
-
-
-class GradeEntrySerializer(serializers.Serializer):
-    scheme_id = serializers.IntegerField()
-    grades = serializers.ListField(child=serializers.IntegerField())
-
-
-class SaveGradeSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField()
-    grades = serializers.ListField(child=GradeEntrySerializer())
-
-    def validate(self, data):
-        user_id = data.get("user_id")
-        grades_data = data.get("grades")
-        student_id = self.context["student_id"]
-
-        try:
-            grader = User.objects.get(id=user_id, role__in=["supervisor", "examiner"])
-        except User.DoesNotExist:
-            raise serializers.ValidationError("Invalid grader ID.")
-
-        try:
-            student = Student.objects.get(id=student_id)
-        except Student.DoesNotExist:
-            raise serializers.ValidationError("Invalid student ID.")
-
-        for grade_entry in grades_data:
-            scheme_id = grade_entry.get("scheme_id")
-            grades = grade_entry.get("grades")
-            try:
-                scheme = MarkingScheme.objects.get(id=scheme_id)
-            except MarkingScheme.DoesNotExist:
-                raise serializers.ValidationError(f"Invalid scheme ID: {scheme_id}.")
-
-            # Validate grader authorization
-            if scheme.pic == "supervisor" and student.supervisor != grader:
-                raise serializers.ValidationError(
-                    f"Grader is not the supervisor for scheme {scheme_id}."
-                )
-            if scheme.pic == "evaluator" and grader not in student.evaluators.all():
-                raise serializers.ValidationError(
-                    f"Grader is not an evaluator for scheme {scheme_id}."
-                )
-
-            # Validate grades length
-            if len(grades) != len(scheme.contents):
-                raise serializers.ValidationError(
-                    f"Grades length ({len(grades)}) does not match contents length ({len(scheme.contents)}) for scheme {scheme_id}."
-                )
-
-        return data
-
-
-class TotalMarksSerializer(serializers.ModelSerializer):
-    student = serializers.StringRelatedField()
-    breakdown = serializers.JSONField()
-
-    class Meta:
-        model = TotalMarks
-        fields = ["id", "student", "course", "total_mark", "breakdown", "updated_at"]
-
-
-class UpdateTotalMarksSerializer(serializers.Serializer):
-    total_mark = serializers.FloatField()
-    breakdown = serializers.JSONField()
-
-    def validate(self, data):
-        total_mark = data.get("total_mark")
-        breakdown = data.get("breakdown")
-        student_id = self.context["student_id"]
-
-        try:
-            student = Student.objects.get(id=student_id)
-        except Student.DoesNotExist:
-            raise serializers.ValidationError("Invalid student ID.")
-
-        # Verify breakdown keys match marking scheme labels
-        schemes = MarkingScheme.objects.filter(course=student.course)
-        expected_keys = {scheme.label for scheme in schemes}
-        provided_keys = set(breakdown.keys())
-        if provided_keys - expected_keys:
-            raise serializers.ValidationError("Invalid scheme labels in breakdown.")
-
-        # Verify breakdown sums to total_mark (within rounding error)
-        breakdown_sum = sum(breakdown.values())
-        if abs(breakdown_sum - total_mark) > 0.01:
-            raise serializers.ValidationError(
-                f"Breakdown sum ({breakdown_sum}) does not match total mark ({total_mark})."
-            )
-
-        return data
+    def get_marks(self, obj):
+        # Return max_mark from first Criteria, assuming all Criteria have the same max_mark
+        criteria = obj.criterias.first()
+        return int(criteria.max_mark) if criteria else 0

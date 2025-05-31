@@ -58,7 +58,6 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
     "student",
     ...markingSchemes.map((s) => s.label),
     "total_mark",
-    "updated_at",
   ]);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -120,9 +119,6 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
       } else if (sortColumn === "total_mark") {
         valueA = a.total_mark;
         valueB = b.total_mark;
-      } else if (sortColumn === "updated_at") {
-        valueA = new Date(a.updated_at).getTime();
-        valueB = new Date(b.updated_at).getTime();
       } else {
         // Breakdown column
         valueA = a.breakdown[sortColumn] || 0;
@@ -157,7 +153,6 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
         .filter((s) => s.course === newValue)
         .map((s) => s.label),
       "total_mark",
-      "updated_at",
     ]);
   };
 
@@ -312,8 +307,6 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                           ? "Name"
                           : value === "total_mark"
                           ? "Total Marks"
-                          : value === "updated_at"
-                          ? "Updated At"
                           : value
                       }
                       onDelete={handleDeleteColumnChip(value)}
@@ -328,7 +321,6 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                 "student",
                 ...filteredSchemes.map((s) => s.label),
                 "total_mark",
-                "updated_at",
               ].map((col) => (
                 <MenuItem key={col} value={col}>
                   <Checkbox checked={visibleColumns.includes(col)} />
@@ -338,8 +330,6 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                         ? "Name"
                         : col === "total_mark"
                         ? "Total Marks"
-                        : col === "updated_at"
-                        ? "Updated At"
                         : col
                     }
                   />
@@ -406,16 +396,6 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                     (sortDirection === "asc" ? "↑" : "↓")}
                 </TableCell>
               )}
-              {visibleColumns.includes("updated_at") && (
-                <TableCell
-                  onClick={() => handleSort("updated_at")}
-                  sx={{ cursor: "pointer" }}
-                >
-                  Updated At{" "}
-                  {sortColumn === "updated_at" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </TableCell>
-              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -450,11 +430,6 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                     ))}
                   {visibleColumns.includes("total_mark") && (
                     <TableCell>{row.total_mark}</TableCell>
-                  )}
-                  {visibleColumns.includes("updated_at") && (
-                    <TableCell>
-                      {new Date(row.updated_at).toLocaleString()}
-                    </TableCell>
                   )}
                 </TableRow>
               ))

@@ -46,30 +46,33 @@ const GradingStepper = ({ student }: { student: number }) => {
         const schemeData = await getMarkingScheme(student);
         if (schemeData) {
           setGradingContents(schemeData);
-          setGrades(
-            schemeData.reduce(
-              (
-                acc: { [schemeId: number]: number[] },
-                scheme: GradingContentsType
-              ) => {
-                acc[scheme.id] = new Array(scheme.contents.length).fill(0);
-                return acc;
-              },
-              {}
-            )
+          // Initialize grades with zeros for each rubric
+          const initialGrades = schemeData.reduce(
+            (
+              acc: { [schemeId: number]: number[] },
+              scheme: GradingContentsType
+            ) => {
+              acc[scheme.id] = new Array(scheme.contents.length).fill(0);
+              return acc;
+            },
+            {}
           );
-        }
-        const gradesData = await getGrades(student);
-        if (gradesData && gradesData.length) {
-          setGrades((prevGrades) => {
-            const updatedGrades = { ...prevGrades };
-            gradesData.forEach(
-              (grade: { scheme: { id: number }; grades: number[] }) => {
-                updatedGrades[grade.scheme.id] = grade.grades;
-              }
-            );
-            return updatedGrades;
-          });
+          setGrades(initialGrades);
+
+          const gradesData = await getGrades(student);
+          if (gradesData && gradesData.length) {
+            setGrades((prevGrades) => {
+              const updatedGrades = { ...prevGrades };
+              gradesData.forEach(
+                (grade: { scheme: { id: number }; grades: number[] }) => {
+                  if (updatedGrades[grade.scheme.id]) {
+                    updatedGrades[grade.scheme.id] = [...grade.grades];
+                  }
+                }
+              );
+              return updatedGrades;
+            });
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -92,16 +95,23 @@ const GradingStepper = ({ student }: { student: number }) => {
     contentIndex: number,
     value: number
   ): void => {
-    setGrades((prevGrades) => ({
-      ...prevGrades,
-      [schemeId]: prevGrades[schemeId].map((grade, j) =>
-        j === contentIndex ? value : grade
-      ),
-    }));
+    setGrades((prevGrades) => {
+      const updatedGrades = { ...prevGrades };
+      if (updatedGrades[schemeId]) {
+        updatedGrades[schemeId] = [
+          ...updatedGrades[schemeId].slice(0, contentIndex),
+          value,
+          ...updatedGrades[schemeId].slice(contentIndex + 1),
+        ];
+      }
+      console.log("Updated grades:", updatedGrades); // Debugging
+      return updatedGrades;
+    });
   };
 
-  const stepScores = gradingContents.map((scheme: GradingContentsType) =>
-    grades[scheme.id].reduce((acc, curr) => acc + curr, 0)
+  const stepScores = gradingContents.map(
+    (scheme: GradingContentsType) =>
+      grades[scheme.id]?.reduce((acc, curr) => acc + curr, 0) || 0
   );
   const totalScore = stepScores.reduce((acc, curr) => acc + curr, 0);
 
@@ -113,17 +123,20 @@ const GradingStepper = ({ student }: { student: number }) => {
       if (!user?.id) {
         throw new Error("User ID not found");
       }
+
       const gradesPayload = gradingContents.map(
         (scheme: GradingContentsType) => ({
           scheme_id: scheme.id,
-          grades: grades[scheme.id],
+          grades: grades[scheme.id] || [],
         })
       );
+
       await saveGrades({
         studentId: student,
         user_id: user.id,
         grades: gradesPayload,
       });
+
       setToast({
         open: true,
         message: "Grades saved successfully!",
@@ -141,7 +154,9 @@ const GradingStepper = ({ student }: { student: number }) => {
 
   const activeScheme = gradingContents[activeStep];
   const handleGradeChangeWrapper = (contentIndex: number, value: number) => {
-    handleGradeChange(activeScheme.id, contentIndex, value);
+    if (activeScheme) {
+      handleGradeChange(activeScheme.id, contentIndex, value);
+    }
   };
 
   const handleCloseToast = () => {
@@ -174,7 +189,7 @@ const GradingStepper = ({ student }: { student: number }) => {
                 steps={steps}
                 stepScores={stepScores}
                 totalScore={totalScore}
-                gradingContents={gradingContents} // Pass gradingContents for max scores
+                gradingContents={gradingContents}
               />
             </Box>
           ) : (
@@ -211,7 +226,7 @@ const GradingStepper = ({ student }: { student: number }) => {
                     mb: 1,
                   }}
                 >
-                  {[...Array(activeScheme.marks + 1)].map((_, idx) => (
+                  {[...Array((activeScheme?.marks || 0) + 1)].map((_, idx) => (
                     <Typography
                       key={idx}
                       sx={{
@@ -226,7 +241,7 @@ const GradingStepper = ({ student }: { student: number }) => {
                 </Box>
 
                 {/* Content Rows */}
-                {activeScheme.contents.map((content, index) => (
+                {activeScheme?.contents.map((content, index) => (
                   <Box
                     key={index}
                     sx={{
@@ -240,7 +255,9 @@ const GradingStepper = ({ student }: { student: number }) => {
                     <FormControl>
                       <RadioGroup
                         row
-                        value={grades[activeScheme.id][index] || 0}
+                        value={
+                          grades[activeScheme.id]?.[index]?.toString() || "0"
+                        }
                         onChange={(e) =>
                           handleGradeChangeWrapper(
                             index,
@@ -249,14 +266,16 @@ const GradingStepper = ({ student }: { student: number }) => {
                         }
                         sx={{ display: "flex", gap: 2 }}
                       >
-                        {[...Array(activeScheme.marks + 1)].map((_, idx) => (
-                          <FormControlLabel
-                            key={idx}
-                            value={idx}
-                            control={<Radio />}
-                            label=""
-                          />
-                        ))}
+                        {[...Array((activeScheme.marks || 0) + 1)].map(
+                          (_, idx) => (
+                            <FormControlLabel
+                              key={idx}
+                              value={idx.toString()}
+                              control={<Radio />}
+                              label=""
+                            />
+                          )
+                        )}
                       </RadioGroup>
                     </FormControl>
                   </Box>

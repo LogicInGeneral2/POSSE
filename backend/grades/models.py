@@ -1,16 +1,12 @@
 from django.db import models
 from django.forms import ValidationError
 from users.models import Student, User
-from django.dispatch import receiver
-from django.db.models.signals import post_save, post_delete
 
 
-class MarkingScheme(models.Model):
+class Rubric(models.Model):
     label = models.CharField(max_length=255)
-    marks = models.FloatField()
     weightage = models.FloatField()
     pic = models.JSONField(default=list)
-    contents = models.JSONField()
     course = models.CharField(
         max_length=5,
         choices=[
@@ -42,82 +38,59 @@ class MarkingScheme(models.Model):
             raise ValidationError("Invalid role(s) in pic")
 
 
+class Criteria(models.Model):
+    label = models.CharField(max_length=255)
+    weightage = models.FloatField()
+    max_mark = models.FloatField()
+    rubric = models.ForeignKey(
+        Rubric, on_delete=models.CASCADE, related_name="criterias"
+    )
+
+    def __str__(self):
+        return self.label
+
+
+class StudentMark(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    criteria = models.ForeignKey(Criteria, on_delete=models.CASCADE)
+    evaluator = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    mark = models.FloatField()
+
+    def __str__(self):
+        return f"{self.student} - {self.criteria} - {self.mark}"
+
+
 class Grade(models.Model):
-    student = models.ForeignKey(
-        Student, on_delete=models.CASCADE, related_name="grades"
-    )
-    scheme = models.ForeignKey(
-        MarkingScheme, on_delete=models.CASCADE, related_name="grades"
-    )
-    grader = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="assigned_grades",
-        limit_choices_to={"role__in": ["supervisor", "examiner", "course_coordinator"]},
-    )
-    grades = models.JSONField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    grade_letter = models.CharField(max_length=5)
+    gpa_value = models.FloatField()
+    min_mark = models.FloatField()
+    max_mark = models.FloatField()
 
     class Meta:
-        unique_together = (
-            "student",
-            "scheme",
-            "grader",
-        )
+        ordering = ["-min_mark"]
 
     def __str__(self):
-        return f"{self.student} - {self.scheme} ({self.grader})"
+        return f"{self.grade_letter} ({self.gpa_value})"
+
+    def contains(self, mark: float) -> bool:
+        return self.min_mark <= mark <= self.max_mark
 
 
-class TotalMarks(models.Model):
-    student = models.ForeignKey(
-        Student, on_delete=models.CASCADE, related_name="total_marks"
-    )
-    course = models.CharField(
-        max_length=5,
-        choices=[
-            ("FYP1", "FYP1"),
-            ("FYP2", "FYP2"),
-        ],
-    )
-    total_mark = models.FloatField(default=0.0)
-    breakdown = models.JSONField(default=dict)
-    updated_at = models.DateTimeField(auto_now=True)
+class StudentGrade(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    total_mark = models.FloatField()
+    grade = models.ForeignKey(Grade, on_delete=models.SET_NULL, null=True, blank=True)
 
-    class Meta:
-        unique_together = ("student", "course")
+    def save(self, *args, **kwargs):
+        # Automatically assign grade based on total_mark
+        matched_grade = Grade.objects.filter(
+            min_mark__lte=self.total_mark, max_mark__gte=self.total_mark
+        ).first()
+        self.grade = matched_grade
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.student} - {self.course} - {self.total_mark}"
-
-
-@receiver([post_save, post_delete], sender=Grade)
-def update_total_marks(sender, instance, **kwargs):
-    student = instance.student
-    course = student.course
-    total_mark = 0.0
-    breakdown = {}
-    schemes = MarkingScheme.objects.filter(course=course)
-    for scheme in schemes:
-        grades = Grade.objects.filter(student=student, scheme=scheme)
-        if grades.exists():
-            total_grades = []
-            for grade in grades:
-                total_grades.extend(grade.grades)
-            if total_grades:
-                max_marks = scheme.marks
-                num_grades = len(total_grades)
-                score = (
-                    sum(total_grades) / (num_grades * max_marks)
-                ) * scheme.weightage
-                total_mark += score
-                breakdown[scheme.label] = round(
-                    score, 2
-                )  # Use label instead of scheme_{id}
-    TotalMarks.objects.update_or_create(
-        student=student,
-        course=course,
-        defaults={"total_mark": round(total_mark, 2), "breakdown": breakdown},
-    )
+        grade_display = self.grade.grade_letter if self.grade else "N/A"
+        return f"{self.student} - Total: {self.total_mark} - Grade: {grade_display}"
