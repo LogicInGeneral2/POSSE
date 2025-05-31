@@ -23,10 +23,14 @@ import {
   ListItemText,
   IconButton,
   Popover,
+  Button,
 } from "@mui/material";
 import { TotalMarks, MarkingScheme } from "../../services/types";
 import SummaryDashboard from "./SummaryDashboard";
-import { Settings as SettingsIcon } from "@mui/icons-material";
+import {
+  Settings as SettingsIcon,
+  Download as DownloadIcon,
+} from "@mui/icons-material";
 
 const extractStudentName = (student: string): string => {
   if (!student) return "Unknown";
@@ -125,6 +129,12 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
       } else if (sortColumn === "total_mark") {
         valueA = a.total_mark;
         valueB = b.total_mark;
+      } else if (sortColumn === "grade_letter") {
+        valueA = a.grade_letter;
+        valueB = b.grade_letter;
+      } else if (sortColumn === "grade_gpa") {
+        valueA = a.grade_gpa;
+        valueB = b.grade_gpa;
       } else {
         // Breakdown column
         valueA = a.breakdown[sortColumn] || 0;
@@ -141,6 +151,93 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
     const start = page * rowsPerPage;
     return sortedRowData.slice(start, start + rowsPerPage);
   }, [sortedRowData, page, rowsPerPage]);
+
+  // CSV Export function
+  const exportToCSV = () => {
+    // Use sortedRowData to maintain the current sort order and filters
+    const dataToExport = sortedRowData;
+
+    // Create headers based on visible columns
+    const headers: string[] = [];
+    const columnKeys: string[] = [];
+
+    if (visibleColumns.includes("student")) {
+      headers.push("Name");
+      columnKeys.push("student");
+    }
+
+    // Add marking scheme columns
+    filteredSchemes
+      .filter((scheme) => visibleColumns.includes(scheme.label))
+      .forEach((scheme) => {
+        headers.push(scheme.label);
+        columnKeys.push(scheme.label);
+      });
+
+    if (visibleColumns.includes("total_mark")) {
+      headers.push("Total Marks");
+      columnKeys.push("total_mark");
+    }
+
+    if (visibleColumns.includes("grade_letter")) {
+      headers.push("Grade Letter");
+      columnKeys.push("grade_letter");
+    }
+
+    if (visibleColumns.includes("grade_gpa")) {
+      headers.push("GPA");
+      columnKeys.push("grade_gpa");
+    }
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(","), // Header row
+      ...dataToExport.map((row) =>
+        columnKeys
+          .map((key) => {
+            let value;
+            if (key === "student") {
+              value = extractStudentName(row.student);
+            } else if (
+              key === "total_mark" ||
+              key === "grade_letter" ||
+              key === "grade_gpa"
+            ) {
+              value = row[key as keyof TotalMarks];
+            } else {
+              // Breakdown column
+              value = row.breakdown[key] || 0;
+            }
+
+            // Escape commas and quotes in CSV
+            const stringValue = String(value);
+            if (
+              stringValue.includes(",") ||
+              stringValue.includes('"') ||
+              stringValue.includes("\n")
+            ) {
+              return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            return stringValue;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `${tabValue}_marks_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleTabChange = (
     _event: React.SyntheticEvent,
@@ -159,7 +256,8 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
         .filter((s) => s.course === newValue)
         .map((s) => s.label),
       "total_mark",
-      "",
+      "grade_letter",
+      "grade_gpa",
     ]);
   };
 
@@ -287,6 +385,17 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
           </FormControl>
         </Box>
         <Box sx={{ display: "flex", alignItems: "right", gap: "10px" }}>
+          <Tooltip title="Export to CSV">
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={exportToCSV}
+              size="small"
+              sx={{ minWidth: "auto", px: 2 }}
+            >
+              Export CSV
+            </Button>
+          </Tooltip>
           <Tooltip title="Settings">
             <IconButton
               onClick={handleClick}
@@ -330,6 +439,8 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
                           ? "Total Marks"
                           : value === "grade_letter"
                           ? "Grade"
+                          : value === "grade_gpa"
+                          ? "GPA"
                           : value
                       }
                       onDelete={handleDeleteColumnChip(value)}
