@@ -10,6 +10,7 @@ from grades.resources import (
 from .models import Grade, Rubric, Criteria, StudentMark, StudentGrade
 from import_export.admin import ImportExportModelAdmin
 import csv
+from users.utils import get_coordinator_course_filter
 
 
 # Rubric Admin
@@ -21,6 +22,13 @@ class RubricAdmin(ImportExportModelAdmin):
     search_fields = ("label",)
     ordering = ("steps",)
     actions = ["get_scheme"]
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            queryset = queryset.filter(course_filter)
+        return queryset
 
     def get_scheme(self, request, queryset):
         response = HttpResponse(content_type="text/csv")
@@ -56,6 +64,21 @@ class CriteriaAdmin(ImportExportModelAdmin):
     list_select_related = ("rubric",)
     actions = ["get_scheme"]
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            # Handle single or compound Q object
+            courses = []
+            if (
+                course_filter.children
+            ):  # Compound Q object (e.g., Q(course='FYP1') | Q(course='Both'))
+                courses = [child[1] for child in course_filter.children]
+            else:  # Single Q object (e.g., Q(course='FYP1'))
+                courses = [course_filter[0][1]]
+            queryset = queryset.filter(rubric__course__in=courses)
+        return queryset
+
     def get_scheme(self, request, queryset):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = (
@@ -86,9 +109,23 @@ class StudentMarkAdmin(ImportExportModelAdmin):
     resource_class = StudentMarkResource
     list_display = ("student", "criteria", "evaluator", "mark")
     list_filter = ("criteria__rubric__course", "criteria__rubric__mode")
-    search_fields = ("student__first_name", "student__last_name", "criteria__label")
+    search_fields = ("student__user__name", "criteria__label")
     list_select_related = ("student", "criteria", "evaluator")
+    list_editable = ("mark",)
     actions = ["get_scheme"]
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            # Handle single or compound Q object
+            courses = []
+            if course_filter.children:  # Compound Q object
+                courses = [child[1] for child in course_filter.children]
+            else:  # Single Q object
+                courses = [course_filter[0][1]]
+            queryset = queryset.filter(criteria__rubric__course__in=courses)
+        return queryset
 
     def get_scheme(self, request, queryset):
         response = HttpResponse(content_type="text/csv")
@@ -107,10 +144,23 @@ class StudentMarkAdmin(ImportExportModelAdmin):
 class StudentGradesAdmin(ImportExportModelAdmin):
     resource_class = StudentGradesResource
     list_display = ("student", "total_mark", "grade")
-    search_fields = ("student__first_name", "student__last_name")
+    search_fields = ("student__user__name",)
     list_select_related = ("student",)
     readonly_fields = ("grade", "total_mark", "student")
     actions = ["get_scheme"]
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        course_filter, is_coordinator = get_coordinator_course_filter(request)
+        if is_coordinator and course_filter:
+            # Handle single or compound Q object
+            courses = []
+            if course_filter.children:  # Compound Q object
+                courses = [child[1] for child in course_filter.children]
+            else:  # Single Q object
+                courses = [course_filter[0][1]]
+            queryset = queryset.filter(student__course__in=courses)
+        return queryset
 
     def get_scheme(self, request, queryset):
         response = HttpResponse(content_type="text/csv")
