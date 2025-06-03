@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from .models import Rubric, StudentMark, StudentGrade
+from .models import Criteria, Rubric, StudentMark, StudentGrade
 from users.models import Student, User
 from .serializers import RubricSerializer, TotalMarksSerializer, MarkingSchemeSerializer
 from django.db import transaction
@@ -27,9 +27,14 @@ class GetMarkingSchemeView(APIView):
                     {"error": "User role not found"}, status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Initialize rubric query
+            # Initialize rubric query with criteria filtered by mode
             rubric_query = Rubric.objects.filter(
-                course=student.course, mode__in=[student.mode, "both"]
+                course=student.course
+            ).prefetch_related(
+                Prefetch(
+                    "criterias",
+                    queryset=Criteria.objects.filter(mode__in=[student.mode, "both"]),
+                )
             )
 
             if user == student.supervisor:
@@ -66,6 +71,10 @@ class GetGradesView(APIView):
             rubrics = Rubric.objects.filter(course=student.course).order_by("steps")
             result = []
             for rubric in rubrics:
+                # Filter criteria by mode
+                criteria_list = rubric.criterias.filter(
+                    mode__in=[student.mode, "both"]
+                ).order_by("id")
                 # Fetch marks for the student, rubric, and authenticated user as evaluator
                 marks = StudentMark.objects.filter(
                     student=student, criteria__rubric=rubric, evaluator=user
@@ -76,8 +85,7 @@ class GetGradesView(APIView):
                     grades = [mark.mark for mark in marks]
                 else:
                     # Initialize grades with zeros for each criterion in the rubric
-                    criteria_count = rubric.criterias.count()
-                    grades = [0] * criteria_count
+                    grades = [0] * criteria_list.count()
 
                 result.append(
                     {"scheme": RubricSerializer(rubric).data, "grades": grades}
@@ -104,7 +112,9 @@ class SaveGradesView(APIView):
                 # Save new marks
                 for grade_entry in grades_data:
                     rubric = get_object_or_404(Rubric, id=grade_entry["scheme_id"])
-                    criteria_list = rubric.criterias.all().order_by("id")
+                    criteria_list = rubric.criterias.filter(
+                        mode__in=[student.mode, "both"]
+                    ).order_by("id")
                     grades = grade_entry["grades"]
 
                     if len(grades) != len(criteria_list):
@@ -135,7 +145,9 @@ class SaveGradesView(APIView):
                 total_mark = 0
                 rubrics = Rubric.objects.filter(course=student.course).order_by("steps")
                 for rubric in rubrics:
-                    criteria_list = rubric.criterias.all().order_by("id")
+                    criteria_list = rubric.criterias.filter(
+                        mode__in=[student.mode, "both"]
+                    ).order_by("id")
                     rubric_score = 0
                     for criteria in criteria_list:
                         # Get all marks for this criteria and student, excluding zeros

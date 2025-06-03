@@ -17,8 +17,8 @@ from users.utils import get_coordinator_course_filter
 @admin.register(Rubric)
 class RubricAdmin(ImportExportModelAdmin):
     resource_class = RubricResource
-    list_display = ("label", "weightage", "course", "mode", "steps", "pic")
-    list_filter = ("course", "mode")
+    list_display = ("label", "weightage", "course", "steps", "pic")
+    list_filter = ("course",)
     search_fields = ("label",)
     ordering = ("steps",)
     actions = ["get_scheme"]
@@ -42,11 +42,11 @@ class RubricAdmin(ImportExportModelAdmin):
                 "rubric_weightage",
                 "rubric_pic",
                 "rubric_course",
-                "rubric_mode",
                 "rubric_steps",
                 "label",
                 "weightage",
                 "max_mark",
+                "mode",
             ]
         )
         return response
@@ -58,8 +58,8 @@ class RubricAdmin(ImportExportModelAdmin):
 @admin.register(Criteria)
 class CriteriaAdmin(ImportExportModelAdmin):
     resource_class = CriteriaResource
-    list_display = ("label", "weightage", "max_mark", "rubric")
-    list_filter = ("rubric__course", "rubric__mode")
+    list_display = ("label", "weightage", "max_mark", "mode", "rubric")
+    list_filter = ("rubric__course", "mode")
     search_fields = ("label", "rubric__label")
     list_select_related = ("rubric",)
     actions = ["get_scheme"]
@@ -91,11 +91,11 @@ class CriteriaAdmin(ImportExportModelAdmin):
                 "rubric_weightage",
                 "rubric_pic",
                 "rubric_course",
-                "rubric_mode",
                 "rubric_steps",
                 "label",
                 "weightage",
                 "max_mark",
+                "mode",
             ]
         )
         return response
@@ -108,7 +108,7 @@ class CriteriaAdmin(ImportExportModelAdmin):
 class StudentMarkAdmin(ImportExportModelAdmin):
     resource_class = StudentMarkResource
     list_display = ("student", "criteria", "evaluator", "mark")
-    list_filter = ("criteria__rubric__course", "criteria__rubric__mode")
+    list_filter = ("criteria__rubric__course", "criteria__mode")
     search_fields = ("student__user__name", "criteria__label")
     list_select_related = ("student", "criteria", "evaluator")
     list_editable = ("mark",)

@@ -13,13 +13,15 @@ class RubricResource(resources.ModelResource):
     weightage = Field(attribute="weightage", column_name="rubric_weightage")
     pic = Field(attribute="pic", column_name="rubric_pic", widget=JSONWidget())
     course = Field(attribute="course", column_name="rubric_course")
-    mode = Field(attribute="mode", column_name="rubric_mode")
     steps = Field(attribute="steps", column_name="rubric_steps")
 
     class Meta:
         model = Rubric
-        fields = ("label", "weightage", "pic", "course", "mode", "steps")
-        import_id_fields = ("label",)
+        fields = ("label", "weightage", "pic", "course", "steps")
+        import_id_fields = (
+            "label",
+            "course",
+        )  # Changed to include both label and course
 
     def before_import_row(self, row, **kwargs):
         # Handle case-insensitive course field
@@ -40,13 +42,16 @@ class RubricResource(resources.ModelResource):
 
             if rubric_label and criteria_label:
                 try:
-                    rubric = Rubric.objects.get(label=rubric_label)
+                    rubric = Rubric.objects.get(
+                        label=rubric_label, course=row.get("rubric_course")
+                    )
                     Criteria.objects.update_or_create(
                         rubric=rubric,
                         label=criteria_label,
                         defaults={
                             "weightage": float(row.get("weightage", 0)),
                             "max_mark": float(row.get("max_mark", 0)),
+                            "mode": row.get("mode", "both"),
                         },
                     )
                 except Exception as e:
@@ -59,6 +64,7 @@ class CriteriaResource(resources.ModelResource):
     label = Field(attribute="label", column_name="label")
     weightage = Field(attribute="weightage", column_name="weightage")
     max_mark = Field(attribute="max_mark", column_name="max_mark")
+    mode = Field(attribute="mode", column_name="mode")
     rubric = Field(
         column_name="rubric_label",
         attribute="rubric",
@@ -67,7 +73,7 @@ class CriteriaResource(resources.ModelResource):
 
     class Meta:
         model = Criteria
-        fields = ("label", "weightage", "max_mark", "rubric")
+        fields = ("label", "weightage", "max_mark", "mode", "rubric")
         import_id_fields = ("label", "rubric")
 
     def before_import_row(self, row, **kwargs):
@@ -80,6 +86,13 @@ class CriteriaResource(resources.ModelResource):
                 json.loads(row["rubric_pic"])
             except json.JSONDecodeError:
                 raise ValueError(f"Invalid JSON in rubric_pic: {row['rubric_pic']}")
+        # Validate mode field
+        if row.get("mode"):
+            valid_modes = {"both", "development", "research"}
+            if row["mode"] not in valid_modes:
+                raise ValueError(
+                    f"Invalid mode: {row['mode']}. Must be one of {valid_modes}"
+                )
         # Create or update Rubric if necessary
         rubric_label = row.get("rubric_label")
         if rubric_label:
@@ -88,10 +101,13 @@ class CriteriaResource(resources.ModelResource):
                 "weightage": float(row.get("rubric_weightage", 0)),
                 "pic": json.loads(row.get("rubric_pic", "[]")),
                 "course": row.get("rubric_course", "FYP1"),
-                "mode": row.get("rubric_mode", "both"),
                 "steps": int(row.get("rubric_steps", 0)),
             }
-            Rubric.objects.update_or_create(label=rubric_label, defaults=rubric_data)
+            Rubric.objects.update_or_create(
+                label=rubric_label,
+                course=row.get("rubric_course", "FYP1"),
+                defaults=rubric_data,
+            )
 
 
 # Resource for StudentMark

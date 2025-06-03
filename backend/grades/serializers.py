@@ -5,7 +5,7 @@ from .models import Rubric, Criteria, StudentMark
 class CriteriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Criteria
-        fields = ["id", "label", "weightage", "max_mark"]
+        fields = ["id", "label", "weightage", "max_mark", "mode"]
 
 
 class RubricSerializer(serializers.ModelSerializer):
@@ -19,7 +19,6 @@ class RubricSerializer(serializers.ModelSerializer):
             "label",
             "weightage",
             "course",
-            "mode",
             "steps",
             "contents",
             "marks",
@@ -72,7 +71,7 @@ class TotalMarksSerializer(serializers.Serializer):
         for rubric in Rubric.objects.filter(course=obj.student.course).order_by(
             "steps"
         ):
-            criteria_list = rubric.criterias.all()
+            criteria_list = rubric.criterias.filter(mode__in=[obj.student.mode, "both"])
             rubric_score = 0
             for criteria in criteria_list:
                 marks = student_marks.filter(criteria_id=criteria.id)
@@ -96,7 +95,7 @@ class MarkingSchemeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Rubric
-        fields = ["id", "label", "marks", "weightage", "pic", "contents", "course"]
+        fields = ["id", "label", "weightage", "pic", "contents", "course"]
 
     def get_contents(self, obj):
         # Return labels of related Criteria

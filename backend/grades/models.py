@@ -15,15 +15,6 @@ class Rubric(models.Model):
         ],
         default="FYP1",
     )
-    mode = models.CharField(
-        max_length=255,
-        choices=[
-            ("both", "Both"),
-            ("development", "Development"),
-            ("research", "Research"),
-        ],
-        default="both",
-    )
     steps = models.IntegerField(default=0)
 
     class Meta:
@@ -44,6 +35,15 @@ class Criteria(models.Model):
     max_mark = models.FloatField()
     rubric = models.ForeignKey(
         Rubric, on_delete=models.CASCADE, related_name="criterias"
+    )
+    mode = models.CharField(
+        max_length=255,
+        choices=[
+            ("both", "Both"),
+            ("development", "Development"),
+            ("research", "Research"),
+        ],
+        default="both",
     )
 
     def __str__(self):

@@ -22,7 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-backend/media/
+backend/media/feedbacks/*
+backend/media/submissions/*
+!backend/media/submissions/student_1201
+!backend/media/submissions/student_1202
+!backend/media/submissions/student_1306
+!backend/media/submissions/student_1309
+backend/media/supervisor_requests/*
+backend/media/uploads/*
+
+
 
 # Ignore env directory and API
 .env
