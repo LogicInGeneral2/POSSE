@@ -20,6 +20,7 @@ export const loginUser = async (
   localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
 
   const userRes = await api.get("/api/users/me/");
+  console.log(userRes.data);
   const userData = userRes.data as User | Student | Supervisor;
 
   return { user: userData };

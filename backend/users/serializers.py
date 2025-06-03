@@ -36,7 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
             )
             data["evaluators"] = [e.name for e in student.evaluators.all()]
 
-        elif instance.role == "supervisor":
+        elif instance.role == "supervisor" or instance.role == "course_coordinator":
             data["supervisor_id"] = instance.id
             data["supervisees_FYP1"] = instance.supervisees.filter(
                 course="FYP1"
