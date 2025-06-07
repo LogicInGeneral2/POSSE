@@ -38,4 +38,5 @@ backend/media/uploads/*
 /env/
 **/node_modules/
 /frontend/.env
-
+__pycache__/
+*.pyc
