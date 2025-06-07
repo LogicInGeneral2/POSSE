@@ -20,8 +20,8 @@ export const loginUser = async (
   localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
 
   const userRes = await api.get("/api/users/me/");
-  console.log(userRes.data);
   const userData = userRes.data as User | Student | Supervisor;
+  console.log(userData);
 
   return { user: userData };
 };
@@ -219,30 +219,9 @@ export const getDocuments = async (category: string) => {
   }
 };
 
-export const getDocumentOptions = async () => {
-  try {
-    const data = await api.get(`/documents/categories`);
-    console.log(data);
-    return data;
-  } catch (error: any) {
-    console.error("Error fetching period:", error);
-    throw new Error(error);
-  }
-};
-
 export const getDocumentModes = async () => {
   try {
     const data = await api.get(`/documents/modes/`);
-    return data;
-  } catch (error: any) {
-    console.error("Error fetching period:", error);
-    throw new Error(error);
-  }
-};
-
-export const getDocumentColours = async () => {
-  try {
-    const data = await api.get(`/documents/themes/`);
     return data;
   } catch (error: any) {
     console.error("Error fetching period:", error);

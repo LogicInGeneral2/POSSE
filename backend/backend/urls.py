@@ -9,9 +9,7 @@ from grades.views import (
     SaveGradesView,
 )
 from settings.views import (
-    DocumentCategoryListView,
     DocumentModeListView,
-    DocumentThemeListView,
     OutlineListView,
     SubmissionStatusThemeListView,
     systemThemeListView,
@@ -187,12 +185,6 @@ urlpatterns = [
         "feedback/delete/<int:feedback_id>/",
         DeleteFeedbackView.as_view(),
         name="delete-submission",
-    ),
-    path("documents/themes/", DocumentThemeListView.as_view(), name="document-themes"),
-    path(
-        "documents/categories/",
-        DocumentCategoryListView.as_view(),
-        name="document-categories",
     ),
     path("logbooks/", LogbookCreateUpdateView.as_view()),
     path("logbooks/<int:pk>/", LogbookCreateUpdateView.as_view()),

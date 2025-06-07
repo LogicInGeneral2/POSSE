@@ -1,7 +1,8 @@
 from django.contrib import admin
+from django.forms import ValidationError
 from users.models import CourseCoordinator
-from .forms import PeriodAdminForm
-from .resources import AnnouncementResource, PeriodResource, SubmissionsResource
+from .forms import PeriodAdminForm, SubmissionsAdminForm
+from .resources import AnnouncementResource
 from .models import Announcement, Period, Submissions
 from django.utils.html import format_html
 from import_export.admin import ImportExportModelAdmin
@@ -9,6 +10,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from users.utils import get_coordinator_course_filter
 from django.contrib import messages
+from django.db.models import Q
 
 
 @admin.register(Announcement)
@@ -84,8 +86,7 @@ class AnnouncementAdmin(ImportExportModelAdmin):
 
 
 @admin.register(Period)
-class PeriodAdmin(ImportExportModelAdmin):
-    resource_class = PeriodResource
+class PeriodAdmin(admin.ModelAdmin):
     form = PeriodAdminForm
     list_display = [
         "title",
@@ -123,6 +124,29 @@ class PeriodAdmin(ImportExportModelAdmin):
                 )
                 return
         super().save_model(request, obj, form, change)
+        # Handle submission creation if requested
+        if form.cleaned_data.get("create_submission"):
+            submission_title = form.cleaned_data.get("submission_title")
+            submission_description = form.cleaned_data.get("submission_description")
+            try:
+                Submissions.objects.create(
+                    title=submission_title,
+                    description=submission_description,
+                    date_open=obj.start_date,
+                    date_close=obj.end_date,
+                    course=obj.course,
+                )
+                self.message_user(
+                    request,
+                    f"Submission '{submission_title}' created successfully.",
+                    messages.SUCCESS,
+                )
+            except ValidationError as e:
+                self.message_user(
+                    request,
+                    f"Failed to create submission: {str(e)}",
+                    messages.ERROR,
+                )
 
     def delete_model(self, request, obj):
         course_filter, is_coordinator = get_coordinator_course_filter(request)
@@ -164,19 +188,47 @@ class PeriodAdmin(ImportExportModelAdmin):
             return
         created_submissions = []
         for period in queryset:
-            submission = Submissions.objects.create(
-                title=period.title,
-                description=period.description,
-                date_open=period.start_date,
-                date_close=period.end_date,
-                course=period.course,
+            try:
+                # Check for existing submissions to avoid duplicates or overlaps
+                if not Submissions.objects.filter(
+                    Q(
+                        date_open__lte=period.end_date,
+                        date_close__gte=period.start_date,
+                    ),
+                    course=period.course,
+                ).exists():
+                    submission = Submissions.objects.create(
+                        title=period.title,
+                        description=period.description,
+                        date_open=period.start_date,
+                        date_close=period.end_date,
+                        course=period.course,
+                    )
+                    created_submissions.append(submission.title)
+                else:
+                    self.message_user(
+                        request,
+                        f"Submission for period '{period.title}' not created due to overlapping dates for course {period.course}.",
+                        level="WARNING",
+                    )
+            except ValidationError as e:
+                self.message_user(
+                    request,
+                    f"Failed to create submission for period '{period.title}': {str(e)}",
+                    level="ERROR",
+                )
+        if created_submissions:
+            self.message_user(
+                request,
+                f"Successfully created {len(created_submissions)} submission(s): {', '.join(created_submissions)}",
+                level="SUCCESS",
             )
-            created_submissions.append(submission.title)
-        self.message_user(
-            request,
-            f"Successfully created {len(created_submissions)} submission(s): {', '.join(created_submissions)}",
-            level="SUCCESS",
-        )
+        else:
+            self.message_user(
+                request,
+                "No submissions created due to existing or overlapping date ranges.",
+                level="WARNING",
+            )
         return HttpResponseRedirect(reverse("admin:details_period_changelist"))
 
     create_submission_from_period.short_description = (
@@ -185,13 +237,18 @@ class PeriodAdmin(ImportExportModelAdmin):
 
 
 @admin.register(Submissions)
-class SubmissionsAdmin(ImportExportModelAdmin):
-    resource_class = SubmissionsResource
+class SubmissionsAdmin(admin.ModelAdmin):
+    form = SubmissionsAdminForm
     list_display = ("title", "date_open", "date_close", "days_left_colored", "course")
     search_fields = ("title", "course")
-    list_filter = ("date_open", "date_close", "course")
+    list_filter = ("course",)
     date_hierarchy = "date_open"
     readonly_fields = ("days_left",)
+
+    def get_form(self, request, obj=None, **kwargs):
+        kwargs["form"] = SubmissionsAdminForm
+        kwargs["form"].request = request  # Pass request to form
+        return super().get_form(request, obj, **kwargs)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

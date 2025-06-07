@@ -95,7 +95,7 @@ class MarkingSchemeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Rubric
-        fields = ["id", "label", "weightage", "pic", "contents", "course"]
+        fields = ["id", "label", "weightage", "pic", "contents", "course", "marks"]
 
     def get_contents(self, obj):
         # Return labels of related Criteria

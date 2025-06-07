@@ -11,12 +11,31 @@ from .models import Grade, Rubric, Criteria, StudentMark, StudentGrade
 from import_export.admin import ImportExportModelAdmin
 import csv
 from users.utils import get_coordinator_course_filter
+from django import forms
+from import_export.admin import ExportMixin
 
 
 # Rubric Admin
+class RubricForm(forms.ModelForm):
+    pic = forms.MultipleChoiceField(
+        choices=Rubric.VALID_ROLES,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Select the roles responsible for this rubric.",
+    )
+
+    class Meta:
+        model = Rubric
+        fields = "__all__"
+
+    def clean_pic(self):
+        # Ensure the cleaned data is a list for JSONField compatibility
+        return self.cleaned_data["pic"]
+
+
 @admin.register(Rubric)
 class RubricAdmin(ImportExportModelAdmin):
     resource_class = RubricResource
+    form = RubricForm  # Use the custom form
     list_display = ("label", "weightage", "course", "steps", "pic")
     list_filter = ("course",)
     search_fields = ("label",)
@@ -105,7 +124,7 @@ class CriteriaAdmin(ImportExportModelAdmin):
 
 # StudentMark Admin
 @admin.register(StudentMark)
-class StudentMarkAdmin(ImportExportModelAdmin):
+class StudentMarkAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = StudentMarkResource
     list_display = ("student", "criteria", "evaluator", "mark")
     list_filter = ("criteria__rubric__course", "criteria__mode")
@@ -141,13 +160,16 @@ class StudentMarkAdmin(ImportExportModelAdmin):
 
 # StudentGrades Admin
 @admin.register(StudentGrade)
-class StudentGradesAdmin(ImportExportModelAdmin):
+class StudentGradesAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = StudentGradesResource
     list_display = ("student", "total_mark", "grade")
     search_fields = ("student__user__name",)
     list_select_related = ("student",)
     readonly_fields = ("grade", "total_mark", "student")
     actions = ["get_scheme"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
@@ -185,7 +207,6 @@ class GradeAdmin(ImportExportModelAdmin):
         "max_mark",
         "range_display",
     )
-    search_fields = ("grade_letter",)
     ordering = ("-min_mark",)
     list_editable = ("gpa_value", "min_mark", "max_mark")
     list_per_page = 20

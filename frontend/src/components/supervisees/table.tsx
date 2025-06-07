@@ -197,6 +197,13 @@ export default function DataTable({
     }
   };
 
+  // Filter actions based on category
+  const filteredActions = action_options.filter(
+    (action: Action) =>
+      (action.label !== "View Logbook" && action.label !== "Edit Topic") ||
+      category === "supervisor"
+  );
+
   return (
     <>
       <Box
@@ -364,12 +371,10 @@ export default function DataTable({
             {filteredData
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map(({ student, submissions, has_logbook }) => {
-                // Find submission matching the selected phase, or use latest if no phase selected
                 const selectedSubmission = phase
                   ? submissions.find((sub) => sub.assignment_title === phase)
                   : submissions[submissions.length - 1];
 
-                // Use "No Submission" as fallback if no matching submission found
                 const currentSubmission = selectedSubmission || {
                   status: "No Submission",
                   assignment_title: "-",
@@ -436,13 +441,13 @@ export default function DataTable({
                       />
                     </TableCell>
                     <TableCell align="center">
-                      {action_options.map((action) => (
+                      {filteredActions.map((action: Action) => (
                         <Tooltip key={action.label} title={action.label} arrow>
                           <span>
                             {action.label === "View Logbook" ? (
                               <IconButton
                                 onClick={() =>
-                                  handleActionClick(action as Action, {
+                                  handleActionClick(action, {
                                     student,
                                     submissions,
                                   })
@@ -461,7 +466,7 @@ export default function DataTable({
                             ) : action.label === "Grade Submission" ? (
                               <IconButton
                                 onClick={() =>
-                                  handleActionClick(action as Action, {
+                                  handleActionClick(action, {
                                     student,
                                     submissions,
                                   })
@@ -479,7 +484,7 @@ export default function DataTable({
                             ) : action.label === "Edit Topic" ? (
                               <IconButton
                                 onClick={() =>
-                                  handleActionClick(action as Action, {
+                                  handleActionClick(action, {
                                     student,
                                     submissions,
                                   })
@@ -498,7 +503,7 @@ export default function DataTable({
                             ) : (
                               <IconButton
                                 onClick={() =>
-                                  handleActionClick(action as Action, {
+                                  handleActionClick(action, {
                                     student,
                                     submissions,
                                   })

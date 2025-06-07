@@ -6,14 +6,11 @@ import zipfile
 from io import BytesIO
 from users.models import CourseCoordinator
 from users.utils import get_coordinator_course_filter
-from .resources import DocumentResource
 from .models import Document, Logbook, StudentSubmission, Feedback
-from import_export.admin import ImportExportModelAdmin
 
 
 @admin.register(Document)
-class DocumentAdmin(ImportExportModelAdmin):
-    resource_class = DocumentResource
+class DocumentAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "category",
@@ -23,7 +20,7 @@ class DocumentAdmin(ImportExportModelAdmin):
         "file_link",
         "thumbnail_preview",
     )
-    search_fields = ("title", "category__label", "mode__label")
+    search_fields = ("title",)
     list_filter = ("category", "mode", "course")
     readonly_fields = ("upload_date", "thumbnail")
     date_hierarchy = "upload_date"
@@ -145,7 +142,7 @@ class FeedbackAdmin(admin.ModelAdmin):
     list_filter = ("supervisor",)
     search_fields = ("supervisor__name", "submission__id")
     date_hierarchy = "upload_date"
-
+    readonly_fields = ("supervisor", "submission", "file", "comment", "upload_date")
     fieldsets = ((None, {"fields": ("supervisor", "submission", "file", "comment")}),)
 
     def get_queryset(self, request):
@@ -173,7 +170,7 @@ class LogbookAdmin(admin.ModelAdmin):
         "date",
         "status",
     )
-    list_filter = ("status", "date", "supervisor", "student")
+    list_filter = ("status", "supervisor", "student")
     search_fields = (
         "student__user__name",
         "student__user__username",

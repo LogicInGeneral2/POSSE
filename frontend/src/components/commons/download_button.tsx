@@ -7,12 +7,14 @@ function Download_Button({
   disabled,
   variants = "outlined",
   icon = true,
+  size = "medium",
 }: {
   fileUrl: string | null;
   text?: string;
   disabled: boolean;
   variants?: "text" | "outlined" | "contained";
   icon?: boolean;
+  size?: "small" | "medium" | "large";
 }) {
   const handleDownload = async () => {
     try {
@@ -42,6 +44,7 @@ function Download_Button({
       onClick={handleDownload}
       startIcon={icon ? <DownloadIcon /> : undefined}
       disabled={disabled}
+      size={size}
     >
       {text}
     </Button>

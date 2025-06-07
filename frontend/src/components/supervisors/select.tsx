@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { getSelectionLists } from "../../services";
 import ErrorNotice from "../commons/error";
 import LoadingSpinner from "../commons/loading";
+import Toast from "../commons/snackbar";
 
 export default function SupervisorsSelection({
   disabled,
@@ -29,14 +30,11 @@ export default function SupervisorsSelection({
   excludedNames: string[];
 }) {
   const [sv_lists, setSVLists] = useState<SupervisorsList[]>([]);
-
   const options: SupervisorsSelectionType[] = sv_lists.map((supervisor) => ({
     name: supervisor.name,
     id: supervisor.id,
   }));
-
   const filter = createFilterOptions<SupervisorsSelectionType>();
-
   const [open, toggleOpen] = React.useState(false);
   const [dialogValue, setDialogValue] =
     React.useState<SupervisorsSelectionType>({
@@ -47,6 +45,15 @@ export default function SupervisorsSelection({
     (option) => !excludedNames.includes(option.name)
   );
   const [isLoading, setIsloading] = useState(true);
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   useEffect(() => {
     const fetchCourseOutlines = async () => {
@@ -62,12 +69,28 @@ export default function SupervisorsSelection({
   }
 
   const handleClose = () => {
-    setDialogValue({ name: "" });
+    setDialogValue({ name: "", proof: undefined });
     toggleOpen(false);
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!dialogValue.name.trim()) {
+      setToast({
+        open: true,
+        message: "Supervisor name is required",
+        severity: "error",
+      });
+      return;
+    }
+    if (!dialogValue.proof) {
+      setToast({
+        open: true,
+        message: "Proof of agreement is required for new supervisors",
+        severity: "error",
+      });
+      return;
+    }
     onChange({ name: dialogValue.name, proof: dialogValue.proof });
     handleClose();
   };
@@ -77,53 +100,64 @@ export default function SupervisorsSelection({
       {isLoading ? (
         <LoadingSpinner />
       ) : (
-        <Autocomplete
-          value={value}
-          onChange={(_, newValue) => {
-            if (typeof newValue === "string") {
-              setTimeout(() => {
+        <>
+          <Toast
+            open={toast.open}
+            message={toast.message}
+            severity={toast.severity}
+            onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+          />
+          <Autocomplete
+            value={value}
+            onChange={(_, newValue) => {
+              if (typeof newValue === "string") {
+                setTimeout(() => {
+                  toggleOpen(true);
+                  setDialogValue({ name: newValue, proof: undefined });
+                });
+              } else if (newValue && "inputValue" in newValue) {
                 toggleOpen(true);
-                setDialogValue({ name: newValue });
-              });
-            } else if (newValue && "inputValue" in newValue) {
-              toggleOpen(true);
-              setDialogValue({ name: newValue.inputValue ?? "" });
-            } else {
-              onChange(newValue);
+                setDialogValue({
+                  name: newValue.inputValue ?? "",
+                  proof: undefined,
+                });
+              } else {
+                onChange(newValue);
+              }
+            }}
+            filterOptions={(options, params) => {
+              const filtered = filter(options, params).filter(
+                (option) => !excludedNames.includes(option.name)
+              );
+              if (params.inputValue !== "") {
+                filtered.push({
+                  inputValue: params.inputValue,
+                  name: `Add "${params.inputValue}"`,
+                } as SupervisorsSelectionType);
+              }
+              return filtered;
+            }}
+            id="new-name-dialog"
+            options={filteredOptions}
+            getOptionLabel={(option) =>
+              typeof option === "string" ? option : option.name
             }
-          }}
-          filterOptions={(options, params) => {
-            const filtered = filter(options, params).filter(
-              (option) => !excludedNames.includes(option.name)
-            );
-            if (params.inputValue !== "") {
-              filtered.push({
-                inputValue: params.inputValue,
-                name: `Add "${params.inputValue}"`,
-              } as SupervisorsSelectionType);
-            }
-            return filtered;
-          }}
-          id="new-name-dialog"
-          options={filteredOptions}
-          getOptionLabel={(option) =>
-            typeof option === "string" ? option : option.name
-          }
-          selectOnFocus
-          clearOnBlur
-          handleHomeEndKeys
-          renderOption={(props, option) => (
-            <li {...props} key={option.name}>
-              {option.name}
-            </li>
-          )}
-          sx={{ width: "100%" }}
-          freeSolo
-          disabled={disabled}
-          renderInput={(params) => (
-            <TextField {...params} label="Select Supervisor" />
-          )}
-        />
+            selectOnFocus
+            clearOnBlur
+            handleHomeEndKeys
+            renderOption={(props, option) => (
+              <li {...props} key={option.name}>
+                {option.name}
+              </li>
+            )}
+            sx={{ width: "100%" }}
+            freeSolo
+            disabled={disabled}
+            renderInput={(params) => (
+              <TextField {...params} label="Select Supervisor" />
+            )}
+          />
+        </>
       )}
 
       {/* Dialog for Adding a Supervisor */}
@@ -147,7 +181,12 @@ export default function SupervisorsSelection({
               margin="dense"
               id="name"
               value={dialogValue.name}
-              onChange={(event) => setDialogValue({ name: event.target.value })}
+              onChange={(event) =>
+                setDialogValue((prev) => ({
+                  ...prev,
+                  name: event.target.value,
+                }))
+              }
               label="Supervisor Name"
               type="text"
               variant="standard"
@@ -158,13 +197,10 @@ export default function SupervisorsSelection({
               size={"100%"}
               disabled={false}
               onUpload={(files) => {
-                if (files.length > 0) {
-                  const file = files[0];
-                  setDialogValue((prev) => ({
-                    ...prev,
-                    proof: file, // store as actual File object
-                  }));
-                }
+                setDialogValue((prev) => ({
+                  ...prev,
+                  proof: files.length > 0 ? files[0] : undefined,
+                }));
               }}
             />
           </DialogContent>

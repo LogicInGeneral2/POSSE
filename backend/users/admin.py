@@ -4,7 +4,12 @@ from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 import urllib
 from documents.models import Logbook, StudentSubmission
-from .forms import CustomUserChangeForm, ExaminerSelectionForm, SupervisorSelectionForm
+from .forms import (
+    CustomUserChangeForm,
+    CustomUserCreationForm,
+    ExaminerSelectionForm,
+    SupervisorSelectionForm,
+)
 from .models import SupervisorsRequest, User, Student, CourseCoordinator
 from django.utils.html import format_html
 from django.contrib import messages
@@ -125,37 +130,102 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "name", "role", "course", "password"),
+                "fields": ("email", "name", "role", "course", "password1", "password2"),
             },
         ),
     )
-
-    # Add inlines for supervisees and evaluatees
     inlines = [SuperviseeInline, EvaluateeInline]
 
     def get_form(self, request, obj=None, **kwargs):
-        kwargs["form"] = CustomUserChangeForm
-        kwargs["form"].request = request  # Pass request to form
+        if obj is None:
+            kwargs["form"] = CustomUserCreationForm
+        else:
+            kwargs["form"] = CustomUserChangeForm
+        kwargs["form"].request = request
         return super().get_form(request, obj, **kwargs)
 
     def save_model(self, request, obj, form, change):
-        if form.cleaned_data.get("password") and not change:
-            obj.set_password(form.cleaned_data["password"])
-        elif change:
-            existing = User.objects.get(pk=obj.pk)
-            if existing.password != obj.password:
-                obj.set_password(obj.password)
-        obj.save()
-
-        # Automatically create/update CourseCoordinator profile for course_coordinator
-        if obj.role == "course_coordinator":
-            course = form.cleaned_data.get("course")
-            try:
-                coordinator = CourseCoordinator.objects.get(user=obj)
-                coordinator.course = course
-                coordinator.save()
-            except CourseCoordinator.DoesNotExist:
+        if not change:
+            # For creation, use CustomUserCreationForm's save method
+            obj = form.save(commit=False)
+            obj.save()
+            if obj.role == "course_coordinator":
+                course = form.cleaned_data.get("course")
                 CourseCoordinator.objects.create(user=obj, course=course)
+        else:
+            # For editing, check if password needs updating
+            if (
+                form.cleaned_data.get("password")
+                and form.cleaned_data["password"] != obj.password
+            ):
+                obj.set_password(form.cleaned_data["password"])
+            obj.save()
+            if obj.role == "course_coordinator":
+                course = form.cleaned_data.get("course")
+                try:
+                    coordinator = CourseCoordinator.objects.get(user=obj)
+                    coordinator.course = course
+                    coordinator.save()
+                except CourseCoordinator.DoesNotExist:
+                    CourseCoordinator.objects.create(user=obj, course=course)
+
+        # Check if the request came from the "Add User" link in SupervisorsRequest
+        referrer = request.META.get("HTTP_REFERER")
+        if referrer and "name" in request.GET and "role" in request.GET and not change:
+            # Normalize the name for robust matching (case-insensitive, strip whitespace)
+            requested_name = request.GET["name"].strip()
+            choice = None
+            supervisor_request = None
+
+            # Check first_name, second_name, third_name for a match
+            try:
+                supervisor_request = SupervisorsRequest.objects.get(
+                    first_name__iexact=requested_name, first_id__isnull=True
+                )
+                choice = "first"
+            except SupervisorsRequest.DoesNotExist:
+                try:
+                    supervisor_request = SupervisorsRequest.objects.get(
+                        second_name__iexact=requested_name, second_id__isnull=True
+                    )
+                    choice = "second"
+                except SupervisorsRequest.DoesNotExist:
+                    try:
+                        supervisor_request = SupervisorsRequest.objects.get(
+                            third_name__iexact=requested_name, third_id__isnull=True
+                        )
+                        choice = "third"
+                    except SupervisorsRequest.DoesNotExist:
+                        pass
+            except SupervisorsRequest.MultipleObjectsReturned:
+                self.message_user(
+                    request,
+                    f"Multiple supervisor requests found for name '{requested_name}'. Please update the appropriate ID manually.",
+                    messages.WARNING,
+                )
+                return HttpResponseRedirect(referrer)
+
+            if supervisor_request and choice:
+                if choice == "first":
+                    supervisor_request.first_id = obj.id
+                elif choice == "second":
+                    supervisor_request.second_id = obj.id
+                elif choice == "third":
+                    supervisor_request.third_id = obj.id
+                supervisor_request.save()
+                self.message_user(
+                    request,
+                    f"Supervisor '{obj.name}' created and linked to {choice} choice in supervisor request.",
+                    messages.SUCCESS,
+                )
+            else:
+                self.message_user(
+                    request,
+                    f"Supervisor '{obj.name}' created, but no matching supervisor request found for name '{requested_name}'. Please check the name or update the appropriate ID manually.",
+                    messages.WARNING,
+                )
+
+            return HttpResponseRedirect(referrer)
 
     def delete_model(self, request, obj):
         if obj.is_superuser:
@@ -668,18 +738,18 @@ class StudentAdmin(ImportExportModelAdmin):
 
 
 @admin.register(SupervisorsRequest)
-class SupervisorsRequestAdmin(ImportExportModelAdmin):
+class SupervisorsRequestAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "student",
         "cgpa",
-        "first_name_with_stats",  # Updated to include stats
+        "first_name_with_stats",
         "approve_first_button",
         "preview_first_button",
-        "second_name_with_stats",  # Updated to include stats
+        "second_name_with_stats",
         "approve_second_button",
         "preview_second_button",
-        "third_name_with_stats",  # Updated to include stats
+        "third_name_with_stats",
         "approve_third_button",
         "preview_third_button",
         "topic",
@@ -690,9 +760,7 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
     )
     list_filter = ("mode",)
     search_fields = (
-        "student__user__name",
-        "student__student_id",
-        "student__user__email",
+        "student__name",
         "first_name",
         "second_name",
         "third_name",
@@ -703,65 +771,104 @@ class SupervisorsRequestAdmin(ImportExportModelAdmin):
         "bulk_approve_third_choice",
     ]
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
     def first_name_with_stats(self, obj):
-        if obj.first_name and obj.first_id:
-            try:
-                supervisor = User.objects.get(id=obj.first_id, role="supervisor")
-                current_students = Student.objects.filter(supervisor=supervisor)
-                student_count = current_students.count()
-                avg_cgpa = current_students.filter(cgpa__gt=0).aggregate(
-                    avg_cgpa=Avg("cgpa")
-                )["avg_cgpa"]
-                return format_html(
-                    "{} (Students: {}, Avg CGPA: {})",
-                    obj.first_name,
-                    student_count,
-                    round(avg_cgpa, 2) if avg_cgpa else "N/A",
-                )
-            except User.DoesNotExist:
-                return obj.first_name
+        if obj.first_name:
+            if obj.first_id:
+                try:
+                    supervisor = User.objects.get(id=obj.first_id, role="supervisor")
+                    current_students = Student.objects.filter(supervisor=supervisor)
+                    student_count = current_students.count()
+                    avg_cgpa = current_students.filter(cgpa__gt=0).aggregate(
+                        avg_cgpa=Avg("cgpa")
+                    )["avg_cgpa"]
+                    return format_html(
+                        "{} (Students: {}, Avg CGPA: {})",
+                        obj.first_name,
+                        student_count,
+                        round(avg_cgpa, 2) if avg_cgpa else "N/A",
+                    )
+                except User.DoesNotExist:
+                    return format_html(
+                        '{} <a href="{}" style="color: red; font-size: smaller;">[Add User]</a>',
+                        obj.first_name,
+                        reverse("admin:users_user_add")
+                        + f"?name={urllib.parse.quote(obj.first_name or '')}&role=supervisor",
+                    )
+            return format_html(
+                '{} <a href="{}" style="color: red; font-size: smaller;">[Add User]</a>',
+                obj.first_name,
+                reverse("admin:users_user_add")
+                + f"?name={urllib.parse.quote(obj.first_name or '')}&role=supervisor",
+            )
         return "-"
 
     first_name_with_stats.short_description = "First Supervisor"
 
     def second_name_with_stats(self, obj):
-        if obj.second_name and obj.second_id:
-            try:
-                supervisor = User.objects.get(id=obj.second_id, role="supervisor")
-                current_students = Student.objects.filter(supervisor=supervisor)
-                student_count = current_students.count()
-                avg_cgpa = current_students.filter(cgpa__gt=0).aggregate(
-                    avg_cgpa=Avg("cgpa")
-                )["avg_cgpa"]
-                return format_html(
-                    "{} (Students: {}, Avg CGPA: {})",
-                    obj.second_name,
-                    student_count,
-                    round(avg_cgpa, 2) if avg_cgpa else "N/A",
-                )
-            except User.DoesNotExist:
-                return obj.second_name
+        if obj.second_name:
+            if obj.second_id:
+                try:
+                    supervisor = User.objects.get(id=obj.second_id, role="supervisor")
+                    current_students = Student.objects.filter(supervisor=supervisor)
+                    student_count = current_students.count()
+                    avg_cgpa = current_students.filter(cgpa__gt=0).aggregate(
+                        avg_cgpa=Avg("cgpa")
+                    )["avg_cgpa"]
+                    return format_html(
+                        "{} (Students: {}, Avg CGPA: {})",
+                        obj.second_name,
+                        student_count,
+                        round(avg_cgpa, 2) if avg_cgpa else "N/A",
+                    )
+                except User.DoesNotExist:
+                    return format_html(
+                        '{} <a href="{}" style="color: red; font-size: smaller;">[Add User]</a>',
+                        obj.second_name,
+                        reverse("admin:users_user_add")
+                        + f"?name={urllib.parse.quote(obj.second_name or '')}&role=supervisor",
+                    )
+            return format_html(
+                '{} <a href="{}" style="color: red; font-size: smaller;">[Add User]</a>',
+                obj.second_name,
+                reverse("admin:users_user_add")
+                + f"?name={urllib.parse.quote(obj.second_name or '')}&role=supervisor",
+            )
         return "-"
 
     second_name_with_stats.short_description = "Second Supervisor"
 
     def third_name_with_stats(self, obj):
-        if obj.third_name and obj.third_id:
-            try:
-                supervisor = User.objects.get(id=obj.third_id, role="supervisor")
-                current_students = Student.objects.filter(supervisor=supervisor)
-                student_count = current_students.count()
-                avg_cgpa = current_students.filter(cgpa__gt=0).aggregate(
-                    avg_cgpa=Avg("cgpa")
-                )["avg_cgpa"]
-                return format_html(
-                    "{} (Students: {}, Avg CGPA: {})",
-                    obj.third_name,
-                    student_count,
-                    round(avg_cgpa, 2) if avg_cgpa else "N/A",
-                )
-            except User.DoesNotExist:
-                return obj.third_name
+        if obj.third_name:
+            if obj.third_id:
+                try:
+                    supervisor = User.objects.get(id=obj.third_id, role="supervisor")
+                    current_students = Student.objects.filter(supervisor=supervisor)
+                    student_count = current_students.count()
+                    avg_cgpa = current_students.filter(cgpa__gt=0).aggregate(
+                        avg_cgpa=Avg("cgpa")
+                    )["avg_cgpa"]
+                    return format_html(
+                        "{} (Students: {}, Avg CGPA: {})",
+                        obj.third_name,
+                        student_count,
+                        round(avg_cgpa, 2) if avg_cgpa else "N/A",
+                    )
+                except User.DoesNotExist:
+                    return format_html(
+                        '{} <a href="{}" style="color: red; font-size: smaller;">[Add User]</a>',
+                        obj.third_name,
+                        reverse("admin:users_user_add")
+                        + f"?name={urllib.parse.quote(obj.third_name or '')}&role=supervisor",
+                    )
+            return format_html(
+                '{} <a href="{}" style="color: red; font-size: smaller;">[Add User]</a>',
+                obj.third_name,
+                reverse("admin:users_user_add")
+                + f"?name={urllib.parse.quote(obj.third_name or '')}&role=supervisor",
+            )
         return "-"
 
     third_name_with_stats.short_description = "Third Supervisor"

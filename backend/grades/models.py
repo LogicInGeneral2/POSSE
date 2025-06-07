@@ -17,6 +17,13 @@ class Rubric(models.Model):
     )
     steps = models.IntegerField(default=0)
 
+    VALID_ROLES = [
+        ("supervisor", "Supervisor"),
+        ("examiner", "Examiner"),
+        ("course_coordinator", "Course Coordinator"),
+    ]
+    VALID_ROLE_VALUES = {role[0] for role in VALID_ROLES}
+
     class Meta:
         ordering = ["steps"]
 
@@ -24,9 +31,12 @@ class Rubric(models.Model):
         return self.label
 
     def clean(self):
-        valid_roles = {"supervisor", "examiner", "course_coordinator"}
-        if not all(role in valid_roles for role in self.pic):
-            raise ValidationError("Invalid role(s) in pic")
+        if not isinstance(self.pic, list):
+            raise ValidationError("pic must be a list")
+        if not all(role in self.VALID_ROLE_VALUES for role in self.pic):
+            raise ValidationError(
+                f"Invalid role(s) in pic. Valid roles are: {', '.join(self.VALID_ROLE_VALUES)}"
+            )
 
 
 class Criteria(models.Model):
@@ -76,6 +86,12 @@ class Grade(models.Model):
 
     def contains(self, mark: float) -> bool:
         return self.min_mark <= mark <= self.max_mark
+
+    def clean(self):
+        if self.min_mark > self.max_mark:
+            raise ValidationError(
+                "Minimum mark must be less than or equal to maximum mark."
+            )
 
 
 class StudentGrade(models.Model):

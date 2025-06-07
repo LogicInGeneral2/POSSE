@@ -1,10 +1,10 @@
 from django import forms
-from .models import documentTheme
+from .models import submissionStatusTheme, systemTheme
 
 
 class themeForm(forms.ModelForm):
     class Meta:
-        model = documentTheme
+        model = submissionStatusTheme
         fields = "__all__"
         widgets = {
             "primary": forms.TextInput(attrs={"type": "color"}),
@@ -14,7 +14,7 @@ class themeForm(forms.ModelForm):
 
 class systemThemeForm(forms.ModelForm):
     class Meta:
-        model = documentTheme
+        model = systemTheme
         fields = "__all__"
         widgets = {
             "main": forms.TextInput(attrs={"type": "color"}),

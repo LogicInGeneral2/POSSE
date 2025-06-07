@@ -44,10 +44,10 @@ export const HomePage = () => {
         >
           <Grid size={4} sx={{ height: "100%" }}>
             <Stack direction="column" sx={{ height: "100%" }}>
-              <Info />
+              {user.role !== "examiner" && <Info />}
               <Paper
                 sx={{
-                  mt: "40px",
+                  mt: user.role === "examiner" ? 0 : "40px",
                   border: "1px solid",
                   backgroundColor: "base.main",
                   borderRadius: "8px",
@@ -69,11 +69,9 @@ export const HomePage = () => {
                 >
                   ANNOUNCEMENT <Announcement sx={{ ml: 1 }} />
                 </Typography>
-
                 <Divider
                   sx={{ borderBottomWidth: 2, borderColor: "primary.main" }}
                 />
-
                 <Announcements />
               </Paper>
             </Stack>

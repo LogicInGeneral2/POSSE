@@ -98,9 +98,10 @@ export interface CourseOutlineTabs {
 
 export interface SupervisorsSelectionType {
   inputValue?: string;
-  proof?: File;
+  proof?: File | string;
   id?: number;
   name: string;
+  hasSavedProof?: boolean;
 }
 
 interface FileType {

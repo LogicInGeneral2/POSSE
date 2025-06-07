@@ -21,7 +21,8 @@ function Upload_Button({
   variants = "outlined",
   icon = true,
   onFilesUploaded,
-  text = "Upload Files",
+  text = "Upload File",
+  multiple = false, // Added prop to control multiple file selection
 }: {
   size: string;
   disabled: boolean;
@@ -29,21 +30,28 @@ function Upload_Button({
   icon?: boolean;
   onFilesUploaded: (files: File | File[]) => void;
   text?: string;
+  multiple?: boolean; // New prop with default false
 }) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const filesArray = Array.from(event.target.files);
-      setUploadedFiles([...uploadedFiles, ...filesArray]);
-      onFilesUploaded([...uploadedFiles, ...filesArray]); // Send files back to parent
+      if (!multiple && filesArray.length > 1) {
+        // If multiple is false, take only the first file
+        setUploadedFiles([filesArray[0]]);
+        onFilesUploaded(filesArray[0]); // Send single file to parent
+      } else {
+        setUploadedFiles(filesArray);
+        onFilesUploaded(multiple ? filesArray : filesArray[0]); // Send array or single file based on multiple prop
+      }
     }
   };
 
   const handleRemoveFile = (index: number) => {
     const newFiles = uploadedFiles.filter((_, i) => i !== index);
     setUploadedFiles(newFiles);
-    onFilesUploaded(newFiles); // Update parent state
+    onFilesUploaded(multiple ? newFiles : newFiles[0] || null); // Update parent: array or single file/null
   };
 
   return (
@@ -58,7 +66,7 @@ function Upload_Button({
         {text}
         <VisuallyHiddenInput
           type="file"
-          multiple
+          multiple={multiple} // Use the multiple prop
           required
           onChange={handleFileUpload}
         />

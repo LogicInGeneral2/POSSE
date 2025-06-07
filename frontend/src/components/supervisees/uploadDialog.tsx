@@ -36,7 +36,7 @@ function UploadDialog({
   const [selectedSubmission, setSelectedSubmission] =
     useState<SubmissionType | null>(null);
   const [submissionList, setSubmissionList] = useState<SubmissionType[]>([]);
-  const [uploadedFile, setUploadedFile] = useState<File>();
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null); // Adjusted to allow null
   const [isLoading, setIsloading] = useState(true);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,9 +123,23 @@ function UploadDialog({
     setComment(found.feedback?.comment || "");
   };
 
-  const handleFileUpload = (files: File | File[]) => {
-    if (Array.isArray(files)) {
-      setUploadedFile(files[0]);
+  const handleFileUpload = (files: File | File[] | null) => {
+    if (files === null) {
+      setUploadedFile(null);
+    } else if (Array.isArray(files)) {
+      if (files.length > 1) {
+        setToast({
+          open: true,
+          message:
+            "Only one file can be uploaded. The first file was selected.",
+          severity: "warning",
+        });
+        setUploadedFile(files[0]);
+      } else if (files.length === 1) {
+        setUploadedFile(files[0]);
+      } else {
+        setUploadedFile(null);
+      }
     } else {
       setUploadedFile(files);
     }
@@ -153,7 +167,7 @@ function UploadDialog({
 
       if (response.status >= 200 && response.status < 300) {
         console.log("Upload successful!");
-        setUploadedFile(undefined);
+        setUploadedFile(null); // Reset to null after success
         await fetchSubmissionList();
         setToast({
           open: true,
@@ -273,6 +287,7 @@ function UploadDialog({
                       ? "Replace File"
                       : "Upload File"
                   }
+                  multiple={false} // Explicitly restrict to single file
                 />
                 {selectedSubmission?.feedback?.id && (
                   <>

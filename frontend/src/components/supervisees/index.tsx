@@ -45,7 +45,6 @@ export const SuperviseesPage = () => {
   const [evaluatees, setEvaluatees] = useState<SuperviseeSubmission[]>([]);
   const [supervisees, setSupervisees] = useState<SuperviseeSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const tabQuery = searchParams.get("tab");
 
   const fetchSupervisees = async () => {

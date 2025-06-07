@@ -89,12 +89,41 @@ export default function SupervisorsTable({
   };
 
   const handleSave = async () => {
+    // Validate CGPA
     const cgpaValidationError = validateCgpa(cgpa.toString());
     if (cgpaValidationError) {
       setCgpaError(cgpaValidationError);
       setToast({
         open: true,
         message: cgpaValidationError,
+        severity: "error",
+      });
+      return;
+    }
+
+    const allSupervisorsSelected = supervisorChoices.every(
+      (choice) => choice !== null && choice.name && choice.name.trim() !== ""
+    );
+    if (!allSupervisorsSelected) {
+      setToast({
+        open: true,
+        message: "Please select all three supervisor choices before saving.",
+        severity: "error",
+      });
+      return;
+    }
+
+    const missingProof = supervisorChoices.some(
+      (choice) =>
+        choice &&
+        !choice.id && // New supervisor (no ID)
+        !choice.proof && // No new file uploaded
+        !choice.hasSavedProof // No proof already saved on server
+    );
+    if (missingProof) {
+      setToast({
+        open: true,
+        message: "Please upload proof of agreement for all new supervisors.",
         severity: "error",
       });
       return;
@@ -114,6 +143,7 @@ export default function SupervisorsTable({
           cgpa: Number(cgpa),
         };
 
+        // Only append proof if it's a new File (not a saved URL or if no saved proof exists)
         if (supervisor?.proof instanceof File) {
           formData.append(
             `proof_${["first", "second", "third"][index]}`,
@@ -153,13 +183,28 @@ export default function SupervisorsTable({
         if (data) {
           setSupervisorChoices([
             data.first_id || data.first_name
-              ? { id: data.first_id, name: data.first_name }
+              ? {
+                  id: data.first_id,
+                  name: data.first_name,
+                  proof: data.first_proof,
+                  hasSavedProof: !!data.first_proof, // True if proof exists on server
+                }
               : null,
             data.second_id || data.second_name
-              ? { id: data.second_id, name: data.second_name }
+              ? {
+                  id: data.second_id,
+                  name: data.second_name,
+                  proof: data.second_proof,
+                  hasSavedProof: !!data.second_proof,
+                }
               : null,
             data.third_id || data.third_name
-              ? { id: data.third_id, name: data.third_name }
+              ? {
+                  id: data.third_id,
+                  name: data.third_name,
+                  proof: data.third_proof,
+                  hasSavedProof: !!data.third_proof,
+                }
               : null,
           ]);
           setTopic(data.topic || "");

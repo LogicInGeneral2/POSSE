@@ -199,46 +199,52 @@ const ProfilePage = () => {
                 <ListItemText primary="Role" secondary={user?.role} />
               </ListItem>
 
-              {user?.role === "supervisor" && "supervisor_id" in user && (
-                <>
-                  <ListItem>
-                    <ListItemIcon>
-                      <SupervisorAccountRounded color="primary" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="FYP 1 Supervisees"
-                      secondary={user.supervisees_FYP1 + " Students" || "None"}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      <SupervisorAccountRounded color="primary" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="FYP 2 Supervisees"
-                      secondary={user.supervisees_FYP2 + " Students" || "None"}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      <GradingRounded color="primary" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="FYP 1 Evaluees"
-                      secondary={user.evaluatees_FYP1 + " Students" || "None"}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      <GradingRounded color="primary" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="FYP 2 Evaluees"
-                      secondary={user.evaluatees_FYP2 + " Students" || "None"}
-                    />
-                  </ListItem>
-                </>
-              )}
+              {user &&
+                ["supervisor", "course_coordinator"].includes(user.role) &&
+                "supervisor_id" in user && (
+                  <>
+                    <ListItem>
+                      <ListItemIcon>
+                        <SupervisorAccountRounded color="primary" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="FYP 1 Supervisees"
+                        secondary={
+                          user.supervisees_FYP1 + " Students" || "None"
+                        }
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemIcon>
+                        <SupervisorAccountRounded color="primary" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="FYP 2 Supervisees"
+                        secondary={
+                          user.supervisees_FYP2 + " Students" || "None"
+                        }
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemIcon>
+                        <GradingRounded color="primary" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="FYP 1 Evaluees"
+                        secondary={user.evaluatees_FYP1 + " Students" || "None"}
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemIcon>
+                        <GradingRounded color="primary" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="FYP 2 Evaluees"
+                        secondary={user.evaluatees_FYP2 + " Students" || "None"}
+                      />
+                    </ListItem>
+                  </>
+                )}
 
               {user?.role === "student" && "student_id" in user && (
                 <>

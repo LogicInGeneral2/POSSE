@@ -1,6 +1,6 @@
 from users.models import Student, User
 from .models import Grade, Rubric, Criteria, StudentMark, StudentGrade
-from import_export import resources
+from import_export import resources, fields
 from import_export.fields import Field
 from import_export.widgets import ForeignKeyWidget, JSONWidget
 import json
@@ -112,39 +112,50 @@ class CriteriaResource(resources.ModelResource):
 
 # Resource for StudentMark
 class StudentMarkResource(resources.ModelResource):
-    student = Field(
-        column_name="student_id",
+    student = fields.Field(
+        column_name="student_name",
         attribute="student",
-        widget=ForeignKeyWidget(Student, field="id"),
+        widget=ForeignKeyWidget(Student, "user__name"),
     )
-    criteria = Field(
-        column_name="criteria_id",
+    criteria = fields.Field(
+        column_name="criteria_label",
         attribute="criteria",
-        widget=ForeignKeyWidget(Criteria, field="id"),
+        widget=ForeignKeyWidget(Criteria, "label"),
     )
-    evaluator = Field(
-        column_name="evaluator_id",
+    evaluator = fields.Field(
+        column_name="evaluator_name",
         attribute="evaluator",
-        widget=ForeignKeyWidget(User, field="id"),
+        widget=ForeignKeyWidget(User, "name"),  # or "get_full_name", if defined
     )
 
     class Meta:
         model = StudentMark
-        fields = ("student_id", "criteria_id", "evaluator_id", "mark")
+        fields = ("student", "criteria", "evaluator", "mark")
+        export_order = ("student", "criteria", "evaluator", "mark")
         import_id_fields = ("student", "criteria", "evaluator")
 
 
 # Resource for StudentGrades
 class StudentGradesResource(resources.ModelResource):
-    student = Field(
-        column_name="student_id",
+    student = fields.Field(
+        column_name="student_name",
         attribute="student",
-        widget=ForeignKeyWidget(Student, field="id"),
+        widget=ForeignKeyWidget(Student, "user__name"),
+    )
+    grade = fields.Field(
+        column_name="grade_letter",
+        attribute="grade",
+        widget=ForeignKeyWidget(Grade, "grade_letter"),
+    )
+    grade_gpa = fields.Field(
+        column_name="grade_gpa",
+        attribute="grade",
+        widget=ForeignKeyWidget(Grade, "gpa_value"),
     )
 
     class Meta:
         model = StudentGrade
-        fields = ("student_id", "total_mark")
+        fields = ("student", "total_mark", "grade", "grade_gpa")
         import_id_fields = ("student",)
 
 

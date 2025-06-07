@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 
 class Announcement(models.Model):
@@ -35,7 +37,9 @@ class Period(models.Model):
 
     title = models.CharField(max_length=255)
     description = models.TextField()
-    directory = models.CharField(max_length=20, choices=DIRECTORY_CHOICES)
+    directory = models.CharField(
+        max_length=20, choices=DIRECTORY_CHOICES, null=True, blank=True
+    )
     start_date = models.DateField()
     end_date = models.DateField()
     is_selection_period = models.BooleanField(default=False)
@@ -53,6 +57,25 @@ class Period(models.Model):
         if self.end_date >= today:
             return (self.end_date - today).days
         return 0
+
+    def clean(self):
+        super().clean()
+        # Validate that start_date is not after end_date
+        if self.start_date > self.end_date:
+            raise ValidationError("Start date cannot be after end date.")
+        # Check for overlapping periods for the same course
+        overlapping = Period.objects.filter(
+            Q(start_date__lte=self.end_date, end_date__gte=self.start_date),
+            course=self.course,
+        ).exclude(id=self.id)  # Exclude self when updating
+        if overlapping.exists():
+            raise ValidationError(
+                f"A period with overlapping dates ({self.start_date} to {self.end_date}) for course {self.course} already exists."
+            )
+
+    class Meta:
+        unique_together = ("start_date", "end_date", "course")
+        ordering = ["start_date"]
 
 
 class Submissions(models.Model):
@@ -98,3 +121,22 @@ class Submissions(models.Model):
                 return "Closed"
             else:
                 return "Completed"
+
+    def clean(self):
+        super().clean()
+        # Validate that date_open is not after date_close
+        if self.date_open > self.date_close:
+            raise ValidationError("Open date cannot be after close date.")
+        # Check for overlapping submissions for the same course
+        overlapping = Submissions.objects.filter(
+            Q(date_open__lte=self.date_close, date_close__gte=self.date_open),
+            course=self.course,
+        ).exclude(id=self.id)  # Exclude self when updating
+        if overlapping.exists():
+            raise ValidationError(
+                f"A submission with overlapping dates ({self.date_open} to {self.date_close}) for course {self.course} already exists."
+            )
+
+    class Meta:
+        unique_together = ("date_open", "date_close", "course")
+        ordering = ["date_open"]

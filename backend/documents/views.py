@@ -3,7 +3,6 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from users.models import Student
 from details.models import Submissions
-from .utils import IsSupervisor
 from .models import Document, Feedback, Logbook, StudentSubmission
 from .serializers import (
     CombinedSubmissionSerializer,
@@ -172,11 +171,11 @@ class SpecificStudentSubmissionView(APIView):
 
 
 class FeedbackUploadView(APIView):
-    permission_classes = [IsAuthenticated, IsSupervisor]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, student_id):
         submission_id = request.data.get("submission")
-        file = request.FILES.get("file")  # May be None
+        file = request.FILES.get("file")
         comment = request.data.get("comment", "")
 
         if not submission_id:

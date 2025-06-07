@@ -10,6 +10,7 @@ import {
   IconButton,
   Stack,
   styled,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -18,6 +19,7 @@ import {
   EventBusyRounded,
   HourglassBottom,
   OutboxRounded,
+  RestorePageRounded,
 } from "@mui/icons-material";
 import UploadIcon from "@mui/icons-material/Upload";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -285,55 +287,157 @@ function SubmissionCards({
             {meta.status === "Feedback" && feedback && feedback.length > 0 && (
               <Box
                 sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: 2,
-                  m: 2,
                   width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  p: 2,
+                  backgroundColor: "base.main",
                 }}
               >
-                {feedback.map((singleFeedback, index) => (
-                  <Box
-                    key={singleFeedback.id}
-                    sx={{
-                      border: "2px solid",
-                      p: 2,
-                      borderRadius: "8px",
-                    }}
-                  >
-                    <Typography variant="subtitle2" gutterBottom>
-                      Feedback from {singleFeedback.supervisorName}:
-                    </Typography>
-                    <Collapse
-                      in={expandedFeedbacks[index] || false}
-                      collapsedSize={maxPreviewLines * 24}
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: "bold",
+                    color: "primary.main",
+                    mb: 1,
+                  }}
+                >
+                  Feedback
+                </Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                    gap: 2,
+                    maxHeight: "400px",
+                    overflowY: "auto",
+                    pr: 1,
+                    "&::-webkit-scrollbar": {
+                      width: "8px",
+                    },
+                    "&::-webkit-scrollbar-track": {
+                      backgroundColor: "grey.100",
+                      borderRadius: "4px",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      backgroundColor: "grey.400",
+                      borderRadius: "4px",
+                      "&:hover": {
+                        backgroundColor: "grey.500",
+                      },
+                    },
+                  }}
+                >
+                  {feedback.map((singleFeedback, index) => (
+                    <Box
+                      key={singleFeedback.id}
+                      sx={{
+                        border: "1px solid",
+                        borderColor: "grey.300",
+                        borderRadius: "12px",
+                        p: 2,
+                        backgroundColor: "background.paper",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          transform: "translateY(-4px)",
+                          boxShadow: "0 6px 12px rgba(0,0,0,0.1)",
+                        },
+                      }}
                     >
-                      <Typography
+                      <Box sx={{ mb: 2 }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            fontWeight: "medium",
+                            color: "text.primary",
+                          }}
+                        >
+                          {singleFeedback.supervisorName}
+                        </Typography>
+                      </Box>
+                      <Collapse
+                        in={expandedFeedbacks[index] || false}
+                        collapsedSize={maxPreviewLines * 24}
+                        timeout={500}
+                      >
+                        <Typography
+                          sx={{
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                            color: "text.primary",
+                            lineHeight: 1.6,
+                            mb: 2,
+                            maxHeight: "200px",
+                            overflowY: "auto",
+                            pr: 1,
+                            "&::-webkit-scrollbar": {
+                              width: "6px",
+                            },
+                            "&::-webkit-scrollbar-track": {
+                              backgroundColor: "grey.100",
+                              borderRadius: "3px",
+                            },
+                            "&::-webkit-scrollbar-thumb": {
+                              backgroundColor: "grey.400",
+                              borderRadius: "3px",
+                              "&:hover": {
+                                backgroundColor: "grey.500",
+                              },
+                            },
+                          }}
+                        >
+                          {singleFeedback.comment}
+                        </Typography>
+                      </Collapse>
+                      <Box
                         sx={{
-                          whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
+                          display: "flex",
+                          gap: 1,
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          mt: 2,
                         }}
                       >
-                        {singleFeedback.comment}
-                      </Typography>
-                    </Collapse>
-                    <Button
-                      size="small"
-                      onClick={() => toggleFeedbackExpand(index)}
-                      sx={{ mt: 1 }}
-                    >
-                      {expandedFeedbacks[index] ? "Show less" : "Read more"}
-                    </Button>
-                    {singleFeedback.src && (
-                      <Download_Button
-                        fileUrl={singleFeedback.src}
-                        text={singleFeedback.title}
-                        variants="contained"
-                        disabled={false}
-                      />
-                    )}
-                  </Box>
-                ))}
+                        <Button
+                          size="small"
+                          onClick={() => toggleFeedbackExpand(index)}
+                          variant="outlined"
+                        >
+                          {expandedFeedbacks[index] ? "Show Less" : "Read More"}
+                        </Button>
+                        {singleFeedback.src && (
+                          <Download_Button
+                            fileUrl={singleFeedback.src}
+                            text={singleFeedback.title}
+                            variants="contained"
+                            disabled={false}
+                            size="small"
+                          />
+                        )}
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+                {meta.days_left > 0 && (
+                  <Button
+                    onClick={handleOpenDialog}
+                    startIcon={<RestorePageRounded />}
+                    color="error"
+                    variant="contained"
+                    sx={{
+                      alignSelf: "flex-start",
+                      borderRadius: "20px",
+                      textTransform: "none",
+                      px: 3,
+                      "&:hover": {
+                        backgroundColor: "error.dark",
+                      },
+                    }}
+                  >
+                    Make Resubmission
+                  </Button>
+                )}
               </Box>
             )}
             {meta.status === "Closed" && submission && (

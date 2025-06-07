@@ -164,7 +164,11 @@ class SuperviseeSubmissionsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, category=None):
-        if request.user.role != "supervisor":
+        if (
+            request.user.role != "supervisor"
+            and request.user.role != "course_coordinator"
+            and request.user.role != "examiner"
+        ):
             return Response({"detail": "Unauthorized"}, status=403)
 
         if category:
@@ -187,7 +191,7 @@ class SuperviseeSubmissionsView(APIView):
                 )
             return Response(result)
 
-        if request.path.endswith("evaluatees/"):
+        if request.resolver_match.url_name == "evaluatees-submissions":
             target = Student.objects.filter(
                 evaluators=request.user,
                 user__is_active=True,

@@ -2,6 +2,7 @@
 from django import forms
 from .models import User, CourseCoordinator
 from .utils import get_coordinator_course_filter
+from django.contrib.auth.forms import UserCreationForm
 
 
 class CustomUserChangeForm(forms.ModelForm):
@@ -69,3 +70,38 @@ class SupervisorSelectionForm(forms.Form):
         required=True,
         label="Select Supervisor",
     )
+
+
+class CustomUserCreationForm(UserCreationForm):
+    course = forms.ChoiceField(
+        choices=CourseCoordinator.COURSE_CHOICES,
+        required=False,
+        label="Course (for Course Coordinators)",
+        help_text="Required for users with role 'course_coordinator'.",
+    )
+
+    class Meta:
+        model = User
+        fields = ("email", "name", "role", "course", "password1", "password2")
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+        # Restrict course choices based on current user's course
+        if self.request:
+            course_filter, is_coordinator = get_coordinator_course_filter(self.request)
+            if is_coordinator and course_filter:
+                coordinator_course = CourseCoordinator.objects.get(
+                    user=self.request.user
+                ).course
+                self.fields["course"].choices = [
+                    (coordinator_course, coordinator_course)
+                ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        role = cleaned_data.get("role")
+        course = cleaned_data.get("course")
+        if role == "course_coordinator" and not course:
+            self.add_error("course", "Course is required for course coordinators.")
+        return cleaned_data

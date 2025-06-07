@@ -100,7 +100,7 @@ export default function Breadcrumb({
   const pages: Navigations[] = [
     { url: "/grading", name: "Grading" },
     { url: "/viewing", name: "Viewing" },
-    { url: "/logs", name: "Logs" },
+    ...(category === "supervisor" ? [{ url: "/logs", name: "Logs" }] : []),
   ];
 
   useEffect(() => {
