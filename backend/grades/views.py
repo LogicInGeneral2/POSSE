@@ -49,8 +49,14 @@ class GetMarkingSchemeView(APIView):
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
-            # Order by steps
-            rubrics = rubric_query.order_by("steps")
+            # Filter rubrics to only include those with non-empty criteria
+            rubrics = [
+                rubric
+                for rubric in rubric_query.order_by("steps")
+                if rubric.criterias.exists()
+            ]
+
+            # Serialize and return the filtered rubrics
             serializer = RubricSerializer(rubrics, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
