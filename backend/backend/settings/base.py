@@ -72,7 +72,7 @@ ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -132,14 +132,18 @@ JAZZMIN_SETTINGS = {
     "site_header": "POSSE ADMIN",
     "site_brand": "POSSE",
     "site_logo": "POSSE_ADMIN_ICON.png",
-    "login_logo": "POSSE_ADMIN_ICON.png",
+    "login_logo": "POSSE_ADMIN_250.png",
     "login_logo_dark": None,
     "site_logo_classes": "img-circle",
     "site_icon": None,
     "welcome_sign": "POSSE ADMIN",
     "copyright": "PSM ONLINE SYSTEM FOR SOFTWARE ENGINEERING",
     "topmenu_links": [
-        {"name": "Back to POSSE", "url": "http://localhost:5173/", "new_window": True},
+        {
+            "name": "Back to POSSE",
+            "url": "http://posse-nine.vercel.app",
+            "new_window": True,
+        },
         {"model": "auth.User"},
         {"app": "books"},
     ],

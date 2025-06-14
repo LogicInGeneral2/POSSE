@@ -77,7 +77,16 @@ function SubmissionCards({
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) {
-      setUploadedFile(event.target.files[0]);
+      const file = event.target.files[0];
+      if (file.type === "application/pdf") {
+        setUploadedFile(file);
+      } else {
+        setToast({
+          open: true,
+          message: "Please upload a PDF file.",
+          severity: "error",
+        });
+      }
     }
   };
 
@@ -205,11 +214,11 @@ function SubmissionCards({
         sx={{
           m: 0,
           p: 0,
+          mx: "10px",
           borderRadius: "12px",
           opacity: isDisabled ? 0.6 : 1,
           transition: "all 0.3s",
           "&:hover": {
-            transform: meta.status === "Pending" ? "scale(1.01)" : "none",
             boxShadow:
               meta.status === "Pending" ? "0 4px 8px rgba(0,0,0,0.1)" : "none",
           },
@@ -486,6 +495,7 @@ function SubmissionCards({
                   Upload
                   <VisuallyHiddenInput
                     type="file"
+                    accept="application/pdf"
                     required
                     onChange={handleFileUpload}
                   />

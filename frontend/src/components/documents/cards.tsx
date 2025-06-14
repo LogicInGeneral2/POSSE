@@ -12,15 +12,17 @@ import { format } from "date-fns";
 import ErrorNotice from "../commons/error";
 import DeveloperModeIcon from "@mui/icons-material/DeveloperMode";
 import ScienceIcon from "@mui/icons-material/Science";
+import MergeIcon from "@mui/icons-material/Merge";
+import MoreIcon from "@mui/icons-material/More";
+import DescriptionIcon from "@mui/icons-material/Description";
 
-// Hardcoded category-based colors
 const categoryColors: Record<string, { primary: string; secondary: string }> = {
-  marking_scheme: { primary: "#FFF3E0", secondary: "#EF6C00" }, // soft orange
-  lecture_notes: { primary: "#E3F2FD", secondary: "#1976D2" }, // light blue
-  samples: { primary: "#E8F5E9", secondary: "#388E3C" }, // light green
-  templates: { primary: "#F3E5F5", secondary: "#8E24AA" }, // light purple
-  forms: { primary: "#FFFDE7", secondary: "#FBC02D" }, // light yellow
-  other: { primary: "#ECEFF1", secondary: "#455A64" }, // grey
+  marking_scheme: { primary: "#FFF3E0", secondary: "#EF6C00" },
+  lecture_notes: { primary: "#E3F2FD", secondary: "#1976D2" },
+  samples: { primary: "#E8F5E9", secondary: "#388E3C" },
+  templates: { primary: "#F3E5F5", secondary: "#8E24AA" },
+  forms: { primary: "#FFFDE7", secondary: "#FBC02D" },
+  other: { primary: "#ECEFF1", secondary: "#455A64" },
 };
 
 // File downloader
@@ -67,12 +69,29 @@ function FileCard({ file }: { file: DocumentType }) {
       }}
     >
       <CardActionArea onClick={() => getFile(file.src)}>
-        <CardMedia
-          component="img"
-          height="140"
-          image={file.thumbnail_url}
-          alt={file.title}
-        />
+        {file.thumbnail_url ? (
+          <CardMedia
+            component="img"
+            height="140"
+            image={file.thumbnail_url}
+            alt={file.title || "Document thumbnail"}
+          />
+        ) : (
+          <Box
+            sx={{
+              height: 140,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: colors.primary, // Match card background
+              borderBottom: `1px solid ${colors.secondary}`, // Mimic CardMedia border
+            }}
+          >
+            <DescriptionIcon
+              sx={{ fontSize: 60, color: colors.secondary }} // Match secondary color
+            />
+          </Box>
+        )}
         <CardContent
           sx={{
             paddingLeft: 0,
@@ -105,8 +124,12 @@ function FileCard({ file }: { file: DocumentType }) {
               <Tooltip title={file.mode}>
                 {file.mode === "Research" ? (
                   <ScienceIcon sx={{ fontSize: 50 }} />
-                ) : (
+                ) : file.mode === "Development" ? (
                   <DeveloperModeIcon sx={{ fontSize: 50 }} />
+                ) : file.mode === "Both" ? (
+                  <MergeIcon sx={{ fontSize: 50 }} />
+                ) : (
+                  <MoreIcon sx={{ fontSize: 50 }} />
                 )}
               </Tooltip>
             </Box>

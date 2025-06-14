@@ -22,7 +22,7 @@ function Upload_Button({
   icon = true,
   onFilesUploaded,
   text = "Upload File",
-  multiple = false, // Added prop to control multiple file selection
+  multiple = false,
 }: {
   size: string;
   disabled: boolean;
@@ -30,20 +30,29 @@ function Upload_Button({
   icon?: boolean;
   onFilesUploaded: (files: File | File[]) => void;
   text?: string;
-  multiple?: boolean; // New prop with default false
+  multiple?: boolean;
 }) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const filesArray = Array.from(event.target.files);
-      if (!multiple && filesArray.length > 1) {
-        // If multiple is false, take only the first file
-        setUploadedFiles([filesArray[0]]);
-        onFilesUploaded(filesArray[0]); // Send single file to parent
+      // Filter for PDF files only
+      const pdfFiles = filesArray.filter(
+        (file) => file.type === "application/pdf"
+      );
+
+      if (pdfFiles.length === 0) {
+        // No valid PDF files selected
+        return;
+      }
+
+      if (!multiple && pdfFiles.length > 1) {
+        setUploadedFiles([pdfFiles[0]]);
+        onFilesUploaded(pdfFiles[0]);
       } else {
-        setUploadedFiles(filesArray);
-        onFilesUploaded(multiple ? filesArray : filesArray[0]); // Send array or single file based on multiple prop
+        setUploadedFiles(pdfFiles);
+        onFilesUploaded(multiple ? pdfFiles : pdfFiles[0]);
       }
     }
   };
@@ -51,7 +60,7 @@ function Upload_Button({
   const handleRemoveFile = (index: number) => {
     const newFiles = uploadedFiles.filter((_, i) => i !== index);
     setUploadedFiles(newFiles);
-    onFilesUploaded(multiple ? newFiles : newFiles[0] || null); // Update parent: array or single file/null
+    onFilesUploaded(multiple ? newFiles : newFiles[0] || null);
   };
 
   return (
@@ -66,7 +75,8 @@ function Upload_Button({
         {text}
         <VisuallyHiddenInput
           type="file"
-          multiple={multiple} // Use the multiple prop
+          multiple={multiple}
+          accept="application/pdf"
           required
           onChange={handleFileUpload}
         />

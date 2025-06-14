@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from settings.models import documentModes
 from users.models import Student
 from details.models import Submissions
 from .models import Document, Feedback, Logbook, StudentSubmission
@@ -45,9 +46,13 @@ from django.core.mail import send_mail
 class DocumentListView(APIView):
     def get(self, request, category=None, student_id=None):
         if request.resolver_match.url_name == "marking-scheme":
-            course = get_object_or_404(Student, id=student_id).course
+            student = get_object_or_404(Student, id=student_id)
+            mode_obj = get_object_or_404(documentModes, label__iexact=student.mode)
             document = get_object_or_404(
-                Document, category="marking_scheme", course=course
+                Document,
+                category="marking_scheme",
+                course=student.course,
+                mode=mode_obj,
             )
             serializer = MarkingSchemeSerializer(document, context={"request": request})
         else:

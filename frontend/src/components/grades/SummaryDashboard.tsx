@@ -23,7 +23,7 @@ import {
   People as PeopleIcon,
   Score as ScoreIcon,
   List as ListIcon,
-  Settings as SettingsIcon,
+  FilterAltRounded,
 } from "@mui/icons-material";
 import { TotalMarks, MarkingScheme } from "../../services/types";
 
@@ -121,7 +121,7 @@ const SummaryDashboard: React.FC<SummaryDashboardProps> = ({
               aria-label="settings"
               color="primary"
             >
-              <SettingsIcon />
+              <FilterAltRounded />
             </IconButton>
           </Tooltip>
         </Box>

@@ -192,7 +192,7 @@ class GetAllTotalMarksView(APIView):
                             ),
                         )
                     )
-                    .filter(Q(studentsupervisor=user) | Q(studentevaluators=user))
+                    .filter(Q(student__supervisor=user) | Q(student__evaluators=user))
                     .all()
                 )
 

@@ -28,8 +28,8 @@ import {
 import { TotalMarks, MarkingScheme } from "../../services/types";
 import SummaryDashboard from "./SummaryDashboard";
 import {
-  Settings as SettingsIcon,
   Download as DownloadIcon,
+  FilterAltRounded,
 } from "@mui/icons-material";
 
 const extractStudentName = (student: string): string => {
@@ -402,7 +402,7 @@ const TotalMarksTable: React.FC<TotalMarksTableProps> = ({
               aria-label="settings"
               color="primary"
             >
-              <SettingsIcon />
+              <FilterAltRounded />
             </IconButton>
           </Tooltip>
         </Box>
