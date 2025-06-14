@@ -3,10 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import Criteria, Rubric, StudentMark, StudentGrade
-from users.models import Student, User
+from users.models import CourseCoordinator, Student, User
 from .serializers import RubricSerializer, TotalMarksSerializer, MarkingSchemeSerializer
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 
 
 class GetMarkingSchemeView(APIView):
@@ -109,7 +109,7 @@ class SaveGradesView(APIView):
             grades_data = request.data.get("grades", [])
 
             with transaction.atomic():
-                # Delete existing marks only for the rubrics being updated
+                # Delete existing marks for the rubrics being updated
                 rubric_ids = [grade_entry["scheme_id"] for grade_entry in grades_data]
                 StudentMark.objects.filter(
                     student=student, evaluator=user, criteria__rubric__id__in=rubric_ids
@@ -132,6 +132,8 @@ class SaveGradesView(APIView):
                         )
 
                     for idx, (criteria, mark) in enumerate(zip(criteria_list, grades)):
+                        if mark == 0:
+                            continue
                         if not (0 <= mark <= criteria.max_mark):
                             return Response(
                                 {
@@ -139,7 +141,6 @@ class SaveGradesView(APIView):
                                 },
                                 status=status.HTTP_400_BAD_REQUEST,
                             )
-                        # Save all marks, including zeros
                         StudentMark.objects.create(
                             student=student,
                             criteria=criteria,
@@ -147,35 +148,10 @@ class SaveGradesView(APIView):
                             mark=mark,
                         )
 
-                # Calculate total_mark
-                total_mark = 0
-                rubrics = Rubric.objects.filter(course=student.course).order_by("steps")
-                for rubric in rubrics:
-                    criteria_list = rubric.criterias.filter(
-                        mode__in=[student.mode, "both"]
-                    ).order_by("id")
-                    rubric_score = 0
-                    for criteria in criteria_list:
-                        # Get all marks for this criteria and student, excluding zeros
-                        marks = StudentMark.objects.filter(
-                            student=student, criteria=criteria
-                        ).exclude(mark=0)
-                        if marks.exists():
-                            avg_mark = sum(mark.mark for mark in marks) / marks.count()
-                            normalized_score = (
-                                avg_mark / criteria.max_mark * criteria.weightage
-                            ) / 100
-                            rubric_score += normalized_score
-                    # Apply rubric weightage (not divided by 100)
-                    total_mark += rubric_score * rubric.weightage
-
-                # Update or create StudentGrade
-                student_grade, created = StudentGrade.objects.get_or_create(
-                    student=student, defaults={"total_mark": total_mark}
-                )
-                if not created:
-                    student_grade.total_mark = total_mark
-                    student_grade.save()
+                    student_grade, created = StudentGrade.objects.get_or_create(
+                        student=student, defaults={"total_mark": 0}
+                    )
+                    student_grade.recalculate_total_mark()
 
             return Response(
                 {"message": "Grades saved successfully"}, status=status.HTTP_200_OK
@@ -187,19 +163,42 @@ class SaveGradesView(APIView):
 class GetAllTotalMarksView(APIView):
     def get(self, request):
         try:
-            # Optimize query with select_related and prefetch_related
-            grades = (
-                StudentGrade.objects.select_related("student", "grade")
-                .prefetch_related(
-                    Prefetch(
-                        "student__studentmark_set",
-                        queryset=StudentMark.objects.select_related("criteria__rubric"),
-                    )
-                )
-                .all()
-            )
+            user = request.user
+            # Check if user is a CourseCoordinator
+            is_course_coordinator = CourseCoordinator.objects.filter(user=user).exists()
 
-            print(f"Found {grades.count()} student grades")
+            if is_course_coordinator:
+                grades = (
+                    StudentGrade.objects.select_related("student", "grade")
+                    .prefetch_related(
+                        Prefetch(
+                            "student__studentmark_set",
+                            queryset=StudentMark.objects.select_related(
+                                "criteria__rubric"
+                            ),
+                        )
+                    )
+                    .all()
+                )
+
+            else:
+                grades = (
+                    StudentGrade.objects.select_related("student", "grade")
+                    .prefetch_related(
+                        Prefetch(
+                            "student__studentmark_set",
+                            queryset=StudentMark.objects.select_related(
+                                "criteria__rubric"
+                            ),
+                        )
+                    )
+                    .filter(Q(studentsupervisor=user) | Q(studentevaluators=user))
+                    .all()
+                )
+
+            print(
+                f"Found {grades.count()} student grades for user {user.id} (Course Coordinator: {is_course_coordinator})"
+            )
 
             if not grades.exists():
                 return Response([], status=status.HTTP_200_OK)

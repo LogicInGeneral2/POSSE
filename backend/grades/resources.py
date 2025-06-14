@@ -1,27 +1,22 @@
 from users.models import Student, User
 from .models import Grade, Rubric, Criteria, StudentMark, StudentGrade
 from import_export import resources, fields
-from import_export.fields import Field
 from import_export.widgets import ForeignKeyWidget, JSONWidget
 import json
 
 
-# Resource for Rubric with nested Criteria
 class RubricResource(resources.ModelResource):
     # Map CSV columns to model fields
-    label = Field(attribute="label", column_name="rubric_label")
-    weightage = Field(attribute="weightage", column_name="rubric_weightage")
-    pic = Field(attribute="pic", column_name="rubric_pic", widget=JSONWidget())
-    course = Field(attribute="course", column_name="rubric_course")
-    steps = Field(attribute="steps", column_name="rubric_steps")
+    label = fields.Field(attribute="label", column_name="rubric_label")
+    weightage = fields.Field(attribute="weightage", column_name="rubric_weightage")
+    pic = fields.Field(attribute="pic", column_name="rubric_pic", widget=JSONWidget())
+    course = fields.Field(attribute="course", column_name="rubric_course")
+    steps = fields.Field(attribute="steps", column_name="rubric_steps")
 
     class Meta:
         model = Rubric
         fields = ("label", "weightage", "pic", "course", "steps")
-        import_id_fields = (
-            "label",
-            "course",
-        )  # Changed to include both label and course
+        import_id_fields = ("label", "course")
 
     def before_import_row(self, row, **kwargs):
         # Handle case-insensitive course field
@@ -39,6 +34,7 @@ class RubricResource(resources.ModelResource):
         if not row_result.errors:
             rubric_label = row.get("rubric_label")
             criteria_label = row.get("label")
+            criteria_mode = row.get("mode", "both")
 
             if rubric_label and criteria_label:
                 try:
@@ -48,24 +44,23 @@ class RubricResource(resources.ModelResource):
                     Criteria.objects.update_or_create(
                         rubric=rubric,
                         label=criteria_label,
+                        mode=criteria_mode,  # Include mode in uniqueness
                         defaults={
                             "weightage": float(row.get("weightage", 0)),
                             "max_mark": float(row.get("max_mark", 0)),
-                            "mode": row.get("mode", "both"),
                         },
                     )
                 except Exception as e:
                     row_result.errors.append(f"Error creating criteria: {str(e)}")
 
 
-# Resource for Criteria
 class CriteriaResource(resources.ModelResource):
     # Map CSV columns to model fields for criteria
-    label = Field(attribute="label", column_name="label")
-    weightage = Field(attribute="weightage", column_name="weightage")
-    max_mark = Field(attribute="max_mark", column_name="max_mark")
-    mode = Field(attribute="mode", column_name="mode")
-    rubric = Field(
+    label = fields.Field(attribute="label", column_name="label")
+    weightage = fields.Field(attribute="weightage", column_name="weightage")
+    max_mark = fields.Field(attribute="max_mark", column_name="max_mark")
+    mode = fields.Field(attribute="mode", column_name="mode")
+    rubric = fields.Field(
         column_name="rubric_label",
         attribute="rubric",
         widget=ForeignKeyWidget(Rubric, field="label"),
@@ -74,7 +69,7 @@ class CriteriaResource(resources.ModelResource):
     class Meta:
         model = Criteria
         fields = ("label", "weightage", "max_mark", "mode", "rubric")
-        import_id_fields = ("label", "rubric")
+        import_id_fields = ("label", "rubric", "mode")  # Include mode in uniqueness
 
     def before_import_row(self, row, **kwargs):
         # Handle case-insensitive course field
@@ -93,21 +88,29 @@ class CriteriaResource(resources.ModelResource):
                 raise ValueError(
                     f"Invalid mode: {row['mode']}. Must be one of {valid_modes}"
                 )
-        # Create or update Rubric if necessary
+        # Create or update Rubric and set rubric field correctly
         rubric_label = row.get("rubric_label")
-        if rubric_label:
+        rubric_course = row.get("rubric_course")
+        if rubric_label and rubric_course:
             rubric_data = {
                 "label": rubric_label,
                 "weightage": float(row.get("rubric_weightage", 0)),
                 "pic": json.loads(row.get("rubric_pic", "[]")),
-                "course": row.get("rubric_course", "FYP1"),
+                "course": rubric_course,
                 "steps": int(row.get("rubric_steps", 0)),
             }
-            Rubric.objects.update_or_create(
+            rubric, _ = Rubric.objects.update_or_create(
                 label=rubric_label,
-                course=row.get("rubric_course", "FYP1"),
+                course=rubric_course,
                 defaults=rubric_data,
             )
+            row["rubric"] = rubric
+        else:
+            raise ValueError("rubric_label and rubric_course are required")
+
+    def dehydrate_rubric(self, criteria):
+        # For export, return the rubric's label
+        return criteria.rubric.label if criteria.rubric else ""
 
 
 # Resource for StudentMark

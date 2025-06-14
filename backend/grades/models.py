@@ -71,6 +71,19 @@ class StudentMark(models.Model):
     def __str__(self):
         return f"{self.student} - {self.criteria} - {self.mark}"
 
+    def clean(self):
+        self.mark = round(self.mark, 1)
+        if self.mark < 0 or self.mark > self.criteria.max_mark:
+            raise ValidationError(
+                f"Mark must be between 0 and {self.criteria.max_mark}."
+            )
+        if self.mark == 0:
+            raise ValidationError("Mark cannot be 0.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
 
 class Grade(models.Model):
     grade_letter = models.CharField(max_length=5)
@@ -99,12 +112,66 @@ class StudentGrade(models.Model):
     total_mark = models.FloatField()
     grade = models.ForeignKey(Grade, on_delete=models.SET_NULL, null=True, blank=True)
 
-    def save(self, *args, **kwargs):
-        # Automatically assign grade based on total_mark
-        matched_grade = Grade.objects.filter(
+    def recalculate_total_mark(self):
+        total_mark = 0
+        rubrics = Rubric.objects.filter(course=self.student.course).order_by("steps")
+        for rubric in rubrics:
+            criteria_list = rubric.criterias.filter(
+                mode__in=[self.student.mode, "both"]
+            ).order_by("id")
+            rubric_score = 0
+            for criteria in criteria_list:
+                # Group marks by evaluator type
+                examiner_marks = StudentMark.objects.filter(
+                    student=self.student,
+                    criteria=criteria,
+                    evaluator__in=self.student.evaluators.all(),
+                ).exclude(mark=0)
+                supervisor_marks = StudentMark.objects.filter(
+                    student=self.student,
+                    criteria=criteria,
+                    evaluator=self.student.supervisor,
+                ).exclude(mark=0)
+
+                # Calculate examiner contribution
+                examiner_score = 0
+                if examiner_marks.exists() and "examiner" in rubric.pic:
+                    avg_examiner_mark = (
+                        sum(mark.mark for mark in examiner_marks)
+                        / examiner_marks.count()
+                    )
+                    examiner_score = (
+                        avg_examiner_mark / criteria.max_mark * criteria.weightage
+                    ) / 100
+
+                # Calculate supervisor contribution
+                supervisor_score = 0
+                if supervisor_marks.exists() and "supervisor" in rubric.pic:
+                    avg_supervisor_mark = (
+                        sum(mark.mark for mark in supervisor_marks)
+                        / supervisor_marks.count()
+                    )
+                    supervisor_score = (
+                        avg_supervisor_mark / criteria.max_mark * criteria.weightage
+                    ) / 100
+
+                # Sum examiner and supervisor scores for the criteria
+                criteria_score = examiner_score + supervisor_score
+                rubric_score += criteria_score
+            # Apply rubric weightage
+            total_mark += rubric_score * rubric.weightage
+        self.total_mark = round(total_mark, 1)  # Round to 1 decimal place
+        # Update or create StudentGrade
+        self.grade = Grade.objects.filter(
             min_mark__lte=self.total_mark, max_mark__gte=self.total_mark
         ).first()
-        self.grade = matched_grade
+        self.save()
+
+    def save(self, *args, **kwargs):
+        # Automatically assign grade based on total_mark
+        self.grade = Grade.objects.filter(
+            min_mark__lte=self.total_mark, max_mark__gte=self.total_mark
+        ).first()
         super().save(*args, **kwargs)
 
     def __str__(self):

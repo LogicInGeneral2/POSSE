@@ -25,12 +25,10 @@ class RubricSerializer(serializers.ModelSerializer):
         ]
 
     def get_contents(self, obj):
-        # Assuming contents are the labels of related Criteria
         return [criteria.label for criteria in obj.criterias.all()]
 
     def get_marks(self, obj):
-        # Assuming max_mark from Criteria determines the number of marks (e.g., max_mark=5 means 0-5 scale)
-        # Use the first Criteria's max_mark for simplicity, assuming all Criteria have the same max_mark
+
         criteria = obj.criterias.first()
         return int(criteria.max_mark) if criteria else 0
 

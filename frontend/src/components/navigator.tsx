@@ -195,7 +195,7 @@ export default function NavigationBar() {
       path: "https://posse-r81n.onrender.com/admin",
       external: true,
     },
-    user?.role === "course_coordinator" && {
+    (user?.role === "course_coordinator" || user?.role === "supervisor") && {
       text: "Grades",
       icon: <GradeRounded sx={{ color: "primary.main" }} />,
       path: "/grades",

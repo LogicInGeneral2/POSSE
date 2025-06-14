@@ -14,6 +14,7 @@ import GetAppIcon from "@mui/icons-material/GetApp";
 import { useState } from "react";
 import { exportLogs } from "../../services";
 import { format } from "date-fns";
+import Toast from "../commons/snackbar";
 export default function DataTable({
   data,
   studentId,
@@ -26,17 +27,32 @@ export default function DataTable({
   role: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
   const handleExport = async () => {
     setIsLoading(true);
     try {
       await exportLogs(studentId);
-    } catch (error) {
-      alert(error);
+    } catch (error: any) {
+      setToast({
+        open: true,
+        message: error.message || "Failed to send feedback.",
+        severity: "error",
+      });
     } finally {
       setIsLoading(false);
     }
   };
-
+  const handleCloseToast = () => {
+    setToast((prev) => ({ ...prev, open: false }));
+  };
   return (
     <Box sx={{ p: 2, flexGrow: 1, overflow: "auto" }}>
       <Box
@@ -52,7 +68,7 @@ export default function DataTable({
           Current Logs
         </Typography>
         {role === "student" && (
-          <Tooltip title="Export All Logs" placement="top">
+          <Tooltip title="Export Approved Logs" placement="top">
             <IconButton
               aria-label="Export"
               onClick={handleExport}
@@ -126,6 +142,12 @@ export default function DataTable({
           </Card>
         );
       })}
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={handleCloseToast}
+      />
     </Box>
   );
 }
