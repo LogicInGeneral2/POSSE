@@ -178,6 +178,7 @@ class GetAllTotalMarksView(APIView):
                             ),
                         )
                     )
+                    .distinct()
                     .all()
                 )
 
@@ -193,6 +194,7 @@ class GetAllTotalMarksView(APIView):
                         )
                     )
                     .filter(Q(student__supervisor=user) | Q(student__evaluators=user))
+                    .distinct()
                     .all()
                 )
 

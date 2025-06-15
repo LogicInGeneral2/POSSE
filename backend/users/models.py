@@ -65,19 +65,28 @@ class User(AbstractBaseUser, PermissionsMixin):
         # Enforce is_staff for course_coordinator
         if self.role == "course_coordinator":
             self.is_staff = True
-        # Auto-generate username
-        if not self.username and self.email:
-            base_username = self.email.split("@")[0]
-            unique_username = base_username
-            counter = 1
-            while User.objects.filter(username=unique_username).exists():
-                unique_username = f"{base_username}{counter}"
-                counter += 1
-            self.username = unique_username
+        # Auto-generate or update username based on email
+        if self.email:
+            # Check if the email has changed or username is not set
+            if not self.username or (
+                self.pk and self.email != User.objects.get(pk=self.pk).email
+            ):
+                base_username = self.email.split("@")[0]
+                unique_username = base_username
+                counter = 1
+                # Exclude current user from username uniqueness check
+                while (
+                    User.objects.filter(username=unique_username)
+                    .exclude(pk=self.pk)
+                    .exists()
+                ):
+                    unique_username = f"{base_username}{counter}"
+                    counter += 1
+                self.username = unique_username
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"{self.name} ({self.get_role_display()})"
+        def __str__(self):
+            return f"{self.name} ({self.get_role_display()})"
 
 
 class CourseCoordinator(models.Model):
