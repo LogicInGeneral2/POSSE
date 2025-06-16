@@ -714,12 +714,13 @@ def export_logs_pdf(request, student_id):
         )
     )
 
+    print("Generating PDF...")
+
     try:
-        student = (
-            Student.objects.get(user__id=student_id)
-            if Student.objects.filter(user__id=student_id).exists()
-            else Student.objects.get(student_id=student_id)
-        )
+        try:
+            student = Student.objects.get(user__id=student_id)
+        except Student.DoesNotExist:
+            student = Student.objects.get(id=student_id)
     except Student.DoesNotExist:
         return HttpResponse("Student not found.", status=404)
 

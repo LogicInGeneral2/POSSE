@@ -233,7 +233,6 @@ export const LogbooksPage = () => {
             data={logData}
             onRowClick={handleSelectLog}
             studentId={idToFetch ?? 0}
-            role={user.role}
           />
         </Paper>
         <Box

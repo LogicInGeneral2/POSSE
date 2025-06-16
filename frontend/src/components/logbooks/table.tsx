@@ -19,12 +19,10 @@ export default function DataTable({
   data,
   studentId,
   onRowClick,
-  role,
 }: {
   data: LogType[];
   studentId: number;
   onRowClick: (log: LogType) => void;
-  role: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{
@@ -67,18 +65,16 @@ export default function DataTable({
         <Typography sx={{ fontWeight: "bold", textAlign: "Left" }}>
           Current Logs
         </Typography>
-        {role === "student" && (
-          <Tooltip title="Export Approved Logs" placement="top">
-            <IconButton
-              aria-label="Export"
-              onClick={handleExport}
-              disabled={isLoading}
-              color="primary"
-            >
-              <GetAppIcon />
-            </IconButton>
-          </Tooltip>
-        )}
+        <Tooltip title="Export Approved Logs" placement="top">
+          <IconButton
+            aria-label="Export"
+            onClick={handleExport}
+            disabled={isLoading}
+            color="primary"
+          >
+            <GetAppIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       {data.length === 0 && (
