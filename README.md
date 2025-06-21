@@ -83,30 +83,30 @@ Built using a **hybrid Waterfall-Agile** methodology with a **React frontend** a
 
 ### Backend Setup (Django)
 
-- 1. Clone the repo
-git clone <your-repo-url>
-cd backend
+1. Clone the repo
+- git clone <your-repo-url>
+- cd backend
 
-- 2. Setup virtual environment
-python -m venv venv
-source venv/bin/activate # macOS/Linux
+2. Setup virtual environment
+- python -m venv venv
+- source venv/bin/activate # macOS/Linux
 OR
-.\venv\Scripts\activate # Windows
+- .\venv\Scripts\activate # Windows
 
-- 3. Install dependencies
-pip install -r requirements.txt
+3. Install dependencies
+- pip install -r requirements.txt
 
-- 4. Database Setup
+4. Database Setup
 SQLite (default):
-python manage.py migrate
+- python manage.py migrate
 OR PostgreSQL
 - Start PostgreSQL
 - Create DB: createdb posse_db
 - Update settings in backend/settings/dev.py
 - Run migrations:
-python manage.py migrate
+- python manage.py migrate
 
-- 5. Create .env file
+5. Create .env file
 Inside backend/.env:
 DJANGO_ENV=development
 DB_NAME=db name
@@ -122,27 +122,27 @@ EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
 DEFAULT_FROM_EMAIL=your-email@gmail.com
 
- - 6. Create admin user
-python manage.py createsuperuser
+6. Create admin user
+- python manage.py createsuperuser
 
-- 7. Start backend server
-python manage.py runserver
+7. Start backend server
+- python manage.py runserver
 
 ### Frontend Setup (React)
 
-- 1. Navigate to frontend
-cd frontend
+1. Navigate to frontend
+- cd frontend
 
-- 2. Install dependencies
-npm install
+2. Install dependencies
+- npm install
 OR
-yarn install
+- yarn install
 
-- 3. Create .env file
+3. Create .env file
 Inside frontend/.env:
 VITE_APP_API_URL=http://localhost:8000
 
-- 4. Start development server
-npm start
+4. Start development server
+- npm start
 OR
-yarn start
+- yarn start
