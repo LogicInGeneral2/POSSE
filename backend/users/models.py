@@ -85,8 +85,8 @@ class User(AbstractBaseUser, PermissionsMixin):
                 self.username = unique_username
         super().save(*args, **kwargs)
 
-        def __str__(self):
-            return f"{self.name} ({self.get_role_display()})"
+    def __str__(self):
+        return f"{self.name} ({self.get_role_display()})"
 
 
 class CourseCoordinator(models.Model):
