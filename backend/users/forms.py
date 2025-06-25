@@ -1,6 +1,6 @@
 # users/forms.py
 from django import forms
-from .models import User, CourseCoordinator
+from .models import Student, User, CourseCoordinator
 from .utils import get_coordinator_course_filter
 from django.contrib.auth.forms import UserCreationForm
 
@@ -63,6 +63,13 @@ class ExaminerSelectionForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Customize the label for the examiners checkboxes
+        self.fields["examiners"].label_from_instance = (
+            lambda obj: f"{obj.name} ({obj.get_role_display()})"
+        )
+
 
 class SupervisorSelectionForm(forms.Form):
     supervisor = forms.ModelChoiceField(
@@ -70,6 +77,13 @@ class SupervisorSelectionForm(forms.Form):
         required=True,
         label="Select Supervisor",
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Customize the label for the supervisor dropdown
+        self.fields["supervisor"].label_from_instance = (
+            lambda obj: f"{obj.name} ({obj.get_role_display()})"
+        )
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -105,3 +119,27 @@ class CustomUserCreationForm(UserCreationForm):
         if role == "course_coordinator" and not course:
             self.add_error("course", "Course is required for course coordinators.")
         return cleaned_data
+
+
+class StudentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Student
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Customize the supervisor field
+        self.fields["supervisor"].queryset = User.objects.filter(
+            role="supervisor", is_active=True
+        ).order_by("name")
+        self.fields["supervisor"].label_from_instance = (
+            lambda obj: f"{obj.name} ({obj.get_role_display()})"
+        )
+
+        # Customize the evaluators field
+        self.fields["evaluators"].queryset = User.objects.filter(
+            is_examiner=True, is_active=True
+        ).order_by("name")
+        self.fields["evaluators"].label_from_instance = (
+            lambda obj: f"{obj.name} ({obj.get_role_display()})"
+        )

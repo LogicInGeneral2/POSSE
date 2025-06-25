@@ -8,6 +8,7 @@ from .forms import (
     CustomUserChangeForm,
     CustomUserCreationForm,
     ExaminerSelectionForm,
+    StudentAdminForm,
     SupervisorSelectionForm,
 )
 from .models import SupervisorsRequest, User, Student, CourseCoordinator
@@ -358,6 +359,7 @@ class CourseCoordinatorAdmin(admin.ModelAdmin):
 @admin.register(Student)
 class StudentAdmin(ImportExportModelAdmin):
     resource_class = StudentResource
+    form = StudentAdminForm
     list_display = (
         "id",
         "user",
