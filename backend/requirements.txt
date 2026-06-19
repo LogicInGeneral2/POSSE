@@ -3,7 +3,6 @@ Brotli==1.1.0
 cffi==1.17.1
 chardet==5.2.0
 charset-normalizer==3.4.1
-click==8.2.1
 colorama==0.4.6
 cryptography==44.0.2
 diff-match-patch==20241021
