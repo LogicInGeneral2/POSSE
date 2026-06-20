@@ -4,16 +4,16 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-# If you use yarn, use `COPY yarn.lock package.json ./` and `RUN yarn install`
+# Install dependencies
 RUN npm install
 
 COPY . .
-# Build the Vite project
+# Build the React project
 RUN npm run build
 
-# Stage 2: Serve the application with Nginx
+# Stage 2: Nginx
 FROM nginx:alpine
-# Copy built assets from the builder stage
+# Copy built assets 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80
