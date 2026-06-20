@@ -1,5 +1,5 @@
 # backend/Dockerfile
-FROM python:3.12-slim
+FROM python:3.12-alpine
 
 # Prevent Python from writing pyc files to disc and buffering stdout/stderr?
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -8,9 +8,11 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # Install system dependencies (PostgreSQL)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libpq-dev \
-    && apt-get clean
+RUN apk add --no-cache \
+    postgresql-dev \
+    gcc \
+    python3-dev \
+    musl-dev
 
 # Install dependencies
 COPY requirements.txt .
