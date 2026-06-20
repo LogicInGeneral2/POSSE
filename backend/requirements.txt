@@ -1,4 +1,4 @@
-asgiref==3.8.1
+asgiref==3.9.1
 Brotli==1.2.0
 cffi==2.0.0
 chardet==5.2.0
