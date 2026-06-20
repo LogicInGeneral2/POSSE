@@ -24,7 +24,7 @@ pipeline {
                     steps {
                         echo "Running Flake8 Linting via Docker..."
                         sh """
-                        docker run --rm -v ${WORKSPACE}/backend:/app -w /app python:3.12-alpine \
+                        docker run --rm --volumes-from POSSE-jenkins -w ${WORKSPACE}/backend python:3.12-alpine \
                             sh -c "pip install flake8 && flake8 ."
                         """
                     }
@@ -33,7 +33,7 @@ pipeline {
                     steps {
                         echo "Running ESLint via Docker..."
                         sh """
-                        docker run --rm -v ${WORKSPACE}/frontend:/app -w /app node:20-alpine \
+                        docker run --rm --volumes-from POSSE-jenkins -w ${WORKSPACE}/frontend node:20-alpine \
                             sh -c "npm install && npm run lint"
                         """
                     }
