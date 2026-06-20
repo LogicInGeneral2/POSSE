@@ -123,12 +123,12 @@ pipeline {
                 sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
                 
                 // Push Backend
-                sh "docker push ${DOCKER_USERNAME}/posse-backend:${GIT_SHORT_HASH}"
-                sh "docker push ${DOCKER_USERNAME}/posse-backend:latest"
+                sh "docker push -q ${DOCKER_USERNAME}/posse-backend:${GIT_SHORT_HASH}"
+                sh "docker push -q ${DOCKER_USERNAME}/posse-backend:latest"
                 
                 // Push Frontend
-                sh "docker push ${DOCKER_USERNAME}/posse-frontend:${GIT_SHORT_HASH}"
-                sh "docker push ${DOCKER_USERNAME}/posse-frontend:latest"
+                sh "docker push -q ${DOCKER_USERNAME}/posse-frontend:${GIT_SHORT_HASH}"
+                sh "docker push -q ${DOCKER_USERNAME}/posse-frontend:latest"
             }
         }
     }
