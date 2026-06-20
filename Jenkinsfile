@@ -91,15 +91,30 @@ pipeline {
             }
         }
 
-        // // 5. DevSecOps: Image Vulnerability Scanning
-        // stage('Security Scan (Trivy)') {
-        //     steps {
-        //         echo "Scanning images for high/critical vulnerabilities..."
-        //         // Pulls a temporary Trivy container to scan built images
-        //         sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL ${DOCKER_USERNAME}/posse-backend:${GIT_SHORT_HASH}"
-        //         sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL ${DOCKER_USERNAME}/posse-frontend:${GIT_SHORT_HASH}"
-        //     }
-        // }
+        // 5. DevSecOps: Image Vulnerability Scanning
+        stage('Security Scan (Trivy)') {
+            steps {
+                echo "Scanning images for high/critical vulnerabilities..."
+                
+                // Backend Scan
+                sh """
+                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image \
+                    --no-progress \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 1 \
+                    ${DOCKER_USERNAME}/posse-backend:${GIT_SHORT_HASH}
+                """
+                
+                // Frontend Scan
+                sh """
+                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image \
+                    --no-progress \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 1 \
+                    ${DOCKER_USERNAME}/posse-frontend:${GIT_SHORT_HASH}
+                """
+            }
+        }
 
         // 6. Push to Docker Hub
         stage('Push to Registry') {
