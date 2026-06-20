@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Credentials
         DOCKERHUB_CREDS = credentials('dockerhub-credentials')
-        DOCKER_USERNAME = 'your-dockerhub-username' 
+        DOCKER_USERNAME = 'sirroastedpotato' 
         
         // Grabs the first 7 characters of the GitHub commit hash for versioning
         GIT_SHORT_HASH = "${env.GIT_COMMIT.take(7)}"
