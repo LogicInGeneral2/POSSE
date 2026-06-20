@@ -39,7 +39,30 @@ pipeline {
         //     }
         // }
 
-        // 2. Parallel Building of Docker Images
+        // 2. Code Quality check
+        stage('SonarQube Code Analysis') {
+            steps {
+                echo "Starting SonarQube Scan..."
+                script {
+                    def scannerHome = tool 'sonar-scanner'
+                    // Send the code to SonarQube
+                    withSonarQubeEnv('sonar-server') {
+                        sh "${scannerHome}/bin/sonar-scanner"
+                    }
+                }
+            }
+        }
+
+        // 3. Quality Gate Check
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        // 4. Parallel Building of Docker Images
         stage('Build Docker Images') {
             parallel {
                 stage('Build Backend') {
@@ -68,7 +91,7 @@ pipeline {
             }
         }
 
-        // // 3. DevSecOps: Image Vulnerability Scanning
+        // // 5. DevSecOps: Image Vulnerability Scanning
         // stage('Security Scan (Trivy)') {
         //     steps {
         //         echo "Scanning images for high/critical vulnerabilities..."
@@ -78,7 +101,7 @@ pipeline {
         //     }
         // }
 
-        // 4. Push to Docker Hub
+        // 6. Push to Docker Hub
         stage('Push to Registry') {
             steps {
                 // Log in once
@@ -95,7 +118,7 @@ pipeline {
         }
     }
 
-    // 5. Post-Build Actions & Notifications
+    // 7. Post-Build Actions & Notifications
     post {
         success {
             echo "Pipeline completed successfully! Images pushed to Docker Hub."
