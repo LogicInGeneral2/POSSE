@@ -23,9 +23,6 @@ pipeline {
                 stage('Backend (Django) Linting') {
                     steps {
                         echo "Running Flake8 Linting via Docker..."
-                        // 1. Spins up a temporary Python Alpine container
-                        // 2. Mounts your backend workspace code into it
-                        // 3. Installs flake8 and runs the scan, then deletes itself
                         sh """
                         docker run --rm -v ${WORKSPACE}/backend:/app -w /app python:3.12-alpine \
                             sh -c "pip install flake8 && flake8 ."
@@ -35,9 +32,6 @@ pipeline {
                 stage('Frontend (React) Linting') {
                     steps {
                         echo "Running ESLint via Docker..."
-                        // 1. Spins up a temporary Node Alpine container
-                        // 2. Mounts your frontend workspace code into it
-                        // 3. Runs npm install, then runs the linter, then deletes itself
                         sh """
                         docker run --rm -v ${WORKSPACE}/frontend:/app -w /app node:20-alpine \
                             sh -c "npm install && npm run lint"
