@@ -2,9 +2,6 @@
 # Stage 1: Build the React application
 FROM node:20-alpine AS builder
 
-# Upgrade libexpat to fix
-RUN apk upgrade --no-cache libexpat
-
 WORKDIR /app
 
 COPY package*.json ./
@@ -17,6 +14,10 @@ RUN npm run build
 
 # Stage 2: Nginx
 FROM nginx:alpine
+
+# Upgrade libexpat to fix
+RUN apk upgrade --no-cache libexpat
+
 # Copy built assets 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
