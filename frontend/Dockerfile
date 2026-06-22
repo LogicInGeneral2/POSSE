@@ -1,6 +1,10 @@
 # frontend/Dockerfile
 # Stage 1: Build the React application
-FROM node:18-alpine AS builder
+FROM node:20-alpine
+
+# Upgrade libexpat to fix
+RUN apk upgrade --no-cache libexpat
+
 WORKDIR /app
 
 COPY package*.json ./
