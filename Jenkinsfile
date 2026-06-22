@@ -121,16 +121,30 @@ pipeline {
         // 6. Push to Docker Hub
         stage('Push to Registry') {
             steps {
-                // Log in once
-                sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
-                
-                // Push Backend
-                sh "docker push -q ${DOCKER_USERNAME}/posse-backend:${GIT_SHORT_HASH}"
-                sh "docker push -q ${DOCKER_USERNAME}/posse-backend:latest"
-                
-                // Push Frontend
-                sh "docker push -q ${DOCKER_USERNAME}/posse-frontend:${GIT_SHORT_HASH}"
-                sh "docker push -q ${DOCKER_USERNAME}/posse-frontend:latest"
+                script {
+                    def shouldPush = true
+                    try {
+                        // Enquire to push to Docker Hub.
+                        input message: "Images have passed all security scans. Do you want to push to Docker Hub?", ok: "Approve & Push"
+                    } catch (err) {
+                        // Allow to pass through even if the user aborts the input prompt.
+                        shouldPush = false
+                        echo "Push to Docker Hub was skipped. Pipeline will continue to Success!"
+                    }
+
+                    if (shouldPush) {
+                        // Log in once
+                        sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+                        
+                        // Push Backend
+                        sh "docker push -q ${DOCKER_USERNAME}/posse-backend:${GIT_SHORT_HASH}"
+                        sh "docker push -q ${DOCKER_USERNAME}/posse-backend:latest"
+                        
+                        // Push Frontend
+                        sh "docker push -q ${DOCKER_USERNAME}/posse-frontend:${GIT_SHORT_HASH}"
+                        sh "docker push -q ${DOCKER_USERNAME}/posse-frontend:latest"
+                    }
+                }
             }
         }
     }
@@ -138,14 +152,18 @@ pipeline {
     // 7. Post-Build Actions & Notifications
     post {
         success {
-            echo "Pipeline completed successfully! Images pushed to Docker Hub."
+            echo "Pipeline completed successfully! (Check logs to see if images were pushed or skipped)"
+        }
+        aborted {
+            echo "Pipeline was aborted manually."
         }
         failure {
             echo "Pipeline failed! Please check the logs."
         }
         always {
             // Secure the environment and free up disk space
-            sh 'docker logout'
+            // The '|| true' is to ensures the pipeline doesn't crash if login was skipped
+            sh 'docker logout || true'
             cleanWs()
         }
     }
